@@ -23,6 +23,8 @@ cd ipz
 docker-compose up -d
 ```
 
+phpMyAdmin is available under port **6969**.
+
 3. **Install PHP dependencies:**
 
 ```bash
@@ -55,13 +57,7 @@ php artisan migrate
 bun install # or npm install
 ```
 
-8. **Build the frontend assets:**
-
-```bash
-bun run build # or npm run build
-```
-
-9. **Run the development server:**
+8. **Run the development server (API):**
 
 ```bash
 php artisan serve
@@ -69,10 +65,16 @@ php artisan serve
 
 The application will be available at `http://localhost:8000`.
 
-10. **Run the React development server (optional):**
+9. **Run the React development server (frontend):**
 
 ```bash
 bun run dev # or npm run dev
 ```
 
-This will run the React app at `http://localhost:3000`.
+### Troubleshooting
+
+#### **Laravel can't connect to the database:**
+
+Check if `extension=pdo_mysql.so` is uncommented in `php.ini`.
+
+[Fedora] If that doesn't work install the `php-mysqlnd` package.
