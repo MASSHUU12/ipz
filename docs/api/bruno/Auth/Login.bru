@@ -1,0 +1,17 @@
+meta {
+  name: Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: 0.0.0.0:8000/api/login
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  email: example@example.com
+  phone_number: 123456789
+  password: Zaq12wsx
+}
