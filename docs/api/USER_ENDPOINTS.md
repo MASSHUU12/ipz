@@ -44,6 +44,7 @@ Accept application/json
     - Required
     - Minimum length: 8 characters
     - Maximum length: 255 characters
+    - At least one lowercase letter, one uppercase letter, one number, and one special character.
     - Must be confirmed with `password_confirmation` field
 
 ### Success Response

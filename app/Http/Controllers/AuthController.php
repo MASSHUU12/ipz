@@ -3,10 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Console\Application;
-use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
-use Illuminate\Routing\ResponseFactory;
 
 class AuthController extends Controller
 {
@@ -15,7 +12,19 @@ class AuthController extends Controller
         $validated = $request->validate([
             'email' => 'required_without:phone_number|email|unique:users,email',
             'phone_number' => 'required_without:email|string|unique:users,phone_number|max:20',
-            'password' => 'required|string|confirmed|max:255|min:8'
+            'password' => [
+                'required',
+                'string',
+                'confirmed',
+                'max:255',
+                'min:8',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*?&]/',
+            ],
+        ], [
+            'password.regex' => 'The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.',
         ]);
 
         // TODO: Add proper phone number validation.
