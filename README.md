@@ -13,31 +13,50 @@
 1. **Clone the repository:**
 
 ```bash
-git clone git@github.com:MASSHUU12/ipz.git
-cd ipz
+git clone git@github.com:MASSHUU12/ipz.git && cp ipz
 ```
 
-2. **Set up Docker containers:**
-
-```bash
-docker-compose up -d
-```
-
-phpMyAdmin is available under port **6969**.
-
-3. **Install PHP dependencies:**
-
-```bash
-composer install
-```
-
-4. **Set up the environment file:**
+2. **Set up the environment file:**
 
 ```bash
 cp .env.example .env
 ```
 
 Update the `.env` file with your database credentials and other environment settings.
+
+### Using Laravel Sail
+
+> [!NOTE]
+> For Windows you need to have [WSL2](https://docs.microsoft.com/en-us/windows/wsl/about)
+> enabled according to the [documentation](https://laravel.com/docs/12.x/sail#introduction).
+
+3. **Start Sail:**
+
+```bash
+./vendor/bin/sail up
+```
+
+4. **Run database migrations:**
+
+```bash
+./vendor/bin/sail artisan migrate
+```
+
+### Alternative
+
+3. **Set up Docker containers:**
+
+```bash
+docker-compose -f docker-compose.db.yml up -d
+```
+
+phpMyAdmin is available under port **6969**.
+
+4. **Install PHP dependencies:**
+
+```bash
+composer install
+```
 
 5. **Generate the application key:**
 
@@ -71,9 +90,9 @@ The application will be available at `http://localhost:8000`.
 bun run dev # or npm run dev
 ```
 
-### Troubleshooting
+#### Troubleshooting
 
-#### **Laravel can't connect to the database:**
+##### **Laravel can't connect to the database:**
 
 Check if `extension=pdo_mysql.so` is uncommented in `php.ini`.
 
