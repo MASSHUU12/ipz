@@ -97,3 +97,7 @@ bun run dev # or npm run dev
 Check if `extension=pdo_mysql.so` is uncommented in `php.ini`.
 
 [Fedora] If that doesn't work install the `php-mysqlnd` package.
+
+## Documentation
+
+API documentation can be found in the [docs/api](./docs/api) folder.
