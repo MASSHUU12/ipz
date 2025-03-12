@@ -1,0 +1,22 @@
+meta {
+  name: Register
+  type: http
+  seq: 3
+}
+
+post {
+  url: 0.0.0.0:8000/api/register
+  body: formUrlEncoded
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:form-urlencoded {
+  email: example@example.com
+  phone_number: 123456789
+  password: Zaq12wsx
+  password_confirmation: Zaq12wsx
+}
