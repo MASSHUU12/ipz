@@ -9,30 +9,30 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+    reviewers:
+      - "MASSHUU12"
     groups:
       all-composer-updates:
         patterns:
           - "*"
-        commit-message:
-          prefix: "deps"
-          include: "scope"
-        labels:
-          - "dependencies"
-        reviewers:
-          - "MASSHUU12"
 
   - package-ecosystem: "bun"
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+    reviewers:
+      - "MASSHUU12"
     groups:
       all-bun-updates:
         patterns:
           - "*"
-        commit-message:
-          prefix: "deps"
-          include: "scope"
-        labels:
-          - "dependencies"
-        reviewers:
-          - "MASSHUU12"
