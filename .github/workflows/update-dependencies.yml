@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -62,19 +64,30 @@ jobs:
             echo "bun_changes=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
-        if: steps.composer-update.outputs.composer_changes == 'true' || steps.bun-update.outputs.bun_changes == 'true'
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update dependencies [automated]"
-          title: "Weekly Dependencies Update"
-          body: |
-            This is an automated weekly dependencies update.
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Create Pull Request
+        if: steps.composer-update.outputs.composer_changes == 'true' || steps.bun-update.outputs.bun_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME="deps/weekly-update-$(date +%Y-%m-%d)"
+          git checkout -b $BRANCH_NAME
+          
+          git add .
+          git commit -m "chore: update dependencies [automated]"
+          
+          git push --set-upstream origin $BRANCH_NAME
+          
+          # Create PR using GitHub CLI
+          gh pr create \
+            --title "Weekly Dependencies Update" \
+            --body "This is an automated weekly dependencies update.
+            
             Changes:
             ${{ steps.composer-update.outputs.composer_changes == 'true' && '- Updated Composer dependencies' || '' }}
-            ${{ steps.bun-update.outputs.bun_changes == 'true' && '- Updated Bun dependencies' || '' }}
-          branch: deps/weekly-update-${{ github.run_number }}
-          base: ${{ github.ref }}
-          delete-branch: true
+            ${{ steps.bun-update.outputs.bun_changes == 'true' && '- Updated Bun dependencies' || '' }}" \
+            --base main
