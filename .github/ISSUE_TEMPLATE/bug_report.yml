@@ -1,0 +1,59 @@
+name: Bug report
+description: Create a report to help us improve
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        When reporting bugs, please follow the guidelines in this template.
+
+  - type: textarea
+    attributes:
+      label: Describe the bug
+      description: |
+        A clear and concise description of what the bug is.
+        Please do not add code examples or error messages as screenshots.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: |
+        Steps to reproduce the behavior:
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Expected behavior
+      description: |
+        A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Additional information
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Screenshots
+      description: |
+        If applicable, add screenshots to help explain your problem.
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: |
+        Add here any other context about the issue.
+    validations:
+      required: false
