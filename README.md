@@ -5,6 +5,10 @@
 - [Docker](https://www.docker.com/products/docker-desktop/)
 - [Bruno](https://www.usebruno.com/downloads) or other API client
 
+## Documentation
+
+API documentation can be found [here](/docs/api/), along with requests for use with Bruno.
+
 ## Setup
 
 1. **Clone the repository:**
