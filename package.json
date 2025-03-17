@@ -47,7 +47,7 @@
         "concurrently": "^9.0.1",
         "globals": "^16.0.0",
         "laravel-vite-plugin": "^1.0",
-        "lucide-react": "^0.479.0",
+        "lucide-react": "^0.482.0",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
         "tailwind-merge": "^3.0.1",
@@ -57,7 +57,7 @@
         "vite": "^6.0"
     },
     "optionalDependencies": {
-        "@rollup/rollup-linux-x64-gnu": "4.35.0",
+        "@rollup/rollup-linux-x64-gnu": "4.36.0",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
         "lightningcss-linux-x64-gnu": "^1.29.1"
     }
