@@ -37,6 +37,48 @@ class UserController extends Controller
         //
     }
 
+    public function updateCurrentUser(Request $request)
+    {
+        $request->validate([
+            'email' => 'sometimes|email|unique:users,email,',
+            // TODO: Adjust phone number validation when PR #33 is merged
+            'phone_number' => 'sometimes|string|unique:users,phone_number|max:20',
+            'password' => [
+                'sometimes',
+                'string',
+                'max:255',
+                'min:8',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*?&]/',
+            ],
+        ], [
+            'password.regex' => 'The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.',
+        ]);
+
+        $user = $request->user();
+
+        if ($request->has('email')) {
+            $user->email = $request->input('email');
+        }
+
+        if ($request->has('phone_number')) {
+            $user->phone_number = $request->input('phone_number');
+        }
+
+        if ($request->has('password')) {
+            $user->password = password_hash($request->input('password'), PASSWORD_DEFAULT);
+        }
+
+        $user->save();
+
+        return response(
+            ['message' => 'User updated successfully', 'user' => $user],
+            200
+        );
+    }
+
     /**
      * Update the specified resource in storage.
      */
