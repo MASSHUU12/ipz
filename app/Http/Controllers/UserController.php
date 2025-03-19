@@ -45,6 +45,21 @@ class UserController extends Controller
         //
     }
 
+    public function destroyCurrentUser(Request $request)
+    {
+        try {
+            $request->user()->delete();
+        } catch (\Exception)
+        {
+            return response(
+                ['message' => 'There was an error during user deletion'],
+                500
+            );
+        }
+
+        return response(['message' => 'User deleted successfully'], 200);
+    }
+
     /**
      * Remove the specified resource from storage.
      */
