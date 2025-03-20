@@ -57,11 +57,31 @@ class AuthController extends Controller
             $user = User::where('phone_number', $request->phone_number)->first();
         }
 
+        if ($user && $user->blocked_until && $user->blocked_until > now()) {
+            return response(
+                ['message' => 'Your account is temporarily blocked. Please try again later.'],
+                401
+            );
+        }
+
         if (!$user || !password_verify($request->password, $user->password)) {
+            $failed_login_limit = 5;
+            $user->failed_login_attempts++;
+
+            if ($user->failed_login_attempts >= $failed_login_limit) {
+                $user->blocked_until = now()->addHours(4);
+            }
+
+            $user->save();
+
             return response([
                 'message' => 'The provided credentials are incorrect.',
             ], 401);
         }
+
+        $user->failed_login_attempts = 0;
+        $user->blocked_until = null;
+        $user->save();
 
         $response = [
             'user' => $user,
