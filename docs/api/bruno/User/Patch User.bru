@@ -1,0 +1,25 @@
+meta {
+  name: Patch User
+  type: http
+  seq: 3
+}
+
+patch {
+  url: 0.0.0.0:8000/api/user
+  body: formUrlEncoded
+  auth: bearer
+}
+
+headers {
+  Accept: application/json
+}
+
+auth:bearer {
+  token: 
+}
+
+body:form-urlencoded {
+  email: example@example.com
+  phone_number: 123456789
+  password: Zaq12wsx$
+}

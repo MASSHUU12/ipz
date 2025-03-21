@@ -1,0 +1,19 @@
+meta {
+  name: Get User
+  type: http
+  seq: 1
+}
+
+get {
+  url: 0.0.0.0:8000/api/user
+  body: none
+  auth: bearer
+}
+
+headers {
+  Accept: application/json
+}
+
+auth:bearer {
+  token: 
+}

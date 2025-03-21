@@ -1,0 +1,15 @@
+meta {
+  name: Delete User
+  type: http
+  seq: 2
+}
+
+delete {
+  url: 0.0.0.0:8000/api/user
+  body: none
+  auth: bearer
+}
+
+headers {
+  Accept: application/json
+}
