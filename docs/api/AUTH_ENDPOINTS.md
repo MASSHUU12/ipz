@@ -37,14 +37,16 @@ Accept application/json
 - **Phone Number**:
     - Required if email is not provided
     - Must be unique in the system
-    - Maximum length: 20 characters
-    - *Note: Additional phone number validation will be implemented in the future*
+    - Must be a valid international phone number format
 
 - **Password**:
     - Required
     - Minimum length: 8 characters
     - Maximum length: 255 characters
-    - At least one lowercase letter, one uppercase letter, one number, and one special character.
+    - Must contain at least one lowercase letter
+    - Must contain at least one uppercase letter
+    - Must contain at least one number
+    - Must contain at least one special character (@, $, !, %, *, ?, &)
     - Must be confirmed with `password_confirmation` field
 
 ### Success Response
@@ -101,6 +103,29 @@ The response includes:
 }
 ```
 
+**Content Example** (when password requirements aren't met):
+
+```json
+{
+  "message": "The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.",
+  "errors": {
+    "password": [
+      "The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character."
+    ]
+  }
+}
+```
+
+**Code**: `500 Internal Server Error`
+
+**Content Example** (when user registration fails):
+
+```json
+{
+  "message": "There was an error during user registration. Please try again."
+}
+```
+
 ## 2. User Login
 
 ### Endpoint
@@ -133,10 +158,19 @@ Accept application/json
 
 - **Phone Number**:
     - Required if email is not provided
-    - Maximum length: 20 characters
+    - Must be a valid international phone number format
 
 - **Password**:
     - Required
+
+### Account Security
+
+The system implements account security features:
+
+- Failed login attempts are tracked
+- After 5 failed login attempts, the account will be temporarily blocked for 4 hours
+- Failed login counter is reset after a successful login
+- When an account is blocked, login attempts and any protected routes will be rejected until the block expires
 
 ### Success Response
 
@@ -161,11 +195,19 @@ Accept application/json
 
 **Code**: `401 Unauthorized`
 
-**Content Example**:
+**Content Example** (incorrect credentials):
 
 ```json
 {
   "message": "The provided credentials are incorrect."
+}
+```
+
+**Content Example** (blocked account):
+
+```json
+{
+  "message": "Your account is temporarily blocked. Please try again later."
 }
 ```
 
@@ -181,6 +223,15 @@ POST /api/logout
 
 ```
 Accept application/json
+Authorization: Bearer {token}
+```
+
+### Authentication
+
+This endpoint requires authentication. The token received during login or registration must be included in the request
+header.
+
+```
 Authorization: Bearer {token}
 ```
 

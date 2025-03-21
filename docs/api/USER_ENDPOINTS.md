@@ -84,7 +84,7 @@ Validation Rules
 - **Phone Number**:
     - Must be unique in the system
     - Maximum length: 20 characters
-    - Note: Additional phone number validation will be implemented when PR #33 is merged
+    - Must be a valid international phone number format
 
 - **Password**:
     - Minimum length: 8 characters

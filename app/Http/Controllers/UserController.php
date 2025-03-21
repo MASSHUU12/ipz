@@ -41,8 +41,7 @@ class UserController extends Controller
     {
         $request->validate([
             'email' => 'sometimes|email|unique:users,email,',
-            // TODO: Adjust phone number validation when PR #33 is merged
-            'phone_number' => 'sometimes|string|unique:users,phone_number|max:20',
+            'phone_number' => 'sometimes|unique:users,phone_number|phone:INTERNATIONAL',
             'password' => [
                 'sometimes',
                 'string',
