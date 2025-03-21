@@ -94,6 +94,15 @@ Validation Rules
     - Must contain at least one number
     - Must contain at least one special character (@$!%*?&)
 
+### Account Security
+
+The system implements account security features:
+
+- Failed login attempts are tracked
+- After 5 failed login attempts, the account will be temporarily blocked for 4 hours
+- Failed login counter is reset after a successful login
+- When an account is blocked, login attempts and any protected routes will be rejected until the block expires
+
 ### Success Response
 
 **Code**: `200 OK`

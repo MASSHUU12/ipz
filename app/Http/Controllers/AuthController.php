@@ -11,7 +11,7 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'email' => 'required_without:phone_number|email|unique:users,email',
-            'phone_number' => 'required_without:email|string|unique:users,phone_number|max:20',
+            'phone_number' => 'required_without:email|unique:users,phone_number|phone:INTERNATIONAL',
             'password' => [
                 'required',
                 'string',
@@ -27,13 +27,18 @@ class AuthController extends Controller
             'password.regex' => 'The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.',
         ]);
 
-        // TODO: Add proper phone number validation.
+        try {
+            $user = User::create([
+                'email' => $validated['email'] ?? null,
+                'phone_number' => $validated['phone_number'] ?? null,
+                'password' => password_hash($validated['password'], PASSWORD_DEFAULT)
+            ]);
+        } catch (\Exception) {
+            return response([
+                'message' => 'There was an error during user registration. Please try again.'
+            ], 500);
+        }
 
-        $user = User::create([
-            'email' => $validated['email'] ?? null,
-            'phone_number' => $validated["phone_number"] ?? null,
-            'password' => password_hash($validated['password'], PASSWORD_DEFAULT)
-        ]);
         $token = $user->createToken('token')->plainTextToken;
         $response = [
             'user' => $user,
@@ -57,11 +62,31 @@ class AuthController extends Controller
             $user = User::where('phone_number', $request->phone_number)->first();
         }
 
+        if ($user && $user->blocked_until && $user->blocked_until > now()) {
+            return response(
+                ['message' => 'Your account is temporarily blocked. Please try again later.'],
+                401
+            );
+        }
+
         if (!$user || !password_verify($request->password, $user->password)) {
+            $failed_login_limit = 5;
+            $user->failed_login_attempts++;
+
+            if ($user->failed_login_attempts >= $failed_login_limit) {
+                $user->blocked_until = now()->addHours(4);
+            }
+
+            $user->save();
+
             return response([
                 'message' => 'The provided credentials are incorrect.',
             ], 401);
         }
+
+        $user->failed_login_attempts = 0;
+        $user->blocked_until = null;
+        $user->save();
 
         $response = [
             'user' => $user,
