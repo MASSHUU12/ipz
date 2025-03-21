@@ -52,11 +52,11 @@ class AuthController extends Controller
     {
         $request->validate([
             'email' => 'required_without:phone_number|email',
-            'phone_number' => 'required_without:email|string|max:20',
+            'phone_number' => 'required_without:email|phone:INTERNATIONAL',
             'password' => 'required',
         ]);
 
-        if ($request->email) {
+        if ($request->has('email')) {
             $user = User::where('email', $request->email)->first();
         } else {
             $user = User::where('phone_number', $request->phone_number)->first();
