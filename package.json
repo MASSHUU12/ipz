@@ -22,11 +22,16 @@
     "typescript-eslint": "^8.23.0"
   },
   "dependencies": {
+    "@emotion/cache": "^11.14.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@inertiajs/react": "^2.0.0",
+    "@mui/material": "^6.4.8",
     "@types/eslint-config-prettier": "^6.11.3",
     "@types/react": "^19.0.3",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
+    "framer-motion": "^12.5.0",
     "laravel-vite-plugin": "^1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
