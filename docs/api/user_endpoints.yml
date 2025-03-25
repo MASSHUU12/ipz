@@ -1,0 +1,218 @@
+openapi: 3.0.3
+info:
+  title: User API
+  description: API for managing the current authenticated user's account
+  version: 1.0.0
+servers:
+  - url: https://example.com
+    description: Main API server
+paths:
+  /api/user:
+    get:
+      operationId: showCurrentUser
+      summary: Get Current User
+      description: Retrieves the currently authenticated user's information.
+      tags:
+        - User
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+    patch:
+      operationId: updateCurrentUser
+      summary: Update Current User
+      description: Updates the currently authenticated user's information.
+      tags:
+        - User
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address (must be unique among all users except current user)
+                phone_number:
+                  type: string
+                  description: User's phone number in international format (must be unique among all users except current user)
+                  maxLength: 20
+                password:
+                  type: string
+                  format: password
+                  description: User's new password
+                  minLength: 8
+                  maxLength: 255
+                  pattern: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User updated successfully"
+                  user:
+                    $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "422":
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error422"
+              examples:
+                emailInUse:
+                  summary: Email Already in Use
+                  value:
+                    message: "The email has already been taken."
+                    errors:
+                      email: ["The email has already been taken."]
+                invalidPassword:
+                  summary: Password Validation Error
+                  value:
+                    message: "The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character."
+                    errors:
+                      password:
+                        [
+                          "The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.",
+                        ]
+    delete:
+      operationId: destroyCurrentUser
+      summary: Delete Current User
+      description: Permanently deletes the currently authenticated user's account.
+      tags:
+        - User
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User deleted successfully"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "There was an error during user deletion"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        phone_number:
+          type: string
+          example: "+48 123456789"
+        email_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        phone_number_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-03-10T11:43:23.000000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-03-19T09:22:15.000000Z"
+    Error401:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Unauthenticated."
+    Error422:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The email has already been taken."
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+  x-account-security:
+    description: |
+      The system implements the following account security features:
+      - Failed login attempts are tracked
+      - After 5 failed login attempts, the account will be temporarily blocked for 4 hours
+      - Failed login counter is reset after a successful login
+      - When an account is blocked, login attempts and any protected routes will be rejected until the block expires
+  x-validation-rules:
+    email:
+      description: |
+        - Must be a valid email format
+        - Must be unique in the system
+    phone_number:
+      description: |
+        - Must be unique in the system
+        - Maximum length: 20 characters
+        - Must be a valid international phone number format
+    password:
+      description: |
+        - Minimum length: 8 characters
+        - Maximum length: 255 characters
+        - Must contain at least one lowercase letter
+        - Must contain at least one uppercase letter
+        - Must contain at least one number
+        - Must contain at least one special character (@$!%*?&)
