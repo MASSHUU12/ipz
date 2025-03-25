@@ -1,0 +1,263 @@
+openapi: 3.0.3
+info:
+  title: Authentication API
+  description: API for user registration, login, and logout
+  version: 1.0.0
+  contact:
+    name: API Support
+servers:
+  - url: https://example.com
+    description: Main API server
+paths:
+  /api/register:
+    post:
+      operationId: register
+      summary: User Registration
+      description: Register a new user account with email or phone number
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                phone_number:
+                  type: string
+                  description: User's phone number in international format
+                password:
+                  type: string
+                  format: password
+                  description: User's password
+                  minLength: 8
+                  maxLength: 255
+                password_confirmation:
+                  type: string
+                  format: password
+                  description: Password confirmation
+              oneOf:
+                - required: [email, password, password_confirmation]
+                - required: [phone_number, password, password_confirmation]
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  token:
+                    type: string
+                    description: Authentication token for subsequent requests
+                    example: "1|Xisr9laFEoIDeMY8Pc7TcdpoJNsoJg3h0nkRHRet14e31ce9"
+        "422":
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error422"
+              examples:
+                emailInUse:
+                  summary: Email Already in Use
+                  value:
+                    message: "The email has already been taken."
+                    errors:
+                      email: ["The email has already been taken."]
+                passwordConfirmation:
+                  summary: Password Confirmation Mismatch
+                  value:
+                    message: "The password field confirmation does not match."
+                    errors:
+                      password:
+                        ["The password field confirmation does not match."]
+                passwordRequirements:
+                  summary: Password Requirements Not Met
+                  value:
+                    message: "The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character."
+                    errors:
+                      password:
+                        [
+                          "The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.",
+                        ]
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "There was an error during user registration. Please try again."
+
+  /api/login:
+    post:
+      operationId: login
+      summary: User Login
+      description: Authenticate user with email/phone number and password
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                phone_number:
+                  type: string
+                  description: User's phone number in international format
+                password:
+                  type: string
+                  format: password
+                  description: User's password
+              oneOf:
+                - required: [email, password]
+                - required: [phone_number, password]
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  token:
+                    type: string
+                    description: Authentication token for subsequent requests
+                    example: "2|LKasd82jd92jd02jdKJkajsd92jdK2j3d0s3dk"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+              examples:
+                incorrectCredentials:
+                  summary: Incorrect Credentials
+                  value:
+                    message: "The provided credentials are incorrect."
+                blockedAccount:
+                  summary: Account Blocked
+                  value:
+                    message: "Your account is temporarily blocked. Please try again later."
+
+  /api/logout:
+    post:
+      operationId: logout
+      summary: User Logout
+      description: Revoke all tokens for the authenticated user
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Tokens Revoked"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error401"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "example@example.com"
+        phone_number:
+          type: string
+          nullable: true
+          example: "+48 123456789"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-03-10T11:43:23.000000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-03-10T11:43:23.000000Z"
+    Error401:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Unauthenticated."
+    Error422:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The given data was invalid."
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+  x-account-security:
+    description: |
+      The system implements the following account security features:
+      - Failed login attempts are tracked
+      - After 5 failed login attempts, the account will be temporarily blocked for 4 hours
+      - Failed login counter is reset after a successful login
+      - When an account is blocked, login attempts and any protected routes will be rejected until the block expires
+  x-validation-rules:
+    email:
+      description: |
+        - Required if phone_number is not provided (required_without:phone_number)
+        - Must be unique in the system
+        - Must be a valid email format
+    phone_number:
+      description: |
+        - Required if email is not provided (required_without:email)
+        - Must be unique in the system
+        - Must be a valid international phone number format (validated with phone:INTERNATIONAL)
+    password:
+      description: |
+        - Required
+        - Minimum length: 8 characters
+        - Maximum length: 255 characters
+        - Must contain at least one lowercase letter
+        - Must contain at least one uppercase letter
+        - Must contain at least one number
+        - Must contain at least one special character (@, $, !, %, *, ?, &)
+        - Must be confirmed with password_confirmation field
