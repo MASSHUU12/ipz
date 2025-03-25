@@ -1,0 +1,240 @@
+openapi: 3.0.3
+info:
+  title: Air Quality API
+  description: |
+    API for retrieving air quality data for locations in Poland by leveraging
+    the GIOŚ (Chief Inspectorate of Environmental Protection) data service.
+  version: 1.0.0
+servers:
+  - url: https://example.com
+    description: Main API server
+tags:
+  - name: Air Quality
+    description: Operations related to air quality data
+paths:
+  /air-quality:
+    get:
+      summary: Get air quality for a specific location
+      description: |
+        Returns detailed air quality information for a specific location in Poland,
+        including measurements from the nearest monitoring station, air quality index,
+        and forecasts if available.
+      operationId: getAirQuality
+      tags:
+        - Air Quality
+      parameters:
+        - name: lat
+          in: query
+          description: Latitude coordinate (must be within Poland's range)
+          required: true
+          schema:
+            type: number
+            format: float
+            minimum: 49.0
+            maximum: 55.0
+            example: 52.2297
+        - name: lon
+          in: query
+          description: Longitude coordinate (must be within Poland's range)
+          required: true
+          schema:
+            type: number
+            format: float
+            minimum: 14.0
+            maximum: 24.0
+            example: 21.0122
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AirQualityResponse"
+        "404":
+          description: No measuring stations found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse404"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse422"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse500"
+components:
+  schemas:
+    AirQualityResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-03-25 11:28:11"
+        request:
+          type: object
+          properties:
+            latitude:
+              type: number
+              format: float
+              example: 52.2297
+            longitude:
+              type: number
+              format: float
+              example: 21.0122
+        data:
+          type: object
+          properties:
+            station:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 123
+                name:
+                  type: string
+                  example: "Warszawa-Centrum"
+                latitude:
+                  type: string
+                  example: "52.2258"
+                longitude:
+                  type: string
+                  example: "21.0095"
+                distance:
+                  type: string
+                  example: "0.45 km"
+                address:
+                  type: string
+                  nullable: true
+                  example: "ul. Marszałkowska 1"
+                city:
+                  type: string
+                  nullable: true
+                  example: "Warszawa"
+                commune:
+                  type: string
+                  nullable: true
+                  example: "Warszawa"
+                district:
+                  type: string
+                  nullable: true
+                  example: "Warszawa"
+                province:
+                  type: string
+                  nullable: true
+                  example: "MAZOWIECKIE"
+            airQuality:
+              type: object
+              nullable: true
+              properties:
+                index:
+                  type: string
+                  example: "Dobry"
+                calculationTime:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  example: "2025-03-25 10:00:00"
+                sourceDataTime:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  example: "2025-03-25 10:00:00"
+                pollutants:
+                  type: object
+                  additionalProperties:
+                    type: object
+                    properties:
+                      index:
+                        type: string
+                        example: "Dobry"
+                      calculationTime:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: "2025-03-25 10:00:00"
+            measurements:
+              type: array
+              items:
+                type: object
+                properties:
+                  parameter:
+                    type: string
+                    example: "pył zawieszony PM10"
+                  code:
+                    type: string
+                    example: "PM10"
+                  value:
+                    type: number
+                    format: float
+                    example: 24.5
+                  unit:
+                    type: string
+                    example: "µg/m³"
+                  measurementTime:
+                    type: string
+                    format: date-time
+                    example: "2025-03-25 10:00:00"
+            forecasts:
+              type: object
+              additionalProperties:
+                type: object
+                additionalProperties:
+                  type: number
+                  format: float
+              example:
+                PM10:
+                  "20250325": 18.45
+                  "20250326": 21.32
+                NO2:
+                  "20250325": 32.1
+                  "20250326": 29.4
+    ErrorResponse404:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "No measuring stations found"
+    ErrorResponse422:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Validation error"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            lat:
+              - "The lat field is required."
+              - "The lat must be between 49 and 55."
+    ErrorResponse500:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Failed to retrieve air quality data"
+        error:
+          type: string
+          example: "Error message details"
