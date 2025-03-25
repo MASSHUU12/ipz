@@ -6,11 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Services\GiosApi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class AirQualityController extends Controller
 {
     protected $giosApi;
+
+    const STATION_CACHE_TTL = 1440;   // 24 hours for station data
+    const AIR_QUALITY_CACHE_TTL = 30; // 30 minutes for air quality data
+    const SENSOR_CACHE_TTL = 60;      // 1 hour for sensor data
+    const FORECAST_CACHE_TTL = 60;    // 1 hour for forecast data
 
     /**
      * Constructor
@@ -38,7 +44,17 @@ class AirQualityController extends Controller
         try {
             $latitude = $request->input('lat');
             $longitude = $request->input('lon');
-            $nearestStation = $this->giosApi->findNearestStation($latitude, $longitude);
+
+            $cacheCoords = [round($latitude, 3), round($longitude, 3)];
+            $stationCacheKey = 'station_' . implode('_', $cacheCoords);
+
+            $nearestStation = Cache::remember(
+                $stationCacheKey,
+                self::STATION_CACHE_TTL * 60,
+                function () use ($latitude, $longitude) {
+                    return $this->giosApi->findNearestStation($latitude, $longitude);
+                }
+            );
 
             if (!$nearestStation) {
                 return response()->json([
@@ -56,13 +72,41 @@ class AirQualityController extends Controller
                 (float)$nearestStation['gegrLon']
             );
 
-            $airQualityIndex = $this->giosApi->getAirQualityIndex($stationId);
-            $sensors = $this->giosApi->getStationSensors($stationId);
+            // Cache air quality index by station ID
+            $airQualityIndexCacheKey = 'air_quality_index_' . $stationId;
+            $airQualityIndex = Cache::remember(
+                $airQualityIndexCacheKey,
+                self::AIR_QUALITY_CACHE_TTL * 60,
+                function () use ($stationId) {
+                    return $this->giosApi->getAirQualityIndex($stationId);
+                }
+            );
+
+            // Cache station sensors by station ID
+            $sensorsCacheKey = 'station_sensors_' . $stationId;
+            $sensors = Cache::remember(
+                $sensorsCacheKey,
+                self::STATION_CACHE_TTL * 60,
+                function () use ($stationId) {
+                    return $this->giosApi->getStationSensors($stationId);
+                }
+            );
+
             $measurementData = [];
 
             if ($sensors) {
                 foreach ($sensors as $sensor) {
-                    $sensorData = $this->giosApi->getSensorData($sensor['id']);
+                    $sensorId = $sensor['id'];
+
+                    // Cache sensor data by sensor ID
+                    $sensorDataCacheKey = 'sensor_data_' . $sensorId;
+                    $sensorData = Cache::remember(
+                        $sensorDataCacheKey,
+                        self::SENSOR_CACHE_TTL * 60,
+                        function () use ($sensorId) {
+                            return $this->giosApi->getSensorData($sensorId);
+                        }
+                    );
 
                     if ($sensorData && !empty($sensorData['values'])) {
                         $latestValue = null;
@@ -99,7 +143,15 @@ class AirQualityController extends Controller
 
                 foreach (['PM10', 'NO2', 'SO2', 'O3'] as $pollutant) {
                     foreach ($terytCodes as $terytCode) {
-                        $forecast = $this->giosApi->getForecast($pollutant, $terytCode);
+                        // Cache forecast by pollutant and TERYT code
+                        $forecastCacheKey = 'forecast_' . $pollutant . '_' . $terytCode;
+                        $forecast = Cache::remember(
+                            $forecastCacheKey,
+                            self::FORECAST_CACHE_TTL * 60,
+                            function () use ($pollutant, $terytCode) {
+                                return $this->giosApi->getForecast($pollutant, $terytCode);
+                            }
+                        );
 
                         if ($forecast) {
                             $forecasts[$pollutant] = $forecast;
