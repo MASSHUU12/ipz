@@ -3,7 +3,8 @@ FROM php:8.3-apache as web
 RUN apt-get update && apt-get install -y \
     libzip-dev \
     zip \
-    unzip
+    unzip \
+    openssl
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -19,6 +20,9 @@ COPY . /app
 RUN composer install
 # RUN bun source /root/.bashrc
 # RUN bun install
+
+RUN openssl genpkey -algorithm RSA -out /etc/ssl/private/private_key.pem -aes256 -passout pass:Zaq12wsx
+RUN openssl rsa -pubout -in /etc/ssl/private/private_key.pem -out /etc/ssl/private/public_key.pem -passin pass:Zaq12wsx
 
 RUN php artisan config:clear
 # RUN php artisan cache:clear
