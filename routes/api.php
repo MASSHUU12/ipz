@@ -6,9 +6,13 @@ use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckUserBlocked;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
+Route::get('/public-key', function (): JsonResponse {
+    return response()->json(['data' => file_get_contents(env('JWS_PUBLIC_KEY_PATH'))]);
+});
 
 Route::get('/air-quality', [AirQualityController::class, 'getAirQuality']);
 
@@ -22,8 +26,8 @@ Route::group(
         Route::patch('/user', [UserController::class, 'updateCurrentUser']);
         Route::delete('/user', [UserController::class, 'destroyCurrentUser']);
 
-        Route::get('/jwstest', function (): JsonResponse {
-            return response()->json(['data' => ':)']);
+        Route::post('/jwstest', function (Request $request): JsonResponse {
+            return response()->json(['data' => $request->input('data')]);
         });
     }
 );

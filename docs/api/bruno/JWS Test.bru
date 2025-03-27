@@ -4,16 +4,24 @@ meta {
   seq: 2
 }
 
-get {
-  url: 0.0.0.0/api/jwstest
-  body: none
+post {
+  url: 0.0.0.0:8000/api/jwstest?jwsignore
+  body: formUrlEncoded
   auth: bearer
 }
 
 params:query {
-  ~jwsignore: 
+  jwsignore: 
 }
 
 headers {
   Accept: application/json
+}
+
+auth:bearer {
+  token: 
+}
+
+body:form-urlencoded {
+  data: :)
 }

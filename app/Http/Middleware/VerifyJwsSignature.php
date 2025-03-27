@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Firebase\JWT\JWT;
 use Symfony\Component\HttpFoundation\Response;
 
 class VerifyJwsSignature
@@ -35,16 +34,41 @@ class VerifyJwsSignature
 
             return $next($request);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'JWS verification failed: ' . $e->getMessage()], 401);
+            return response()->json([
+                'error' => 'JWS verification failed',
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
 
     protected function verifyJwsSignature(string $jwsSignature, string $payload): bool {
         $publicKey = file_get_contents(env('JWS_PUBLIC_KEY_PATH'));
-        $algorithms = (object)['RS256'];
-        $decoded = JWT::decode($jwsSignature, $publicKey, $algorithms);
-        $payloadHash = hash('sha256', $payload);
+        if (!$publicKey) {
+            return response()->json(['error' => 'Public key not found.'], 500);
+        }
 
-        return $decoded->payload_hash === $payloadHash;
+        list($encodedHeader, $encodedPayload, $encodedSignature) = explode('.', $jwsSignature);
+        $dataToVerify = $encodedHeader . '.' . $encodedPayload;
+        $signature = base64UrlDecode($encodedSignature);
+
+        $publicKeyResource = openssl_pkey_get_public($publicKey);
+        if (!$publicKeyResource) {
+            return response()->json(['error' => 'Invalid public key.'], 500);
+        }
+
+        $verified = openssl_verify($dataToVerify, $signature, $publicKeyResource, OPENSSL_ALGO_SHA256);
+        if ($verified !== 1) {
+            return response()->json(['error' => 'Signature verification failed.'], 401);
+        }
+
+        return $verified === 1;
+    }
+
+    function base64UrlDecode(string $input): string {
+        $remainder = strlen($input) % 4;
+        if ($remainder) {
+            $input .= str_repeat('=', 4 - $remainder);
+        }
+        return base64_decode(str_replace(['-', '_'], ['+', '/'], $input));
     }
 }
