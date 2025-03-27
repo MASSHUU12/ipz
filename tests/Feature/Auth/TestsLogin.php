@@ -27,7 +27,7 @@ class TestsLogin extends TestCase
             'password' => $password,
         ];
 
-        $response = $this->postJson('/login', $data);
+        $response = $this->postJson('/api/login', $data);
 
         $response->assertStatus(201)
             ->assertJsonStructure([
@@ -47,10 +47,10 @@ class TestsLogin extends TestCase
             'password' => "WrongPassword!",
         ];
 
-        $response = $this->postJson('/login', $data);
+        $response = $this->postJson('/api/login', $data);
 
         $response->assertStatus(401)
-            ->assertJson(['message' => 'Podane dane uwierzytelniające są nieprawidłowe.']);
+            ->assertJson(['message' => 'The provided credentials are incorrect.']);
     }
 
     // zablokowanie konta po 5 nieudanych próbach logowania
@@ -61,19 +61,19 @@ class TestsLogin extends TestCase
             'password' => password_hash('Password1!', PASSWORD_DEFAULT)]);
 
         for ($i = 0; $i < 5; $i++){
-            $this->postJson('/login',[
+            $this->postJson('/api/login',[
                 'email' => 'testowy@example.com',
                 'password' => 'Password1!',
             ]);
         }
 
-        $response = $this->postJson('/login',[
+        $response = $this->postJson('/api/login',[
             'email' => 'testowy@example.com',
             'password' => 'Password1!',
         ]);
 
         $response->assertStatus(401)
-            ->assertJson(['message' => 'Twoje konto jest chwilowo zablokowane. Spróbuj ponownie później.']);
+            ->assertJson(['message' => 'Your account is temporarily blocked. Please try again later.']);
 
         $user->refresh();
         $this->assertNotNull($user->blocked_until);

@@ -3,11 +3,12 @@
 namespace Tests\Feature\Auth;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use App\Http\Controllers\AuthController;
 use Tests\TestCase;
 class TestsRegistration extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     // poprawna rejestracja przy użyciu e-mail
     public function testSuccessfulRegistrationEmail()
@@ -17,7 +18,7 @@ class TestsRegistration extends TestCase
             'password' => 'Password1!',
             'password_confirmation' => 'Password1!',
         ];
-        $response = $this->postJson('/register', $data);
+        $response = $this->postJson('/api/register', $data);
 
         $response->assertStatus(201)
             ->assertJsonStructure([
@@ -37,7 +38,7 @@ class TestsRegistration extends TestCase
             'password_confirmation' => 'Password1!',
         ];
 
-        $response = $this->postJson('/register', $data);
+        $response = $this->postJson('/api/register', $data);
 
         $response->assertStatus(201)
             ->assertJsonStructure([
@@ -54,7 +55,7 @@ class TestsRegistration extends TestCase
             'password'              => 'Password1!',
             'password_confirmation' => 'Password1!',
         ];
-        $response = $this->postJson('/register', $data);
+        $response = $this->postJson('/api/register', $data);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['email', 'phone_number']);
@@ -68,7 +69,7 @@ class TestsRegistration extends TestCase
             'password'              => 'Password1!',
             'password_confirmation' => 'Password1!',
         ];
-        $response = $this->postJson('/register', $data);
+        $response = $this->postJson('/api/register', $data);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['phone_number']);
