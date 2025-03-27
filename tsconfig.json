@@ -108,6 +108,8 @@
         // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
         "skipLibCheck": true /* Skip type checking all .d.ts files. */,
         "baseUrl": ".",
+        "typeRoots": ["./node_modules/@types", "./src/@types"],
+
         "paths": {
             "@/*": ["./resources/js/*"],
             "ziggy-js": ["./vendor/tightenco/ziggy"]
@@ -119,4 +121,5 @@
         "resources/js/**/*.d.ts",
         "resources/js/**/*.tsx",
     ]
+    
 }
