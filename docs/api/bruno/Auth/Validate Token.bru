@@ -1,0 +1,19 @@
+meta {
+  name: Validate Token
+  type: http
+  seq: 4
+}
+
+get {
+  url: 0.0.0.0:8000/api/token/validate
+  body: none
+  auth: bearer
+}
+
+headers {
+  Accept: application/json
+}
+
+auth:bearer {
+  token: 
+}
