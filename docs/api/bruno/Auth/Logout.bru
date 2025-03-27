@@ -5,9 +5,13 @@ meta {
 }
 
 post {
-  url: 0.0.0.0:8000/api/logout
+  url: 0.0.0.0:8000/api/logout?jwsignore
   body: none
   auth: bearer
+}
+
+params:query {
+  jwsignore: 
 }
 
 headers {

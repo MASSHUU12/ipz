@@ -5,9 +5,13 @@ meta {
 }
 
 delete {
-  url: 0.0.0.0:8000/api/user
+  url: 0.0.0.0:8000/api/user?jwsignore
   body: none
   auth: bearer
+}
+
+params:query {
+  jwsignore: 
 }
 
 headers {

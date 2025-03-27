@@ -5,13 +5,18 @@ meta {
 }
 
 get {
-  url: 0.0.0.0:8000/api/user
+  url: 0.0.0.0:8000/api/user?jwsignore
   body: none
   auth: bearer
 }
 
+params:query {
+  jwsignore: 
+}
+
 headers {
   Accept: application/json
+  X-JWS-Signature: lmao
 }
 
 auth:bearer {

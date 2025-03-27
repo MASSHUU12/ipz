@@ -5,9 +5,13 @@ meta {
 }
 
 get {
-  url: 0.0.0.0:8000/api/token/validate
+  url: 0.0.0.0:8000/api/token/validate?jwsignore
   body: none
   auth: bearer
+}
+
+params:query {
+  jwsignore: 
 }
 
 headers {
