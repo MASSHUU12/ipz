@@ -14,6 +14,13 @@ Route::get('/', function () {
 Route::get('profile', function () {
     return Inertia::render('profile');
 })->name('profile');
+Route::get('/dashboard', function () {
+    return Inertia::render('dashboard');
+});
+
+Route::get('/register', function () {
+    return Inertia::render('register');
+});
 
 // Route::get('/', function () {
 //     return Inertia::render('welcome');
