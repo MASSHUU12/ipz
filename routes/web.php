@@ -15,6 +15,10 @@ Route::get('profile', function () {
     return Inertia::render('profile');
 })->name('profile');
 
+Route::get('/jwstest', function() {
+    return Inertia::render('jwstest');
+})->name('jwstest');
+
 // Route::get('/', function () {
 //     return Inertia::render('welcome');
 // })->name('home');

@@ -4,6 +4,7 @@ use App\Http\Controllers\AirQualityController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\CheckUserBlocked;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -20,5 +21,9 @@ Route::group(
         Route::get('/user', [UserController::class, 'showCurrentUser']);
         Route::patch('/user', [UserController::class, 'updateCurrentUser']);
         Route::delete('/user', [UserController::class, 'destroyCurrentUser']);
+
+        Route::get('/jwstest', function (): JsonResponse {
+            return response()->json(['data' => ':)']);
+        });
     }
 );

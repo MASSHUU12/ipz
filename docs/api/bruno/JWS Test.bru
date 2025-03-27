@@ -1,0 +1,19 @@
+meta {
+  name: JWS Test
+  type: http
+  seq: 2
+}
+
+get {
+  url: 0.0.0.0/api/jwstest
+  body: none
+  auth: bearer
+}
+
+params:query {
+  ~jwsignore: 
+}
+
+headers {
+  Accept: application/json
+}
