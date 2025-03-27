@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
@@ -102,5 +103,22 @@ class AuthController extends Controller
         return response([
             'message' => 'Tokens Revoked'
         ], 200);
+    }
+
+    public function validateToken(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user) {
+            return response()->json([
+                'valid' => true,
+                'user' => $user
+            ], 200);
+        } else {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Invalid token'
+            ], 401);
+        }
     }
 }
