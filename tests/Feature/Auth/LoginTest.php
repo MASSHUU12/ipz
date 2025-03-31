@@ -9,7 +9,7 @@ use Illuminate\Support\Carbon;
 use Tests\TestCase;
 use function PHPUnit\Framework\assertNotNull;
 
-class TestsLogin extends TestCase
+class LoginTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -63,7 +63,7 @@ class TestsLogin extends TestCase
         for ($i = 0; $i < 5; $i++){
             $this->postJson('/api/login',[
                 'email' => 'testowy@example.com',
-                'password' => 'Password1!',
+                'password' => 'WrongPassword',
             ]);
         }
 
