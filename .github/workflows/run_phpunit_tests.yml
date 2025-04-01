@@ -41,6 +41,7 @@ jobs:
 
       - name: Update .env with database configuration
         run: |
+          sed -i 's/DB_HOST=db/DB_HOST=127.0.0.1/' .env
           sed -i 's/DB_DATABASE=ipz/DB_DATABASE=test_db/' .env
           sed -i 's/DB_USERNAME=root/DB_USERNAME=root/' .env
           sed -i 's/DB_PASSWORD=Zaq12wsx/DB_PASSWORD=root/' .env
