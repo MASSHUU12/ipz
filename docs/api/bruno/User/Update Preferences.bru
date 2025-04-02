@@ -1,0 +1,28 @@
+meta {
+  name: Update Preferences
+  type: http
+  seq: 5
+}
+
+patch {
+  url: 0.0.0.0:8000/api/user/preferences
+  body: formUrlEncoded
+  auth: bearer
+}
+
+headers {
+  Accept: application/json
+}
+
+auth:bearer {
+  token: 
+}
+
+body:form-urlencoded {
+  notice_method: E-mail
+  city: Szczecin
+  meteorological_warnings: 1
+  hydrological_warnings: 1
+  temperature_warning: 1
+  temperature_check_value: 21.37
+}

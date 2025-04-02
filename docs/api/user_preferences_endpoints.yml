@@ -1,0 +1,129 @@
+openapi: 3.0.0
+info:
+  title: User Preferences API
+  version: 1.0.0
+  description: API for managing user preferences.
+servers:
+  - url: http://0.0.0.0:8000/api
+    description: Local API server
+  - url: https://185.238.73.59/api
+    description: Main API server
+paths:
+  /user/preferences:
+    get:
+      summary: Get current user preferences
+      operationId: getCurrentUserPreferences
+      tags:
+        - User Preferences
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  preferences:
+                    $ref: "#/components/schemas/UserPreference"
+        "401":
+          description: Unauthorized
+    patch:
+      summary: Update current user preferences
+      operationId: updateCurrentUserPreferences
+      tags:
+        - User Preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserPreference"
+      responses:
+        "200":
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User preferences updated successfully.
+                  preferences:
+                    $ref: "#/components/schemas/UserPreference"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  example: User does not have an e-mail provided, so it is not possible to notice over it.
+        "401":
+          description: Unauthorized
+
+components:
+  schemas:
+    UserPreference:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 1
+        notice_method:
+          type: string
+          enum:
+            - SMS
+            - E-mail
+            - Both
+          example: E-mail
+        city:
+          type: string
+          maxLength: 255
+          example: Szczecin
+        meteorological_warnings:
+          type: boolean
+          example: true
+        hydrological_warnings:
+          type: boolean
+          example: false
+        temperature_warning:
+          type: boolean
+          example: true
+        temperature_check_value:
+          type: number
+          format: float
+          maximum: 50
+          minimum: -50
+          example: 25
+    UpdateUserPreference:
+      type: object
+      properties:
+        notice_method:
+          type: string
+          enum:
+            - SMS
+            - E-mail
+            - Both
+          example: E-mail
+        city:
+          type: string
+          maxLength: 255
+          example: San Francisco
+        meteorological_warnings:
+          type: boolean
+          example: true
+        hydrological_warnings:
+          type: boolean
+          example: false
+        temperature_warning:
+          type: boolean
+          example: true
+        temperature_check_value:
+          type: number
+          format: float
+          maximum: 50
+          minimum: -50
+          example: 25
