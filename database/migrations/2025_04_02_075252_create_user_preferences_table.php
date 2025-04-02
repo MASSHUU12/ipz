@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('user_preferences', function (Blueprint $table) {
             $table->id('user_id');
             $table->enum('notice_method', ['SMS', 'E-mail', 'Both'])->default('E-mail');
-            $table->string('city');
+            $table->string('city')->nullable();
             $table->boolean('meteorological_warnings')->default(false);
             $table->boolean('hydrological_warnings')->default(false);
             $table->boolean('temperature_warning')->default(false);
-            $table->decimal('temperature_check_value', 5, 2)->nullable();
+            $table->decimal('temperature_check_value', 5, 2)->default(10);
             $table->timestamps();
         });
     }
