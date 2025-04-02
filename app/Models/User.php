@@ -50,4 +50,12 @@ class User extends Authenticatable
             'blocked_until' => 'datetime',
         ];
     }
+
+    /**
+     * Get the user preference associated with the user.
+     */
+    public function preference()
+    {
+        return $this->hasOne(UserPreference::class, 'user_id');
+    }
 }

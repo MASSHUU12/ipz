@@ -32,4 +32,13 @@ class UserPreference extends Model
         'temperature_warning' => 'boolean',
         'temperature_check_value' => 'decimal:2',
     ];
+
+
+    /**
+     * Get the user that owns the preference.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }
