@@ -3,6 +3,7 @@
 use App\Http\Controllers\AirQualityController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserPreferenceController;
 use App\Http\Middleware\CheckUserBlocked;
 use Illuminate\Support\Facades\Route;
 
@@ -18,4 +19,7 @@ Route::group(['middleware' => ['auth:sanctum', CheckUserBlocked::class]], functi
     Route::get('/user', [UserController::class, 'showCurrentUser']);
     Route::patch('/user', [UserController::class, 'updateCurrentUser']);
     Route::delete('/user', [UserController::class, 'destroyCurrentUser']);
+
+    Route::get('/user/preferences', [UserPreferenceController::class, 'showCurrentUserPreferences']);
+    Route::patch('/user/preferences', [UserPreferenceController::class, 'updateCurrentUserPreferences']);
 });
