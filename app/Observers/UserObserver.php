@@ -25,4 +25,15 @@ class UserObserver
             'temperature_check_value' => 10,
         ]);
     }
+
+    /**
+     * Handle the User "deleted" event.
+     *
+     * @param  \App\Models\User  $user
+     * @return void
+     */
+    public function deleted(User $user)
+    {
+        UserPreference::where('user_id', $user->id)->delete();
+    }
 }
