@@ -29,6 +29,7 @@ class UserPreferenceController extends Controller
             'city' => 'required|string|max:255',
             'meteorological_warnings' => 'boolean',
             'hydrological_warnings' => 'boolean',
+            'air_quality_warnings' => 'boolean',
             'temperature_warning' => 'boolean',
             'temperature_check_value' => 'numeric|max:50|min:-50',
         ]);
@@ -60,6 +61,7 @@ class UserPreferenceController extends Controller
             'city' => 'nullable|string|max:255',
             'meteorological_warnings' => 'boolean',
             'hydrological_warnings' => 'boolean',
+            'air_quality_warnings' => 'boolean',
             'temperature_warning' => 'boolean',
             'temperature_check_value' => 'numeric|max:50|min:-50',
         ]);
@@ -101,6 +103,9 @@ class UserPreferenceController extends Controller
             $preferences->hydrological_warnings = $request->input(
                 'hydrological_warnings', $preferences->hydrological_warnings
             );
+            $preferences->air_quality_warnings = $request->input(
+                'air_quality_warnings', $preferences->air_quality_warnings
+            );
             $preferences->temperature_warning = $request->input(
                 'temperature_warning', $preferences->temperature_warning
             );
@@ -130,6 +135,7 @@ class UserPreferenceController extends Controller
             'city' => 'required|string|max:255',
             'meteorological_warnings' => 'boolean',
             'hydrological_warnings' => 'boolean',
+            'air_quality_warnings' => 'boolean',
             'temperature_warning' => 'boolean',
             'temperature_check_value' => 'numeric|max:50|min:-50',
         ]);

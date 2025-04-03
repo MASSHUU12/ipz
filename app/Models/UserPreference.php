@@ -22,6 +22,7 @@ class UserPreference extends Model
         'city',
         'meteorological_warnings',
         'hydrological_warnings',
+        'air_quality_warnings',
         'temperature_warning',
         'temperature_check_value'
     ];
@@ -29,10 +30,10 @@ class UserPreference extends Model
     protected $casts = [
         'meteorological_warnings' => 'boolean',
         'hydrological_warnings' => 'boolean',
+        'air_quality_warnings' => 'boolean',
         'temperature_warning' => 'boolean',
         'temperature_check_value' => 'decimal:2',
     ];
-
 
     /**
      * Get the user that owns the preference.
