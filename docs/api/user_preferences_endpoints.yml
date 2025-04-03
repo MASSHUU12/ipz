@@ -89,6 +89,9 @@ components:
         hydrological_warnings:
           type: boolean
           example: false
+        air_quality_warnings:
+          type: boolean
+          example: false
         temperature_warning:
           type: boolean
           example: true
@@ -116,6 +119,9 @@ components:
           type: boolean
           example: true
         hydrological_warnings:
+          type: boolean
+          example: false
+        air_quality_warnings:
           type: boolean
           example: false
         temperature_warning:

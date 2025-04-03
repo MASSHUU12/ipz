@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('city')->nullable();
             $table->boolean('meteorological_warnings')->default(false);
             $table->boolean('hydrological_warnings')->default(false);
+            $table->boolean('air_quality_warnings')->default(false);
             $table->boolean('temperature_warning')->default(false);
             $table->decimal('temperature_check_value', 5, 2)->default(10);
             $table->timestamps();
