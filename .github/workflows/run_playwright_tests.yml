@@ -1,0 +1,88 @@
+name: Run Playwright Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, intl, xml, zip, pdo_mysql
+          ini-values: |
+            date.timezone=UTC
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v2
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest --no-dev
+
+      - name: Setup environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          sed -i 's/DB_HOST=db/DB_HOST=127.0.0.1/' .env
+          sed -i 's/DB_DATABASE=ipz/DB_DATABASE=test_db/' .env
+          sed -i 's/DB_USERNAME=root/DB_USERNAME=root/' .env
+          sed -i 's/DB_PASSWORD=Zaq12wsx/DB_PASSWORD=root/' .env
+
+      - name: Run database migrations
+        run: php artisan migrate --force
+
+      - name: Start Laravel Server
+        run: |
+          php artisan serve --host=0.0.0.0 --port=8000 &
+          sleep 3  # Wait for the server to start
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install & build frontend dependencies with Bun
+        run: |
+          bun install
+          bun run build
+
+      - name: Install Playwright Browsers
+        run: bun playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: bun playwright test --project=firefox
