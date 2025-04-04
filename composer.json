@@ -15,6 +15,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "propaganistas/laravel-phone": "^5.3",
+        "spatie/laravel-permission": "^6.16",
         "tightenco/ziggy": "^2.4"
     },
     "require-dev": {

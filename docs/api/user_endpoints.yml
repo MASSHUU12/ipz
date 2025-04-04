@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: User API
   description: API for managing the current authenticated user's account
-  version: 1.0.0
+  version: 1.1.0
 servers:
   - url: https://example.com
     description: Main API server
@@ -173,6 +173,42 @@ components:
           type: string
           format: date-time
           example: "2025-03-19T09:22:15.000000Z"
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Role"
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "User"
+        guard_name:
+          type: string
+          example: "web"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-04-04T11:18:14.000000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-04-04T11:18:14.000000Z"
+        pivot:
+          type: object
+          properties:
+            model_type:
+              type: string
+              example: "App\\Models\\User"
+            model_id:
+              type: integer
+              example: 1
+            role_id:
+              type: integer
+              example: 1
     Error401:
       type: object
       properties:

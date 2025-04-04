@@ -1,14 +1,25 @@
 <?php
 
 namespace Tests\Feature\Auth;
+
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use App\Http\Controllers\AuthController;
 use Tests\TestCase;
+
 class RegistrationTest extends TestCase
 {
     use DatabaseTransactions;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Call the seeder to ensure roles are available during tests
+        $this->seed(RolesAndPermissionsSeeder::class);
+    }
 
     // poprawna rejestracja przy użyciu e-mail
     public function testSuccessfulRegistrationEmail()
