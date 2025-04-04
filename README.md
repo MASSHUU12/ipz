@@ -47,10 +47,10 @@ docker exec -it ipz-web /bin/bash
 php artisan key:generate
 ```
 
-6. **Run database migrations:**
+6. **Run database migrations and seed with roles and permissions:**
 
 ```bash
-php artisan migrate
+php artisan migrate:fresh --seed
 ```
 
 7. **Run the development server (API):**
