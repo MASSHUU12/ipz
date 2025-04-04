@@ -606,3 +606,9 @@ FodyWeavers.xsd
 # End of https://www.toptal.com/developers/gitignore/api/laravel,phpunit,visualstudio,visualstudiocode,phpstorm+all,webstorm+all,composer
 
 public/build
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
