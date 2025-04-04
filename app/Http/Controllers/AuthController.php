@@ -34,6 +34,7 @@ class AuthController extends Controller
                 'phone_number' => $validated['phone_number'] ?? null,
                 'password' => password_hash($validated['password'], PASSWORD_DEFAULT)
             ]);
+            $user->assignRole('User');
         } catch (\Exception) {
             return response([
                 'message' => 'There was an error during user registration. Please try again.'
