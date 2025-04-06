@@ -21,12 +21,19 @@ export default defineConfig({
     },
   },
   server: {
-    host: "0.0.0.0",
-    port: 5173,
+    host: "localhost",
+    port: 5175,
     strictPort: true,
     cors: true,
-    hmr: {
-      host: "localhost",
-    },
+    //hmr: {
+    //  host: "host.docker.internal",
+    //},
+    proxy: {
+
+      '^/(login|register|logout|dashboard|profile|api|sanctum)': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },  
   },
 });

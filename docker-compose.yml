@@ -9,6 +9,9 @@ services:
     ports:
       - "8000:8000"
       - "5173:5173"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
     volumes:
       - .:/app:delegated
     depends_on:
@@ -17,6 +20,7 @@ services:
     networks:
       - app-network
     privileged: true
+
 
   db:
     image: mariadb:10.11
