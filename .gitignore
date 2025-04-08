@@ -612,3 +612,4 @@ public/build
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+resources/js/pages/VerifyEmailThankYou.jsx
