@@ -21,11 +21,4 @@ class EmailVerificationNotificationController extends Controller
 
 		return back()->with('status', 'verification-link-sent');
 	}
-	public static function sendNotification(User $user): void
-	{
-		if (!$user->hasVerifiedEmail()) {
-			SendMail::sendMail($user->email, $user->id, 'emailverify');
-		}
-	}
-
 }
