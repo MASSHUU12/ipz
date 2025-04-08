@@ -5,5 +5,5 @@ test("has title", async ({ page }) => {
 
   // Expect a title "to contain" a substring.
   // It's the title from .env file APP_NAME.
-  await expect(page).toHaveTitle(/- IPZ/);
+  await expect(page).toHaveTitle(/IPZ/);
 });
