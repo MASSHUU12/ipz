@@ -11,7 +11,7 @@ export default function Admin(): JSX.Element {
   }, []);
 
   async function fetchUserInfo(): Promise<void> {
-    const response = await getCurrentUser(token);
+    const response = await getCurrentUser({ token });
     setOutput(JSON.stringify(response, null, 2));
   }
 
