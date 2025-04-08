@@ -43,7 +43,7 @@ class SendMail extends Mailable
 
 		if ($data['type'] === 'emailverify') {
 			$data['verify_link'] = URL::temporarySignedRoute(
-				'verification.verify', // nazwa trasy – upewnij się, że jest zdefiniowana w routes/web.php
+				'verification.verify',
 				now()->addMinutes(60),
 				[
 					'id'   => $this->userId,
