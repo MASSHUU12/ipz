@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Services\ImgwApiClient;
+use Illuminate\Support\Facades\Cache;
 
 class ImgwController extends Controller
 {
@@ -32,7 +33,15 @@ class ImgwController extends Controller
         $station = $request->query('station');
         $format  = $request->query('format', 'json');
 
-        $data = $this->client->getSynopData($id, $station, $format);
+        $cacheKey = 'synop_' . md5("id:{$id}_station:{$station}_format:{$format}");
+
+        $data = Cache::remember(
+            $cacheKey,
+            now()->addMinutes(10),
+            function () use ($id, $station, $format) {
+                return $this->client->getSynopData($id, $station, $format);
+            }
+        );
 
         if ($data) {
             return response()->json($data);
@@ -44,7 +53,15 @@ class ImgwController extends Controller
     public function hydro(Request $request): JsonResponse
     {
         $variant = $request->query('hydro_variant', 1);
-        $data = $this->client->getHydroData($variant);
+        $cacheKey = 'hydro_variant_' . $variant;
+
+        $data = Cache::remember(
+            $cacheKey,
+            now()->addMinutes(10),
+            function () use ($variant) {
+                return $this->client->getHydroData($variant);
+            }
+        );
 
         if ($data) {
             return response()->json($data);
@@ -55,7 +72,11 @@ class ImgwController extends Controller
 
     public function meteo(): JsonResponse
     {
-        $data = $this->client->getMeteoData();
+        $cacheKey = 'meteo_data';
+
+        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () {
+            return $this->client->getMeteoData();
+        });
 
         if ($data) {
             return response()->json($data);
@@ -66,7 +87,11 @@ class ImgwController extends Controller
 
     public function warningsMeteo(): JsonResponse
     {
-        $data = $this->client->getWarningsMeteo();
+        $cacheKey = 'warnings_meteo';
+
+        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () {
+            return $this->client->getWarningsMeteo();
+        });
 
         if ($data) {
             return response()->json($data);
@@ -77,7 +102,11 @@ class ImgwController extends Controller
 
     public function warningsHydro(): JsonResponse
     {
-        $data = $this->client->getWarningsHydro();
+        $cacheKey = 'warnings_hydro';
+
+        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () {
+            return $this->client->getWarningsHydro();
+        });
 
         if ($data) {
             return response()->json($data);
@@ -88,7 +117,11 @@ class ImgwController extends Controller
 
     public function products(): JsonResponse
     {
-        $data = $this->client->getProducts();
+        $cacheKey = 'products_data';
+
+        $data = Cache::remember($cacheKey, now()->addMinutes(60), function () {
+            return $this->client->getProducts();
+        });
 
         if ($data) {
             return response()->json($data);
