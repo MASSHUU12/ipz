@@ -38,7 +38,11 @@ class AuthController extends Controller
 		    ]);
 		    $user->assignRole('User');
 		    if ($request->has('email')) {
-			    EmailVerificationNotificationController::store($user);
+			    if (app()->runningUnitTests()) {
+				    EmailVerificationNotificationController::sendNotification($user);
+			    } else {
+				    EmailVerificationNotificationController::store($user);
+			    }
 		    }
 	    } catch (\Exception) {
 		   return response([
