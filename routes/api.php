@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AirQualityController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ImgwController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserPreferenceController;
 use App\Http\Middleware\CheckUserBlocked;
@@ -12,6 +13,13 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
 Route::get('/air-quality', [AirQualityController::class, 'getAirQuality']);
+
+Route::get('/synop', [ImgwController::class, 'synop']);
+Route::get('/hydro', [ImgwController::class, 'hydro']);
+Route::get('/meteo', [ImgwController::class, 'meteo']);
+Route::get('/products', [ImgwController::class, 'products']);
+Route::get('/warnings/meteo', [ImgwController::class, 'warningsMeteo']);
+Route::get('/warnings/hydro', [ImgwController::class, 'warningsHydro']);
 
 Route::group(['middleware' => ['auth:sanctum', CheckUserBlocked::class]], function () {
     Route::group(['middleware' => ['role:User|Super Admin']], function () {

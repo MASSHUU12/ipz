@@ -1,0 +1,195 @@
+openapi: 3.0.0
+info:
+  title: IMGW API Proxy
+  version: 1.0.0
+  description: >
+    This API proxies data from the IMGW public endpoints and exposes endpoints to retrieve:
+      - Synoptic data (/synop) with optional query parameters: id, station, and format.
+      - Hydrological data (/hydro) with an optional hydro_variant parameter.
+      - Meteorological data (/meteo).
+      - Meteorological warnings (/warnings/meteo).
+      - Hydrological warnings (/warnings/hydro).
+      - Product resources (/products).
+
+servers:
+  - url: http://0.0.0.0:8000/api
+    description: Local API server
+  - url: https://185.238.73.59/api
+    description: Main API server
+
+paths:
+  /synop:
+    get:
+      summary: Retrieve synoptic data.
+      description: >
+        Returns synoptic data from IMGW. Accepts optional query parameters:
+        - **id:** Station ID.
+        - **station:** Station name (without diacritical characters).
+        - **format:** Output format (json, xml, csv, html). Defaults to json.
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: string
+          description: Station ID for the query.
+          required: false
+        - in: query
+          name: station
+          schema:
+            type: string
+          description: Station name (without diacritical characters).
+          required: false
+        - in: query
+          name: format
+          schema:
+            type: string
+            enum: [json, xml, csv, html]
+            default: json
+          description: Output format. Default is json.
+          required: false
+      responses:
+        "200":
+          description: Successful response with synoptic data.
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data: { "sample": "synoptic data" }
+        "500":
+          description: Error fetching synoptic data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unable to retrieve synoptic data
+  /hydro:
+    get:
+      summary: Retrieve hydrological data.
+      description: >
+        Returns hydrological data from IMGW.
+        Use the query parameter **hydro_variant** to select between variant 1 (/hydro) and variant 2 (/hydro2).
+      parameters:
+        - in: query
+          name: hydro_variant
+          schema:
+            type: integer
+            enum: [1, 2]
+            default: 1
+          description: >
+            Hydro variant version. Default value is 1. Use 2 for the /hydro2 endpoint.
+          required: false
+      responses:
+        "200":
+          description: Successful response with hydrological data.
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data: { "sample": "hydrological data" }
+        "500":
+          description: Error fetching hydrological data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unable to retrieve hydrological data
+  /meteo:
+    get:
+      summary: Retrieve meteorological data.
+      description: Returns meteorological data from IMGW.
+      responses:
+        "200":
+          description: Successful response with meteorological data.
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data: { "sample": "meteorological data" }
+        "500":
+          description: Error fetching meteorological data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unable to retrieve meteorological data
+  /warnings/meteo:
+    get:
+      summary: Retrieve meteorological warnings.
+      description: Returns meteorological warnings data from IMGW.
+      responses:
+        "200":
+          description: Successful response with meteorological warnings.
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data: { "sample": "meteoro warnings" }
+        "500":
+          description: Error fetching meteorological warnings.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unable to retrieve meteorological warnings
+  /warnings/hydro:
+    get:
+      summary: Retrieve hydrological warnings.
+      description: Returns hydrological warnings data from IMGW.
+      responses:
+        "200":
+          description: Successful response with hydrological warnings.
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data: { "sample": "hydro warnings" }
+        "500":
+          description: Error fetching hydrological warnings.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unable to retrieve hydrological warnings
+  /products:
+    get:
+      summary: Retrieve product resources.
+      description: Returns a list of available product resources from IMGW.
+      responses:
+        "200":
+          description: Successful response with products.
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data: { "sample": "product data" }
+        "500":
+          description: Error fetching product data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unable to retrieve product data

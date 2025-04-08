@@ -1,0 +1,21 @@
+meta {
+  name: Synoptic data
+  type: http
+  seq: 1
+}
+
+get {
+  url: 0.0.0.0:8000/api/synop?station=Szczecin&format=json
+  body: none
+  auth: none
+}
+
+params:query {
+  station: Szczecin
+  format: json
+  ~id: 0
+}
+
+headers {
+  Accept: application/json
+}
