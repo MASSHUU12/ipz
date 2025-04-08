@@ -1,3 +1,4 @@
+import { getCurrentUser } from "@/api/userApi";
 import { Box, Button, ButtonGroup, Stack, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
 
@@ -9,9 +10,9 @@ export default function Admin(): JSX.Element {
     document.title = "IPZ - Overlord's Dashboard";
   }, []);
 
-  function fetchUserInfo(): void {
-    console.log(token);
-    setOutput(token);
+  async function fetchUserInfo(): Promise<void> {
+    const response = await getCurrentUser(token);
+    setOutput(JSON.stringify(response, null, 2));
   }
 
   const buttons = [
@@ -26,6 +27,7 @@ export default function Admin(): JSX.Element {
     >
       c:
     </Button>,
+    <Button>Add buttons to do smth</Button>,
   ];
 
   return (
