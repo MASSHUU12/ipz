@@ -6,7 +6,7 @@ export interface Payload {
 
 export const instance = axios.create({
   baseURL: "/api",
-  timeout: 1000,
+  timeout: 10000,
   headers: {
     Accept: "application/json",
   },
