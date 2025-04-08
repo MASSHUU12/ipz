@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TextField, Button, Typography, Box, Paper } from '@mui/material';
 import { Link, router } from '@inertiajs/react';
-
+import { instance } from '@/api/api';
 const Login = () => {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -12,35 +12,32 @@ const Login = () => {
     e.preventDefault();
     setErrors({});
     setLoading(true);
-
+  
+    if (!emailOrPhone || !password) {
+      setErrors({ general: 'All fields are required' });
+      setLoading(false);
+      return;
+    }
+  
     try {
-      await fetch('http://localhost:8000/sanctum/csrf-cookie', {
-        credentials: 'include',
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailOrPhone);
+
+      const response = await instance.post('/login', {
+        ...(isEmail ? { email: emailOrPhone } : { phone_number: emailOrPhone }),
+        password,
       });
+        
+      const token = response.data.token;
 
-      const response = await fetch('http://localhost:8000/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: emailOrPhone,
-          password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setErrors(data.errors || { general: data.message || 'Invalid credentials' });
+      localStorage.setItem('authToken', token);
+  
+      router.visit('/dashboard');
+    } catch (error: any) {
+      if (error.response?.data?.errors) {
+        setErrors(error.response.data.errors);
       } else {
-        router.visit('/dashboard');
+        setErrors({ general: error.response?.data?.message || 'Login failed' });
       }
-    } catch (error) {
-      console.error(error);
-      setErrors({ general: 'Network error' });
     } finally {
       setLoading(false);
     }

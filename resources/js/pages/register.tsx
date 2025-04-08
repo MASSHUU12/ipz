@@ -7,6 +7,7 @@ import {
   Paper
 } from '@mui/material';
 import { Link, router } from '@inertiajs/react';
+import { instance } from '@/api/api';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -15,48 +16,74 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<any>({});
   const [loading, setLoading] = useState(false);
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
+    
   
-    if (password !== confirmPassword) {
-      setErrors({ confirmPassword: "Passwords don't match" });
+    if (!emailOrPhone || !password || !confirmPassword) {
+      setErrors({ general: 'All fields are required' });
       setLoading(false);
       return;
     }
   
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailOrPhone)) {
+      setErrors({ email: 'Incorrect email address' });
+      setLoading(false);
+      return;
+    }
+    
+    if (password.length < 8) {
+      setErrors({ password: 'Password must have at least 8 letters' });
+      setLoading(false);
+      return;
+    }
+    if (password.length > 255) {
+      setErrors({ password: 'Password must have less than 255 letters' });
+      setLoading(false);
+      return;
+    }
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[@$!%*?&]/.test(password);
+    if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+      setErrors({
+        password: 'Password must contain uppercase, lowercase, number and special character',
+      });
+      setLoading(false);
+      return;
+    }
+  
+    if (password !== confirmPassword) {
+      setErrors({ confirmPassword: 'Passwords are not the same' });
+      setLoading(false);
+      return;
+    }
+   
+    
     try {
-      await fetch('http://localhost:8000/sanctum/csrf-cookie', {
-        credentials: 'include',
+      const response = await instance.post('/register', {
+        name,
+        email: emailOrPhone,
+        password,
+        password_confirmation: confirmPassword,
       });
   
-      const response = await fetch('http://localhost:8000/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          name,
-          email: emailOrPhone,
-          password,
-          password_confirmation: confirmPassword,
-        }),
-      });
-  
-      const data = await response.json();
-  
-      if (!response.ok) {
-        setErrors(data.errors || { general: data.message || 'Something went wrong' });
+      const token = response.data.token;
+      localStorage.setItem('authToken', token);
+
+
+      router.visit('/login');
+    } catch (error: any) {
+      if (error.response?.data?.errors) {
+        setErrors(error.response.data.errors);
       } else {
-        router.visit('/login');
+        setErrors({ general: 'An error occurred during registration' });
       }
-    } catch (error) {
-      console.error(error);
-      setErrors({ general: 'Network error' });
     } finally {
       setLoading(false);
     }
@@ -88,26 +115,11 @@ const Register = () => {
           Create Account
         </Typography>
 
-        <TextField
-          fullWidth
-          label="Name"
-          variant="filled"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          error={!!errors.name}
-          helperText={errors.name}
-          sx={{
-            mb: 2,
-            backgroundColor: '#3a3a3a',
-            input: { color: '#fff' },
-            label: { color: '#bbb' },
-          }}
-        />
 
         <TextField
           fullWidth
-          label="Email or Phone"
-          variant="filled"
+          label="Email"
+          variant="filled" 
           value={emailOrPhone}
           onChange={(e) => setEmailOrPhone(e.target.value)}
           error={!!errors.email}
