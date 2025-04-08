@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use App\Http\Controllers\AuthController;
 use Tests\TestCase;
+use Illuminate\Support\Facades\Mail;
 
 class RegistrationTest extends TestCase
 {
