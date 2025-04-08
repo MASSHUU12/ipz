@@ -1,4 +1,4 @@
-import { instance } from "./api";
+import { instance, Payload } from "./api";
 
 export interface Role {
   id: number;
@@ -31,9 +31,9 @@ export interface GetCurrentUserResponse {
 }
 
 export const getCurrentUser = async (
-  token: string,
+  payload: Payload,
 ): Promise<GetCurrentUserResponse | null> => {
-  if (token.length <= 0) {
+  if (!payload.token && payload.token!.length <= 0) {
     console.error("Token is empty.");
     return null;
   }
@@ -41,7 +41,7 @@ export const getCurrentUser = async (
   try {
     const response = await instance.get<GetCurrentUserResponse>("/user", {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${payload.token}`,
       },
     });
     return response.data;
