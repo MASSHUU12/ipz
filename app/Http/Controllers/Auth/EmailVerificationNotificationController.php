@@ -11,14 +11,19 @@ use App\Mail\SendMail;
 class EmailVerificationNotificationController extends Controller
 {
 
-	public static function store(User $user): RedirectResponse
+	public static function store(User $user)
 	{
 		if ($user->hasVerifiedEmail()) {
-			return redirect()->intended(route('dashboard', absolute: false));
+			return request()->wantsJson()
+				? response()->json(['message' => 'Email already verified'])
+				: redirect()->intended(route('dashboard', absolute: false));
 		}
 
 		SendMail::sendMail($user->email, $user->id, 'emailverify');
 
-		return back()->with('status', 'verification-link-sent');
+		return request()->wantsJson()
+			? response()->json(['status' => 'verification-link-sent'])
+			: back()->with('status', 'verification-link-sent');
 	}
+
 }
