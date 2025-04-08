@@ -1,0 +1,19 @@
+meta {
+  name: Hydrological data
+  type: http
+  seq: 2
+}
+
+get {
+  url: 0.0.0.0:8000/api/hydro?hydro_variant=1
+  body: none
+  auth: none
+}
+
+params:query {
+  hydro_variant: 1
+}
+
+headers {
+  Accept: application/json
+}

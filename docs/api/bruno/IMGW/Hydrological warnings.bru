@@ -1,0 +1,15 @@
+meta {
+  name: Hydrological warnings
+  type: http
+  seq: 5
+}
+
+get {
+  url: 0.0.0.0:8000/api/warnings/hydro
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
