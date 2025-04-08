@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-
+use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Auth\EmailVerificationNotificationController;
+use App\Http\Controllers\Auth\EmailVerificationPromptController;
 class AuthController extends Controller
 {
     public function register(Request $request)
@@ -28,7 +30,7 @@ class AuthController extends Controller
             'password.regex' => 'The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.',
         ]);
 
-	    try {
+
 		    $user = User::create([
 			    'email' => $validated['email'] ?? null,
 			    'phone_number' => $validated['phone_number'] ?? null,
@@ -38,11 +40,11 @@ class AuthController extends Controller
 		    if ($request->has('email')) {
 			    EmailVerificationNotificationController::store($user);
 		    }
-	    } catch (\Exception) {
-		    return response([
+
+		   /* return response([
 			    'message' => 'There was an error during user registration. Please try again.'
-		    ], 500);
-	    }
+		    ], 500);*/
+
 
         $token = $user->createToken('token')->plainTextToken;
         $response = [

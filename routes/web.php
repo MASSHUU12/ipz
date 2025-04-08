@@ -29,7 +29,7 @@ Route::get('/idkfa', function () {
 });
 
 Route::get('/email/verify/{id}/{hash}', [\App\Http\Controllers\Auth\VerifyEmailController::class, '__invoke'])
-	->middleware(['signed', 'throttle:6,1'])
+	//->middleware(['signed', 'throttle:6,1'])
 	->name('verification.verify');
 
 Route::get('/email/verify/thank-you', function () {

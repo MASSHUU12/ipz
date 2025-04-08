@@ -50,6 +50,10 @@ class SendMail extends Mailable
 					'hash' => sha1($this->toEmail)
 				]
 			);
+
+			//Log::info('Wygenerowany link weryfikacyjny', ['verify_link' => $data['verify_link']]);
+			//dd($data['verify_link']);
+
 		}
 
 		return $this
