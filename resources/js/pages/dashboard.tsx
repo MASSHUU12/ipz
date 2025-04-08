@@ -4,8 +4,8 @@ import {
   AppBar,
   Toolbar,
   Typography,
-  Grid,
   Card,
+  Grid,
   CardContent,
   TextField,
   IconButton,
@@ -157,7 +157,7 @@ const Dashboard = () => {
                   <Card sx={{ height: "90%", display: "flex", flexDirection: "column", backgroundColor: "#222", color: "#fff", borderRadius: 2, p: 2 }}>
                     <CardContent sx={{ flexGrow: 1 }}>
                       <Typography variant="h6" gutterBottom>Today's Air Pollution</Typography>
-                      <AirQualityBar percent={0.5} />
+                      <AirQualityBar />
                     </CardContent>
                   </Card>
                 </Box>
@@ -234,7 +234,7 @@ const Dashboard = () => {
                   <Card sx={{ height: "80%", display: "flex", flexDirection: "column", backgroundColor: "#222", color: "#fff", borderRadius: 2, p: 2 }}>
                     <CardContent sx={{ flexGrow: 1 }}>
                       <Typography variant="h6" gutterBottom>Today's Air Pollution</Typography>
-                      <AirQualityBar percent={0.5} />
+                      <AirQualityBar />
                     </CardContent>
                   </Card>
                 </Box>
