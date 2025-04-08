@@ -27,11 +27,6 @@ Route::get('/register', function () {
 Route::get('/idkfa', function () {
     return Inertia::render('admin');
 });
-//janek janek pamietaj zreby to wyjebac
-/*Route::get('/test-my-mail', function () {
-	SendMail::sendMail('janhospodarysko11@gmail.com', 1, 'emailverify');
-	return 'Wiadomość wysłana!';
-});*/
 
 Route::get('/email/verify/{id}/{hash}', [\App\Http\Controllers\Auth\VerifyEmailController::class, '__invoke'])
 	->middleware(['signed', 'throttle:6,1'])
