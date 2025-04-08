@@ -24,6 +24,7 @@ class RegistrationTest extends TestCase
     // poprawna rejestracja przy użyciu e-mail
     public function testSuccessfulRegistrationEmail()
     {
+	    Mail::fake();
         $data = [
             'email' => 'test@example.com',
             'password' => 'Password1!',
