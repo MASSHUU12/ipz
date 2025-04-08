@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Mail\SendMail;
@@ -10,15 +11,15 @@ use App\Mail\SendMail;
 class EmailVerificationNotificationController extends Controller
 {
 
-	public function store(Request $request): RedirectResponse
+	public static function store(User $user): RedirectResponse
 	{
-		if ($request->user()->hasVerifiedEmail()) {
+		if ($user()->hasVerifiedEmail()) {
 			return redirect()->intended(route('dashboard', absolute: false));
 		}
 
-		$request->user()->sendEmailVerificationNotification();
+		$user()->sendEmailVerificationNotification();
 
-		SendMail::sendMail($request->user()->email, 'emailverify');
+		SendMail::sendMail($user()->email, 'emailverify');
 
 		return back()->with('status', 'verification-link-sent');
 	}

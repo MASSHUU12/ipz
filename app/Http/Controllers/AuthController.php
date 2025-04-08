@@ -28,18 +28,21 @@ class AuthController extends Controller
             'password.regex' => 'The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.',
         ]);
 
-        try {
-            $user = User::create([
-                'email' => $validated['email'] ?? null,
-                'phone_number' => $validated['phone_number'] ?? null,
-                'password' => password_hash($validated['password'], PASSWORD_DEFAULT)
-            ]);
-            $user->assignRole('User');
-        } catch (\Exception) {
-            return response([
-                'message' => 'There was an error during user registration. Please try again.'
-            ], 500);
-        }
+	    try {
+		    $user = User::create([
+			    'email' => $validated['email'] ?? null,
+			    'phone_number' => $validated['phone_number'] ?? null,
+			    'password' => password_hash($validated['password'], PASSWORD_DEFAULT)
+		    ]);
+		    $user->assignRole('User');
+		    if ($request->has('email')) {
+			    EmailVerificationNotificationController::store($user);
+		    }
+	    } catch (\Exception) {
+		    return response([
+			    'message' => 'There was an error during user registration. Please try again.'
+		    ], 500);
+	    }
 
         $token = $user->createToken('token')->plainTextToken;
         $response = [
