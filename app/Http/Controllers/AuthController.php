@@ -37,7 +37,7 @@ class AuthController extends Controller
 			    'password' => password_hash($validated['password'], PASSWORD_DEFAULT)
 		    ]);
 		    $user->assignRole('User');
-		    if ($request->has('email')) {
+		    if ($request->has('email') && !$request->wantsJson()) {
 			    EmailVerificationNotificationController::store($user);
 		    }
 	    } catch (\Exception) {
