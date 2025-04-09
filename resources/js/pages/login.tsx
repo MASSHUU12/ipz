@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TextField, Button, Typography, Box, Paper } from '@mui/material';
 import { Link, router } from '@inertiajs/react';
 import { instance } from '@/api/api';
 import { isValidEmail, isValidPhone } from "./regex";
+import { Alert, AlertTitle } from '@mui/material';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 const Login = () => {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -26,6 +28,11 @@ const Login = () => {
       if (isValidEmail(emailOrPhone)) {
         payload.email = emailOrPhone;
       } else if (isValidPhone(emailOrPhone)) {
+        if (!emailOrPhone.startsWith('+')) {
+          setErrors({ login: 'Phone number must start with + and contain only digits' });
+          setLoading(false);
+          return;
+        }   
         payload.phone_number = emailOrPhone;
       } else {
         setErrors({ login: "Incorrect email or phone number" });
@@ -39,16 +46,35 @@ const Login = () => {
       localStorage.setItem('authToken', token);
   
       router.visit('/dashboard');
-    } catch (error: any) {
-      if (error.response?.data?.errors) {
-        setErrors(error.response.data.errors);
-      } else {
-        setErrors({ general: error.response?.data?.message || 'Login failed' });
+    }catch (error: any) {
+      const messageFromBackend = error.response?.data?.message;
+      if (error.response?.status === 422 ) {
+        setErrors((prev: any) => ({
+          ...prev,
+          ...error.response.data.errors,
+          general: "Incorrect phone or email or password."
+        }));
+      }
+       else {
+        setErrors((prev: any) => ({
+          ...prev,
+          general:  'Login failed. Please try again.',
+        }));
       }
     } finally {
       setLoading(false);
     }
+
+     
   };
+  const [showVerificationInfo, setShowVerificationInfo] = useState(false);
+
+    useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('verification') === '1') {
+        setShowVerificationInfo(true);
+      }
+    }, []);
 
   return (
     <Box
@@ -74,6 +100,16 @@ const Login = () => {
         }}
       >
         <form onSubmit={handleLogin}>
+        {showVerificationInfo && (
+          <Alert
+            severity="success"
+            icon={<CheckCircleOutlineIcon />}
+            sx={{ mb: 3 }}
+          >
+            <AlertTitle>Check your mailbox</AlertTitle>
+            We have sent you a verification email.
+          </Alert>
+        )}
           <Typography variant="h6" mb={3} color="#fff">
             Login
           </Typography>
@@ -91,8 +127,7 @@ const Login = () => {
               input: { color: '#fff' },
               label: { color: '#bbb' },
             }}
-            error={!!errors.email}
-            helperText={errors.email}
+
           />
 
           <TextField
@@ -109,15 +144,20 @@ const Login = () => {
               input: { color: '#fff' },
               label: { color: '#bbb' },
             }}
-            error={!!errors.password}
-            helperText={errors.password}
+
           />
+          {errors.login && (
+            <Typography color="error" variant="body2" mb={2}>
+              {errors.login}
+            </Typography>
+          )}
 
           {errors.general && (
             <Typography color="error" variant="body2" mb={2}>
               {errors.general}
             </Typography>
           )}
+
 
           <Button
             type="submit"

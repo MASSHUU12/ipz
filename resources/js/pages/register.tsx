@@ -10,7 +10,6 @@ import { Link, router } from '@inertiajs/react';
 import { instance } from '@/api/api';
 import { isValidEmail, isValidPhone } from "./regex";
 const Register = () => {
-  const [name, setName] = useState('');
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -29,12 +28,15 @@ const Register = () => {
       return;
     }
   
-    const payload: Record<string, string> = { name, password };
-
+    const dataToSend: Record<string, string> = {
+      password,
+      password_confirmation: confirmPassword,
+    };
+    
     if (isValidEmail(emailOrPhone)) {
-      payload.email = emailOrPhone;
+      dataToSend.email = emailOrPhone;
     } else if (isValidPhone(emailOrPhone)) {
-      payload.phone_number = emailOrPhone;
+      dataToSend.phone_number = emailOrPhone;
     }
     
     
@@ -68,18 +70,12 @@ const Register = () => {
    
     
     try {
-      const response = await instance.post('/register', {
-        name,
-        email: emailOrPhone,
-        password,
-        password_confirmation: confirmPassword,
-      });
-  
+      const response = await instance.post('/register', dataToSend);
       const token = response.data.token;
       localStorage.setItem('authToken', token);
 
 
-      router.visit('/login');
+      router.visit('/login?verification=1');
     } catch (error: any) {
       if (error.response?.data?.errors) {
         setErrors(error.response.data.errors);
