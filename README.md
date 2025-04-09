@@ -23,6 +23,8 @@ git clone git@github.com:MASSHUU12/ipz.git && cp ipz
 cp .env.example .env
 ```
 
+Also, you need to set an email password here, which you can find on Discord.
+
 3. **Set up Docker containers:**
 
 ```bash

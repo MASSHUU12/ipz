@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use App\Http\Controllers\AuthController;
 use Tests\TestCase;
+use Illuminate\Support\Facades\Mail;
 
 class RegistrationTest extends TestCase
 {
@@ -23,7 +24,8 @@ class RegistrationTest extends TestCase
 
     // poprawna rejestracja przy użyciu e-mail
     public function testSuccessfulRegistrationEmail()
-    {
+    {Mail::fake();
+
         $data = [
             'email' => 'test@example.com',
             'password' => 'Password1!',

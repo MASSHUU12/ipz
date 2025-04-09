@@ -5,11 +5,22 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Auth\EmailVerificationNotificationController;
+use Propaganistas\LaravelPhone\PhoneNumber;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
+        if ($request->has('phone_number')) {
+            $request->validate([
+                'phone_number' => 'phone:INTERNATIONAL',
+            ]);
+
+            $phone = new PhoneNumber($request->phone_number);
+            $request->merge(['phone_number' => $phone->formatE164()]);
+        }
+
         $validated = $request->validate([
             'email' => 'required_without:phone_number|email|unique:users,email',
             'phone_number' => 'required_without:email|unique:users,phone_number|phone:INTERNATIONAL',
@@ -28,18 +39,23 @@ class AuthController extends Controller
             'password.regex' => 'The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.',
         ]);
 
-        try {
+        // try {
             $user = User::create([
                 'email' => $validated['email'] ?? null,
                 'phone_number' => $validated['phone_number'] ?? null,
                 'password' => password_hash($validated['password'], PASSWORD_DEFAULT)
             ]);
             $user->assignRole('User');
-        } catch (\Exception) {
-            return response([
-                'message' => 'There was an error during user registration. Please try again.'
-            ], 500);
-        }
+            if ($request->has('email')) {
+                if (!app()->runningUnitTests()) {
+                    EmailVerificationNotificationController::store($user);
+                }
+            }
+        // } catch (\Exception) {
+        //     return response([
+        //         'message' => 'There was an error during user registration. Please try again.'
+        //     ], 500);
+        // }
 
         $token = $user->createToken('token')->plainTextToken;
         $response = [
