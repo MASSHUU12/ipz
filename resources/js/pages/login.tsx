@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TextField, Button, Typography, Box, Paper } from '@mui/material';
 import { Link, router } from '@inertiajs/react';
 import { instance } from '@/api/api';
+import { isValidEmail, isValidPhone } from "./regex";
 const Login = () => {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -20,13 +21,19 @@ const Login = () => {
     }
   
     try {
-      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailOrPhone);
+      const payload: Record<string, string> = { password };
 
-      const response = await instance.post('/login', {
-        ...(isEmail ? { email: emailOrPhone } : { phone_number: emailOrPhone }),
-        password,
-      });
-        
+      if (isValidEmail(emailOrPhone)) {
+        payload.email = emailOrPhone;
+      } else if (isValidPhone(emailOrPhone)) {
+        payload.phone_number = emailOrPhone;
+      } else {
+        setErrors({ login: "Incorrect email or phone number" });
+        setLoading(false);
+        return;
+      }
+
+      const response = await instance.post("/login", payload);
       const token = response.data.token;
 
       localStorage.setItem('authToken', token);

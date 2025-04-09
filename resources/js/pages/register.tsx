@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import { Link, router } from '@inertiajs/react';
 import { instance } from '@/api/api';
-
+import { isValidEmail, isValidPhone } from "./regex";
 const Register = () => {
   const [name, setName] = useState('');
   const [emailOrPhone, setEmailOrPhone] = useState('');
@@ -29,12 +29,14 @@ const Register = () => {
       return;
     }
   
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailOrPhone)) {
-      setErrors({ email: 'Incorrect email address' });
-      setLoading(false);
-      return;
+    const payload: Record<string, string> = { name, password };
+
+    if (isValidEmail(emailOrPhone)) {
+      payload.email = emailOrPhone;
+    } else if (isValidPhone(emailOrPhone)) {
+      payload.phone_number = emailOrPhone;
     }
+    
     
     if (password.length < 8) {
       setErrors({ password: 'Password must have at least 8 letters' });
@@ -118,7 +120,7 @@ const Register = () => {
 
         <TextField
           fullWidth
-          label="Email"
+          label="Email or Phone"
           variant="filled" 
           value={emailOrPhone}
           onChange={(e) => setEmailOrPhone(e.target.value)}
