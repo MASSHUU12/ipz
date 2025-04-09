@@ -8,9 +8,8 @@ import {
 } from '@mui/material';
 import { Link, router } from '@inertiajs/react';
 import { instance } from '@/api/api';
-
+import { isValidEmail, isValidPhone } from "./regex";
 const Register = () => {
-  const [name, setName] = useState('');
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -29,12 +28,17 @@ const Register = () => {
       return;
     }
   
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailOrPhone)) {
-      setErrors({ email: 'Incorrect email address' });
-      setLoading(false);
-      return;
+    const dataToSend: Record<string, string> = {
+      password,
+      password_confirmation: confirmPassword,
+    };
+    
+    if (isValidEmail(emailOrPhone)) {
+      dataToSend.email = emailOrPhone;
+    } else if (isValidPhone(emailOrPhone)) {
+      dataToSend.phone_number = emailOrPhone;
     }
+    
     
     if (password.length < 8) {
       setErrors({ password: 'Password must have at least 8 letters' });
@@ -66,18 +70,12 @@ const Register = () => {
    
     
     try {
-      const response = await instance.post('/register', {
-        name,
-        email: emailOrPhone,
-        password,
-        password_confirmation: confirmPassword,
-      });
-  
+      const response = await instance.post('/register', dataToSend);
       const token = response.data.token;
       localStorage.setItem('authToken', token);
 
 
-      router.visit('/login');
+      router.visit('/login?verification=1');
     } catch (error: any) {
       if (error.response?.data?.errors) {
         setErrors(error.response.data.errors);
@@ -118,7 +116,7 @@ const Register = () => {
 
         <TextField
           fullWidth
-          label="Email"
+          label="Email or Phone"
           variant="filled" 
           value={emailOrPhone}
           onChange={(e) => setEmailOrPhone(e.target.value)}
