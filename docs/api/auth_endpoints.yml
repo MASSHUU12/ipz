@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Authentication API
   description: API for user registration, login, and logout
-  version: 1.0.0
+  version: 1.1.0
   contact:
     name: API Support
 servers:
@@ -70,6 +70,25 @@ paths:
                     message: "The email has already been taken."
                     errors:
                       email: ["The email has already been taken."]
+                invalidEmail:
+                  summary: Invalid Email
+                  value:
+                    message: "The email field must be a valid email address."
+                    errors:
+                      email: ["The email field must be a valid email address."]
+                phoneInUse:
+                  summary: Phone Number Already in Use
+                  value:
+                    message: "The phone number has already been taken."
+                    errors:
+                      email: ["The phone number has already been taken."]
+                invalidPhoneNumber:
+                  summary: Invalid Phone Number
+                  value:
+                    message: "The phone number field must be a valid number."
+                    errors:
+                      phone_number:
+                        ["The phone number field must be a valid number."]
                 passwordConfirmation:
                   summary: Password Confirmation Mismatch
                   value:
