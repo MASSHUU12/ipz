@@ -6,6 +6,7 @@ use App\Http\Controllers\ImgwController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserPreferenceController;
 use App\Http\Middleware\CheckUserBlocked;
+use App\Http\Middleware\EnsureUserIsVerified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,24 +22,29 @@ Route::get('/products', [ImgwController::class, 'products']);
 Route::get('/warnings/meteo', [ImgwController::class, 'warningsMeteo']);
 Route::get('/warnings/hydro', [ImgwController::class, 'warningsHydro']);
 
-Route::group(['middleware' => ['auth:sanctum', CheckUserBlocked::class]], function () {
-    Route::group(['middleware' => ['role:User|Super Admin']], function () {
-        Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/token/validate', [AuthController::class, 'validateToken']);
+Route::group(
+    ['middleware' => ['auth:sanctum', CheckUserBlocked::class]],
+    function () {
+        Route::group(['middleware' => ['role:User|Super Admin']], function () {
+            Route::group(['middleware' => [EnsureUserIsVerified::class]], function () {
+                Route::get('/user/preferences', [UserPreferenceController::class, 'showCurrentUserPreferences']);
+                Route::patch('/user/preferences', [UserPreferenceController::class, 'updateCurrentUserPreferences']);
+            });
 
-        Route::get('/user', [UserController::class, 'showCurrentUser']);
-        Route::patch('/user', [UserController::class, 'updateCurrentUser']);
-        Route::delete('/user', [UserController::class, 'destroyCurrentUser']);
+            Route::post('/logout', [AuthController::class, 'logout']);
+            Route::get('/token/validate', [AuthController::class, 'validateToken']);
 
-        Route::get('/user/preferences', [UserPreferenceController::class, 'showCurrentUserPreferences']);
-        Route::patch('/user/preferences', [UserPreferenceController::class, 'updateCurrentUserPreferences']);
-    });
-
-    Route::group(['middleware' => ['role:Super Admin']], function () {
-        Route::get('/admintest', function (Request $request) {
-            return response([
-                'message' => 'Sphinx of black quartz, judge my vow'
-            ], 200);
+            Route::get('/user', [UserController::class, 'showCurrentUser']);
+            Route::patch('/user', [UserController::class, 'updateCurrentUser']);
+            Route::delete('/user', [UserController::class, 'destroyCurrentUser']);
         });
-    });
-});
+
+        Route::group(['middleware' => ['role:Super Admin']], function () {
+            Route::get('/admintest', function (Request $request) {
+                return response([
+                    'message' => 'Sphinx of black quartz, judge my vow'
+                ], 200);
+            });
+        });
+    }
+);

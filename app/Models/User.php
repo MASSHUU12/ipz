@@ -48,6 +48,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'phone_number' => E164PhoneNumberCast::class,
+            'phone_number_verified_at' => 'datetime',
             'blocked_until' => 'datetime',
         ];
     }
