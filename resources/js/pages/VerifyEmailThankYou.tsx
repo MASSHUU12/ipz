@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from "@inertiajs/react";
 
 const VerifyEmailThankYou: React.FC = () => {
     return (
@@ -25,7 +26,9 @@ const VerifyEmailThankYou: React.FC = () => {
                     Twój adres e-mail został potwierdzony. Możesz teraz korzystać z pełnej funkcjonalności aplikacji.
                 </p>
 
-                <button style={styles.button}>Przejdź do dashboardu</button>
+                <Link href="/dashboard" style={styles.button}>
+                Przejdź do dashboardu
+                </Link>
 
                 <p style={styles.footer}>Dziękujemy za zaufanie!</p>
             </div>
