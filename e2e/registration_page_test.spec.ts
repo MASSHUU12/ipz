@@ -3,12 +3,12 @@ import {test, expect} from '@playwright/test';
 test.describe('Testy strony rejestracji', () => {
 
     test.beforeEach(async ({page}) => {
-        await page.goto('localhost:8000/register');
+        await page.goto('http://localhost:8000/register');
     });
 
-    test.afterEach(async ({page}) => {
-        await page.close();
-    });
+//    test.afterEach(async ({page}) => {
+//        await page.close();
+//    });
 
     test('Sprawdzenie tytulu strony', async ({page}) => {
         const title = await page.title();
@@ -32,80 +32,69 @@ test.describe('Testy strony rejestracji', () => {
     });
 
     test('Rejestracja z poprawnymi danymi', async ({page}) => {
-        await page.getByRole('textbox', { name: 'Name' }).fill('Jan Kowalski');
-        await page.getByRole('textbox', { name: 'Email or Phone' }).fill('test@example.com');
-        await page.getByRole('textbox', { name: 'Password', exact:true }).fill('Password1!');
-        await page.getByRole('textbox', { name: 'Confirm Password' }).fill('Password1!');
+        await page.getByRole('textbox', { name: 'Email or Phone' }).fill('testRegist@testowy.com');
+        await page.getByRole('textbox', { name: 'Password', exact:true }).fill('Testowy1!');
+        await page.getByRole('textbox', { name: 'Confirm Password' }).fill('Testowy1!');
 
         const registerButton = page.getByRole('button', { name: 'REGISTER' });
         await registerButton.click();
 
-        await expect(page).toHaveURL('http://localhost:8000/profile');
+        await expect(page).toHaveURL('http://localhost:8000/login?verification=1');
 
         await expect(page.locator('.error-message')).toHaveCount(0);
     });
 
 
     test('Rejestracja z pustymi danymi', async ({page}) => {
-        await page.getByRole('textbox', { name: 'Name' }).fill('');
         await page.getByRole('textbox', { name: 'Email or Phone' }).fill('');
         await page.getByRole('textbox', { name: 'Password', exact:true }).fill('');
         await page.getByRole('textbox', { name: 'Confirm Password' }).fill('');
         
         const registerButton = page.getByRole('button', { name: 'REGISTER' });
         await registerButton.click();
-        
-        const errorMessage = await page.locator('.error-message').textContent();
-        expect(errorMessage).toContain('required fields');
+        await expect(page.locator('text=All fields are required')).toHaveText('All fields are required');
+
 
         await expect(page).toHaveURL('http://localhost:8000/register');
     });
 
-    // przykładowe dane do zmiany, baza jeszcze jest pusta
+   
     test('Rejestracja z istniejacym loginem', async ({page}) => {
-        await page.getByPlaceholder('Name').fill('existingUser');
-        await page.getByPlaceholder('Email or Phone').fill('existing@test.pl');
-        await page.getByPlaceholder('Password').fill('123Haslo!');
-        await page.getByPlaceholder('Confirm Password').fill('123Haslo!');
+        await page.getByRole('textbox', { name: 'Email or Phone' }).fill('testRegist@testowy.com');
+        await page.getByRole('textbox', { name: 'Password', exact:true }).fill('123Haslo!');
+        await page.getByRole('textbox', { name: 'Confirm Password' }).fill('123Haslo!');
 
         const registerButton = await page.getByRole('button', { name: 'Register' });
         await registerButton.click();
 
-        await expect(page.locator('.error-message')).toHaveText('user already exists');
+        await expect(page.locator('text=The email has already been taken.')).toHaveText('The email has already been taken.');
         await expect(page).toHaveURL('http://localhost:8000/register');
-
-        await expect(registerButton).toBeDisabled();
     });
 
 
-    // dane użytkownika do poprawy.
     test('Rejestracja z błędnym potwierdzeniem hasła', async ({page}) => {
-        await page.getByPlaceholder('Name').fill('CorrectName');
-        await page.getByPlaceholder('Email or Phone').fill('correctEmailOrPhone');
-        await page.getByPlaceholder('Password').fill('CorrectPassword1!');
-        await page.getByPlaceholder('Confirm Password').fill('WrongPassword1!');
+        await page.getByRole('textbox', { name: 'Email or Phone' }).fill('Testowy2@testowy.com');
+        await page.getByRole('textbox', { name: 'Password', exact:true }).fill('CorrectPassword1!');
+        await page.getByRole('textbox', { name: 'Confirm Password' }).fill('WrongPassword1!');
 
         const registerButton = await page.getByRole('button', { name: 'Register' });
         await registerButton.click();
 
-        await expect(page.locator('.error-message')).toHaveText('password does not match');
+        await expect(page.locator('text=Passwords are not the same')).toHaveText('Passwords are not the same');
+        await expect(page).toHaveURL('http://localhost:8000/register');
     });
 
     // format hasła 8 znaków wielka litera, mała litera, cyfra, znak specjalny
     // dane użytkownika do poprawy.
     test('Rejestracja z niepoprawnym formatem hasła', async ({page}) => {
-        await page.getByPlaceholder('Name').fill('CorrectName');
-        await page.getByPlaceholder('Email or Phone').fill('correctEmailOrPhone');
-        await page.getByPlaceholder('Password').fill('psw');
-        await page.getByPlaceholder('Confirm Password').fill('pws');
+        await page.getByRole('textbox', { name: 'Email or Phone' }).fill('Testowy2@testowy.com');
+        await page.getByRole('textbox', { name: 'Password', exact:true }).fill('passwd');
+        await page.getByRole('textbox', { name: 'Confirm Password' }).fill('passwd');
 
         const registerButton = await page.getByRole('button', { name: 'Register' });
         await registerButton.click();
 
-        await expect(page.locator('.error-message')).toContainText([
-            'małe i duże litery',
-            'przynajmniej jedna cyfra',
-            'przynajmniej jeden znak specjalny'
-          ]);
+        await expect(page.locator('text=Password must have at least 8 letters')).toHaveText('Password must have at least 8 letters');
+        await expect(page).toHaveURL('http://localhost:8000/register');
     });
 });
