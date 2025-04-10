@@ -6,9 +6,9 @@ test.describe('Testy strony rejestracji', () => {
         await page.goto('http://localhost:8000/register');
     });
 
-//    test.afterEach(async ({page}) => {
-//        await page.close();
-//    });
+   test.afterEach(async ({page}) => {
+        await page.close();
+    });
 
     test('Sprawdzenie tytulu strony', async ({page}) => {
         const title = await page.title();
