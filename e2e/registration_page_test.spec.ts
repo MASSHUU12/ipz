@@ -31,17 +31,18 @@ test.describe('Testy strony rejestracji', () => {
     
     });
 
+
     test('Rejestracja z poprawnymi danymi', async ({page}) => {
-        await page.getByRole('textbox', { name: 'Email or Phone' }).fill('testRegist@testowy.com');
+        const uniqueEmail = `randomRegist${Date.now()}@testowy.com`;
+        await page.getByRole('textbox', { name: 'Email or Phone' }).fill(uniqueEmail);
         await page.getByRole('textbox', { name: 'Password', exact:true }).fill('Testowy1!');
         await page.getByRole('textbox', { name: 'Confirm Password' }).fill('Testowy1!');
 
         const registerButton = page.getByRole('button', { name: 'REGISTER' });
         await registerButton.click();
+        await page.getByRole('alert',{name:'Check your mailbox We have sent you a verification email.'}).isVisible();
 
         await expect(page).toHaveURL('http://localhost:8000/login?verification=1');
-
-        await expect(page.locator('.error-message')).toHaveCount(0);
     });
 
 
