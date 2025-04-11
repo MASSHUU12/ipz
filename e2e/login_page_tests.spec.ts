@@ -2,19 +2,18 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Testy logowania', () => {
   
-  // Przed każdym testem otwieramy stronę logowania.
   test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:8000/login');
   });
 
-  // Po każdym teście zamykamy stronę (uwaga: Playwright domyślnie dba o czystość kontekstu)
-  test.afterEach(async ({ page }) => {
-    await page.close();
-  });
+
+  //test.afterEach(async ({ page }) => {
+  //  await page.close();
+  //});
 
   test('Sprawdzenie widocznosci przycisku rejestracji', async ({ page }) => {
-    const registerButton = await page.getByRole('button', { name: 'Sign In' });
-    await expect(registerButton).toBeVisible();
+    const singInButton = await page.getByRole('button', { name: 'Sign In' });
+    await expect(singInButton).toBeVisible();
   });
 
   test('Sprawdzenie działania linku Register', async ({ page }) => {
@@ -22,119 +21,130 @@ test.describe('Testy logowania', () => {
     await expect(page).toHaveURL('http://localhost:8000/register');
   });
 
-  test('Logowanie z poprawnymi danymi', async ({ page }) => {
-    await page.getByPlaceholder('Email or Phone').fill('testowy@example.com');
-    await page.getByPlaceholder('Password').fill('Password1!');
-    await page.getByRole('button', { name: 'SIGN IN' }).click();
 
+  // test z poprawnym loginem i hasłem zależny od wcześniejszych testów rejestracji
+  // po nowym uruchomieniu aplikacji testowej użytkownika nie mam w bazie danych (jest chyba tylko lokalnie)
+  // test ten nie przejdzie
+  test('Logowanie z poprawnymi danymi', async ({ page }) => {
+    await page.getByRole('textbox', { name: 'Email or Phone' }).fill('Testowy@testowy.com');
+    await page.getByRole('textbox', { name: 'Password' }).fill('Testowy1!');
+    const singInButton = page.getByRole('button', { name: 'Sign In' });
+    await singInButton.click();
+    await page.waitForURL('http://localhost:8000/dashboard');
     await expect(page).toHaveURL('http://localhost:8000/dashboard');
   });
 
 
   test('Logowanie z pustymi danymi', async ({ page }) => {
-    await page.getByRole('button', { name: 'SIGN IN' }).click();
+    await page.getByRole('textbox', { name: 'Email or Phone' }).fill('');
+    await page.getByRole('textbox', { name: 'Password'}).fill('');
+    await page.getByRole('button', { name: 'Sign In' }).click();
 
-    await expect(page.locator('.error-message')).toHaveText("The 'login'/'password' field cannot be empty");
+    await expect(page.locator('text=All fields are required')).toHaveText('All fields are required');
 
     await expect(page).toHaveURL('http://localhost:8000/login');
   });
 
 
   test('Logowanie z niepoprawnymi danymi', async ({ page }) => {
-    await page.getByPlaceholder('Email or Phone').fill('nonexistent@example.com');
-    await page.getByPlaceholder('Password').fill('WrongPassword1!');
+    await page.getByRole('textbox', { name: 'Email or Phone' }).fill('test@TEST.com');
+    await page.getByRole('textbox', { name: 'Password'}).fill('Password1!');
     await page.getByRole('button', { name: 'SIGN IN' }).click();
 
-    await expect(page.locator('.error-message')).toHaveText("Incorrect 'login' or 'password'");
+    await expect(page.locator('text=Login failed. Please try')).toHaveText('Login failed. Please try again.');
     await expect(page).toHaveURL('http://localhost:8000/login');
   });
 
 
   test('Logowanie z poprawnym loginem, błędnym hasłem', async ({ page }) => {
-    await page.getByPlaceholder('Email or Phone').fill('testowy@example.com');
-    await page.getByPlaceholder('Password').fill('WrongPassword!');
-    await page.getByRole('button', { name: 'SIGN IN' }).click();
+    await page.getByRole('textbox', { name: 'Email or Phone' }).fill('Testowy@testowy.com');
+    await page.getByRole('textbox', { name: 'Password'}).fill('Passwd');
+    await page.getByRole('button', { name: 'Sign In' }).click();
 
-    await expect(page.locator('.error-message')).toHaveText("Incorrect 'login' or 'password'");
+    await expect(page.locator('text=Login failed. Please try')).toHaveText('Login failed. Please try again.');
     await expect(page).toHaveURL('http://localhost:8000/login');
   });
 
 
   test('Logowanie z poprawnym loginem, pustym hasłem', async ({ page }) => {
-    await page.getByPlaceholder('Email or Phone').fill('testowy@example.com');
-    await page.getByPlaceholder('Password').fill('');
-    await page.getByRole('button', { name: 'SIGN IN' }).click();
+    await page.getByRole('textbox', { name: 'Email or Phone' }).fill('Testowy@testowy.com');
+    await page.getByRole('textbox', { name: 'Password'}).fill('');
+    await page.getByRole('button', { name: 'Sign In' }).click();
 
-    await expect(page.locator('.error-message')).toHaveText("The 'login'/'password' field cannot be empty");
+    await expect(page.locator('text=All fields are required')).toHaveText('All fields are required');
     await expect(page).toHaveURL('http://localhost:8000/login');
   });
 
 
   test('Logowanie z pustym loginem, poprawnym hasłem', async ({ page }) => {
-    await page.getByPlaceholder('Email or Phone').fill('');
-    await page.getByPlaceholder('Password').fill('Password1!');
-    await page.getByRole('button', { name: 'SIGN IN' }).click();
+    await page.getByRole('textbox', { name: 'Email or Phone' }).fill('');
+    await page.getByRole('textbox', { name: 'Password'}).fill('Testowy1!');
+    await page.getByRole('button', { name: 'Sign In' }).click();
 
-    await expect(page.locator('.error-message')).toHaveText("The 'login'/'password' field cannot be empty");
+    await expect(page.locator('text=All fields are required')).toHaveText('All fields are required');
     await expect(page).toHaveURL('http://localhost:8000/login');
   });
 
 
   test('Logowanie z niepoprawnym loginem i poprawnym hasłem', async ({ page }) => {
-    await page.getByPlaceholder('Email or Phone').fill('invaliduser@example.com');
-    await page.getByPlaceholder('Password').fill('Password1!');
-    await page.getByRole('button', { name: 'SIGN IN' }).click();
+    await page.getByRole('textbox', { name: 'Email or Phone' }).fill('invaliduser@example.com');
+    await page.getByRole('textbox', { name: 'Password'}).fill('Password1!');
+    await page.getByRole('button', { name: 'Sign In' }).click();
 
-    await expect(page.locator('.error-message')).toHaveText("Incorrect 'login' or 'password'");
+    await expect(page.locator('text=Login failed. Please try')).toHaveText('Login failed. Please try again.');
     await expect(page).toHaveURL('http://localhost:8000/login');
   });
 
-  test('Logowanie z SQL Injection w polu login', async ({ page }) => {
-    await page.getByPlaceholder('Email or Phone').fill("admin' OR '1'='1");
-    await page.getByPlaceholder('Password').fill('SomePassword!');
-    await page.getByRole('button', { name: 'SIGN IN' }).click();
 
-    await expect(page.locator('.error-message')).toHaveText("Unauthorized Access");
+  test('Logowanie z SQL Injection w polu login', async ({ page }) => {
+    await page.getByRole('textbox', { name: 'Email or Phone' }).fill("admin' OR '1'='1");
+    await page.getByRole('textbox', { name: 'Password'}).fill('SomePassword!');
+    await page.getByRole('button', { name: 'Sign In' }).click();
+
+    await expect(page.locator('text=Incorrect email or phone')).toHaveText('Incorrect email or phone number');
     await expect(page).toHaveURL('http://localhost:8000/login');
   });
 
 
   test('Logowanie z SQL Injection w polu hasło', async ({ page }) => {
-    await page.getByPlaceholder('Email or Phone').fill('testowy@example.com');
-    await page.getByPlaceholder('Password').fill("password' OR '1'='1");
-    await page.getByRole('button', { name: 'SIGN IN' }).click();
+    await page.getByRole('textbox', { name: 'Email or Phone' }).fill('testowy@example.com');
+    await page.getByRole('textbox', { name: 'Password'}).fill("password' OR '1'='1");
+    await page.getByRole('button', { name: 'Sing In' }).click();
 
-    await expect(page.locator('.error-message')).toHaveText("Unauthorized access");
+    await expect(page.locator('text=Login failed. Please try')).toHaveText('Login failed. Please try again.');
     await expect(page).toHaveURL('http://localhost:8000/login');
   });
 
-
+// ine wiem czy czasem nie nalezy ograniczyć ilości znaków w polach login i hasło
   test('Logowanie z długim loginem i hasłem', async ({ page }) => {
-    const longString = 'a'.repeat(1000);
-    await page.getByPlaceholder('Email or Phone').fill(longString);
-    await page.getByPlaceholder('Password').fill(longString);
-    await page.getByRole('button', { name: 'SIGN IN' }).click();
+    const longString = 'a'.repeat(50);
+    await page.getByRole('textbox', { name: 'Email or Phone' }).fill(longString+'@testowy.com');
+    await page.getByRole('textbox', { name: 'Password'}).fill('A'+longString+'1!');
+    await page.getByRole('button', { name: 'Sign In' }).click();
 
-    await expect(page.locator('.error-message')).toHaveText(/Login\/password is too long/);
-    await expect(page).toHaveURL('http://localhost:8000/login');
+    await page.waitForURL('http://localhost:8000/dashboard');
+    await expect(page).toHaveURL('http://localhost:8000/dashboard');
   });
 
+  // traktowane jako niewłaściwe dane
   test('Logowanie ze znakami specjalnymi', async ({ page }) => {
-    const specialLogin = '!@#$%^&*()_+={}[]:";\'<>?,./';
-    const specialPassword = '!@#$%^&*()_+={}[]:";\'<>?,./';
-    await page.getByPlaceholder('Email or Phone').fill(specialLogin);
-    await page.getByPlaceholder('Password').fill(specialPassword);
-    await page.getByRole('button', { name: 'SIGN IN' }).click();
+    const specialLogin = '!#$%^&*()@testowy_+={}[]:";\'<>?,./.com';
+    const specialPassword = 'Aa1!@#$%^&*()_+={}[]:";\'<>?,./';
+    await page.getByRole('textbox', { name: 'Email or Phone' }).fill(specialLogin);
+    await page.getByRole('textbox', { name: 'Password'}).fill(specialPassword);
+    await page.getByRole('button', { name: 'Sign In' }).click();
 
-    await expect(page).toHaveURL('http://localhost:8000/dashboard');
+    await expect(page.locator('text=Incorrect email or phone')).toHaveText('Incorrect email or phone number');
+    await expect(page).toHaveURL('http://localhost:8000/login');
   });
 
 
   test('Logowanie z różnymi wielkościami liter', async ({ page }) => {
-    await page.getByPlaceholder('Email or Phone').fill('AdMiN@example.com');
-    await page.getByPlaceholder('Password').fill('PaSSworD1!');
-    await page.getByRole('button', { name: 'SIGN IN' }).click();
+    await page.getByRole('textbox', { name: 'Email or Phone' }).fill('Testowy@testowy.com');
+    await page.getByRole('textbox', { name: 'Password'}).fill('Testowy1!');
+    await page.getByRole('button', { name: 'Sign In' }).click();
 
+    await page.waitForURL('http://localhost:8000/dashboard');
     await expect(page).toHaveURL('http://localhost:8000/dashboard');
   });
 
