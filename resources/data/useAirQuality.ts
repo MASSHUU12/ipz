@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
+import { instance } from "../js/api/api";
 import { cityCoordinates } from "./cities";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 export interface AirQualityData {
   airQuality: {
@@ -23,24 +22,30 @@ export const useAirQuality = (city: string) => {
   useEffect(() => {
     if (!coords) return;
 
-    const url = `${API_URL}/air-quality?lat=${coords.lat}&lon=${coords.lon}`;
-    setLoading(true);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const res = await instance.get(
+          `/air-quality?lat=${coords.lat}&lon=${coords.lon}`
+        );
+        const responseText = res.data;
+        if (typeof responseText === "string" && responseText.includes("namespace")) {
+          throw new Error("Wrong answer from backend");
+        }
 
-    fetch(url)
-      .then((res) => res.text())
-      .then((text) => {
-        if (text.includes("namespace")) throw new Error("Wrong answer from backend");
-
-        const json = JSON.parse(text);
+        const json = typeof responseText === "string" ? JSON.parse(responseText) : responseText;
+        
         if (!json?.data) throw new Error("no 'data'");
-
         setData(json.data);
-      })
-      .catch((err) => {
+      } catch (err: any) {
         console.error("❌ API error:", err.message || err);
         setData(null);
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [city]);
 
   return { data, loading };
