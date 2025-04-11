@@ -1,182 +1,147 @@
-  import AirQualityBar from "./components/AirQualityBar";
-  import React from "react";
-  import { cityCoordinates } from "../../data/cities";
-  import { useAirQuality } from "../../data/useAirQuality";
-  import SearchIcon from "@mui/icons-material/Search";
-  import { useWeatherConditions } from "../../data/useWeatherConditions";
+import React from "react";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Card,
+  Grid,
+  CardContent,
+  TextField,
+  IconButton,
+  InputAdornment,
+  Avatar,
+  useMediaQuery,
+  Drawer,
+  Box,
+} from "@mui/material";
+import { Notifications, ArrowDropDown, Search as SearchIcon } from "@mui/icons-material";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from "recharts";
 
-  import {
-    AppBar,
-    Toolbar,
-    Typography,
-    Card,
-    Grid,
-    CardContent,
-    TextField,
-    IconButton,
-    InputAdornment,
-    Avatar,
-    useMediaQuery,
-    Drawer,
-    Box,
-  } from "@mui/material";
-  import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    BarChart,
-    Bar,
-    Cell
-  } from "recharts";
-  import { Notifications, ArrowDropDown } from "@mui/icons-material";
-  import Sidebar from "./Sidebar";
+import Sidebar from "./Sidebar";
+import AirQualityBar from "./components/AirQualityBar";
+import { cityCoordinates } from "../../data/cities";
+import { useAirQuality } from "../../data/useAirQuality";
+import { useWeatherConditions } from "../../data/useWeatherConditions";
+const airPollutionData = [
+  { name: "Jan", value: 100 },
+  { name: "Feb", value: 200 },
+  { name: "Mar", value: 150 },
+  { name: "Apr", value: 300 },
+  { name: "May", value: 250 },
+  { name: "Jun", value: 400 },
+  { name: "Jul", value: 500 },
+  { name: "Aug", value: 350 },
+  { name: "Sep", value: 450 },
+];
 
-  const airPollutionData = [
-    { name: "Jan", value: 100 },
-    { name: "Feb", value: 200 },
-    { name: "Mar", value: 150 },
-    { name: "Apr", value: 300 },
-    { name: "May", value: 250 },
-    { name: "Jun", value: 400 },
-    { name: "Jul", value: 500 },
-    { name: "Aug", value: 350 },
-    { name: "Sep", value: 450 },
-  ];
+const weatherData = [
+  { day: "Mon", value: 80 },
+  { day: "Tue", value: 120 },
+  { day: "Wed", value: 200 },
+  { day: "Thu", value: 180 },
+  { day: "Fri", value: 100 },
+  { day: "Sat", value: 140 },
+  { day: "Sun", value: 200 },
+];
+const Dashboard = () => {
+  const [searchValue, setSearchValue] = React.useState("");
+  const isMobile = useMediaQuery("(max-width:900px)");
+  const [selectedCity, setSelectedCity] = React.useState("Szczecin");
+  const { data: airData, loading: airLoading } = useAirQuality(selectedCity);
+  const { weather, loading: weatherLoading } = useWeatherConditions(selectedCity);
 
-  const weatherData = [
-    { day: "Mon", value: 80 },
-    { day: "Tue", value: 120 },
-    { day: "Wed", value: 200 },
-    { day: "Thu", value: 180 },
-    { day: "Fri", value: 100 },
-    { day: "Sat", value: 140 },
-    { day: "Sun", value: 200 },
-  ];
-
-  const Dashboard = () => {
-    const isMobile = useMediaQuery("(max-width:900px)");
-    const [selectedCity, setSelectedCity] = React.useState("Szczecin");
-    const { data: airData, loading: airLoading } = useAirQuality(selectedCity);
-    const { weather, loading: weatherLoading } = useWeatherConditions(selectedCity);
-    const normalizeParameter = (label: string): string => {
-      const mapping: Record<string, string> = {
-        "pył zawieszony pm10": "pm10",
-        "pył zawieszony pm2.5": "pm25",
-        "dwutlenek azotu": "no2",
-        "dwutlenek siarki": "so2",
-        "ozon": "o3",
-        "tlenek węgla": "co",
-      };
-      return mapping[label.toLowerCase()] || label.toLowerCase();
+  const normalizeParameter = (label: string): string => {
+    const mapping: Record<string, string> = {
+      "pył zawieszony pm10": "pm10",
+      "pył zawieszony pm2.5": "pm25",
+      "dwutlenek azotu": "no2",
+      "dwutlenek siarki": "so2",
+      "ozon": "o3",
+      "tlenek węgla": "co",
     };
-    
-    const pollutantThresholds: Record<string, { good: number; moderate: number; unhealthy: number }> = {
-      pm25: { good: 10, moderate: 25, unhealthy: 50 },
-      pm10: { good: 20, moderate: 50, unhealthy: 100 },
-      no2:  { good: 40, moderate: 100, unhealthy: 200 },
-      so2:  { good: 50, moderate: 125, unhealthy: 300 },
-      o3:   { good: 60, moderate: 120, unhealthy: 180 },
-      co:   { good: 3, moderate: 6, unhealthy: 10 },
-    };
-    
-    const getAirQualityLevel = (parameter: string, rawValue: number | string) => {
-      const value = typeof rawValue === "string" ? parseFloat(rawValue) : rawValue;
-      const norm = pollutantThresholds[parameter.toLowerCase()];
-    
-      if (!norm) return { level: "Unknown", color: "#999" };
-    
-      if (value <= norm.good) return { level: "Good", color: "#00e676" };
-      if (value <= norm.moderate) return { level: "Moderate", color: "#ffeb3b" };
-      if (value <= norm.unhealthy) return { level: "Unhealthy", color: "#ff9800" };
-      return { level: "Very Unhealthy", color: "#f44336" };
-    };
-    
-    
-    
-    
-      
-    const airPollutionChartData = airData?.measurements?.map((m) => {
-      const param = normalizeParameter(m.parameter);
-      const { level, color } = getAirQualityLevel(param, m.value);
-      
-      return {
-        name: param.toUpperCase(),
-        value: parseFloat(m.value.toString()),
-        level,
-        color,
-      };
-    }) ?? [];
-    
-  
-    return (
-      <Box sx={{ display: "flex", backgroundColor: "#1e1e1e", minHeight: "100vh", color: "#fff" }}>
-        {isMobile ? (
-          <Drawer
-            variant="temporary"
-            open={false}
-            onClose={() => {}}
-            ModalProps={{ keepMounted: true }}
-          >
-            <Sidebar />
-          </Drawer>
-        ) : (
-          <Box sx={{ width: 240, flexShrink: 0 }}>
-            <Sidebar />
-          </Box>
-        )}
+    return mapping[label.toLowerCase()] || label.toLowerCase();
+  };
 
-        <Box
-          sx={{
-            flexGrow: 1,
-            padding: 2,
-            marginLeft: { md: "240px" },
-            display: "flex",
-            justifyContent: "center",
-          }}
+  const pollutantThresholds: Record<string, { good: number; moderate: number; unhealthy: number }> = {
+    pm25: { good: 10, moderate: 25, unhealthy: 50 },
+    pm10: { good: 20, moderate: 50, unhealthy: 100 },
+    no2: { good: 40, moderate: 100, unhealthy: 200 },
+    so2: { good: 50, moderate: 125, unhealthy: 300 },
+    o3: { good: 60, moderate: 120, unhealthy: 180 },
+    co: { good: 3, moderate: 6, unhealthy: 10 },
+  };
+
+  const getAirQualityLevel = (parameter: string, rawValue: number | string) => {
+    const value = typeof rawValue === "string" ? parseFloat(rawValue) : rawValue;
+    const norm = pollutantThresholds[parameter.toLowerCase()];
+    if (!norm) return { level: "Unknown", color: "#999" };
+    if (value <= norm.good) return { level: "Good", color: "#00e676" };
+    if (value <= norm.moderate) return { level: "Moderate", color: "#ffeb3b" };
+    if (value <= norm.unhealthy) return { level: "Unhealthy", color: "#ff9800" };
+    return { level: "Very Unhealthy", color: "#f44336" };
+  };
+
+  const airPollutionChartData = airData?.measurements?.map((m) => {
+    const param = normalizeParameter(m.parameter);
+    const { level, color } = getAirQualityLevel(param, m.value);
+    return {
+      name: param.toUpperCase(),
+      value: parseFloat(m.value.toString()),
+      level,
+      color,
+    };
+  }) ?? [];
+
+  return (
+    <Box sx={{ display: "flex", backgroundColor: "#1e1e1e", minHeight: "100vh", color: "#fff" }}>
+      {isMobile ? (
+        <Drawer
+          variant="temporary"
+          open={false}
+          onClose={() => {}}
+          ModalProps={{ keepMounted: true }}
         >
-          <Box sx={{ maxWidth: {xs:1400}, width: "100%", mx: "auto" }}>
-          <AppBar
-            position="static"
-            sx={{
-              marginBottom: 2,
-              backgroundColor: "#1e1e1e",
-              color: "#fff",
-              padding: 1,
-            }}
-          >
+          <Sidebar />
+        </Drawer>
+      ) : (
+        <Box sx={{ width: 240, minWidth: 200, flexShrink: 0 }}>
+          <Sidebar />
+        </Box>
+      )}
+
+      <Box sx={{ flexGrow: 1, width: "100%", px: 2, py: 2, display: "flex", justifyContent: "center" }}>
+        <Box sx={{ maxWidth: { xs: 1400 }, width: "100%", mx: "auto" }}>
+          <AppBar position="static" sx={{ mb: 2, backgroundColor: "#1e1e1e", color: "#fff", p: 1 }}>
             <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-              {/* Pole wyszukiwania */}
               <TextField
                 placeholder="Search city"
                 variant="outlined"
                 size="small"
-                sx={{
-                  backgroundColor: "#2e2e2e",
-                  borderRadius: "10px",
-                  input: { color: "#fff" },
-                  flexGrow: 1,
-                  maxWidth: 500,
+                sx={{ backgroundColor: "#2e2e2e", borderRadius: "10px", input: { color: "#fff" }, flexGrow: 1,}}
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && cityCoordinates[searchValue]) {
+                    setSelectedCity(searchValue);
+                  }
                 }}
                 InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: "#aaa" }} />
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => {
+                          if (cityCoordinates[searchValue]) {
+                            setSelectedCity(searchValue);
+                          }
+                        }}
+                        sx={{ color: "#fff", boxShadow: 3 }}
+                      >
+                        <SearchIcon />
+                      </IconButton>
                     </InputAdornment>
                   ),
                 }}
-                onChange={(e) => {
-                  const city = e.target.value;
-                  if (cityCoordinates[city]) {
-                    setSelectedCity(city);
-                  }
-                }}
               />
-
-              {/* Ikonki po prawej */}
               <Box sx={{ display: "flex", alignItems: "center", ml: 2 }}>
                 <IconButton sx={{ color: "#fff", ml: 1 }}>
                   <Notifications />
@@ -191,6 +156,7 @@
             </Toolbar>
           </AppBar>
 
+
             {isMobile ? (
     <>
       {/* Pogoda */}
@@ -204,7 +170,6 @@
                         <Typography variant="subtitle1">{selectedCity}</Typography>
                         <Box display="flex" justifyContent="space-between" mt={2}>
                           <Typography variant="h4" fontWeight="bold">🌤 12°C</Typography>
-                          <Typography variant="body2" sx={{ color: "#aaa" }}>Hourly forecast below</Typography>
                         </Box>
                       </CardContent>
                     </Card>
@@ -237,17 +202,17 @@
                     <CardContent sx={{ flexGrow: 1 }}>
                       <Typography variant="h6" gutterBottom>Today's Air Pollution</Typography>
                       {airLoading ? (
-                        <Typography>Ładowanie...</Typography>
+                        <Typography>Loading...</Typography>
                       ) : airData ? (
                         <>
                           <Typography variant="subtitle2" gutterBottom>
-                            Indeks jakości: {airData.airQuality.index}
+                            Quality Index: {airData.airQuality.index}
                           </Typography>
                           <Box sx={{ maxWidth: 300, mx: "auto" }}>
                             <AirQualityBar index={airData.airQuality.index} />
                           </Box>
                           <Box mt={2}>
-                            <Typography variant="body2">Szczegóły pomiarów:</Typography>
+                            <Typography variant="body2">Measuerement details:</Typography>
                             <ul style={{ paddingLeft: 16 }}>
                               {airData.measurements.map((m: any, i: number) => (
                                 <li key={i}>
@@ -258,7 +223,7 @@
                           </Box>
                         </>
                       ) : (
-                        <Typography>Brak danych o jakości powietrza</Typography>
+                        <Typography>No data</Typography>
                       )}
                     </CardContent>
 
@@ -325,13 +290,11 @@
               <Typography variant="h4" fontWeight="bold">
                 🌤 {weatherLoading || !weather ? "--" : `${weather.temperature}°C`}
               </Typography>
-              <Typography variant="body2" sx={{ color: "#aaa", mt: 1 }}>
-                Hourly forecast below
-              </Typography>
             </Box>
           </CardContent>
         </Card>
       </Grid>
+
   
       {/* Podsumowanie pogody */}
       <Grid item xs={12} md={6}>
@@ -359,10 +322,16 @@
             {weatherLoading || !weather ? (
               <Typography>Loading Data...</Typography>
             ) : (
-              <Box component="ul" sx={{ listStyle: "none", p: 0, m: 2, fontSize: "18px"}}>
-                <li><strong>💧 Humidity:</strong> {weather.humidity}%</li>
-                <li><strong>💨 Wind:</strong> {weather.wind_speed} m/s</li>
-                <li><strong>🌡 Pressure:</strong> {weather.pressure} hPa</li>
+              <Box>
+                <Typography variant="body1" component="div" sx={{ mb: 1 }}>
+                  💧 Humidity: {weather.humidity}%
+                </Typography>
+                <Typography variant="body1" component="div" sx={{ mb: 1 }}>
+                  💨 Wind: {weather.wind_speed} m/s
+                </Typography>
+                <Typography variant="body1" component="div">
+                  🌡 Pressure: {weather.pressure} hPa
+                </Typography>
               </Box>
             )}
           </CardContent>

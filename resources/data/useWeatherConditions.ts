@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { cityCoordinates } from "./cities"; 
+import { instance } from "../js/api/api";
+
+import { cityCoordinates } from "./cities";
+
 const buildCityToStationMap = (): Record<string, string> => {
   return Object.keys(cityCoordinates).reduce((map, city) => {
     const key = city
@@ -30,7 +32,6 @@ const getStationName = (city: string): string => {
     .replace(/ /g, "");
 };
 
-
 export const useWeatherConditions = (city: string) => {
   const [weather, setWeather] = useState<null | {
     temperature: number;
@@ -46,7 +47,7 @@ export const useWeatherConditions = (city: string) => {
       setLoading(true);
       try {
         const station = getStationName(city);
-        const res = await axios.get(`/api/synop?station=${station}`);
+        const res = await instance.get(`/synop?station=${station}`); // użycie instance
         const entry = res.data;
         if (entry && entry.temperatura) {
           setWeather({
@@ -58,7 +59,7 @@ export const useWeatherConditions = (city: string) => {
         } else {
           setWeather(null);
         }
-      } catch (error: any) {
+      } catch (error) {
         setWeather(null);
       } finally {
         setLoading(false);
