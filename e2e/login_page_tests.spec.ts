@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Testy logowania', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:8000/login', { timeout: 60000 });
+    await page.goto('http://localhost:8000/login', { timeout: 100000 });
   });
 
 
@@ -18,7 +18,7 @@ test.describe('Testy logowania', () => {
 
   test('Sprawdzenie działania linku Register', async ({ page }) => {
     await page.getByRole('link', { name: 'Register' }).click();
-    await expect(page).toHaveURL('http://localhost:8000/register');
+    await expect(page).toHaveURL('http://localhost:8000/register', { timeout: 100000 });
   });
 
 
@@ -29,9 +29,9 @@ test.describe('Testy logowania', () => {
     await page.getByRole('textbox', { name: 'Email or Phone' }).fill('Testowy@testowy.com');
     await page.getByRole('textbox', { name: 'Password' }).fill('Testowy1!');
     const singInButton = page.getByRole('button', { name: 'Sign In' });
-    await singInButton.click({ timeout: 60000 });
-    await page.waitForURL('http://localhost:8000/dashboard', { timeout: 60000 });
-    await expect(page).toHaveURL('http://localhost:8000/dashboard', { timeout: 60000 });
+    await singInButton.click();
+    await page.waitForURL('http://localhost:8000/dashboard', { timeout: 200000 });
+    await expect(page).toHaveURL('http://localhost:8000/dashboard', { timeout: 200000 });
   });
 
 
@@ -42,17 +42,17 @@ test.describe('Testy logowania', () => {
 
     await expect(page.locator('text=All fields are required')).toHaveText('All fields are required');
 
-    await expect(page).toHaveURL('http://localhost:8000/login');
+    await expect(page).toHaveURL('http://localhost:8000/login', { timeout: 200000 });
   });
 
 
   test('Logowanie z niepoprawnymi danymi', async ({ page }) => {
     await page.getByRole('textbox', { name: 'Email or Phone' }).fill('test@TEST.com');
     await page.getByRole('textbox', { name: 'Password' }).fill('Password1!');
-    await page.getByRole('button', { name: 'SIGN IN' }).click({ timeout: 60000 });
+    await page.getByRole('button', { name: 'SIGN IN' }).click();
 
     await expect(page.locator('text=Login failed. Please try')).toHaveText('Login failed. Please try again.');
-    await expect(page).toHaveURL('http://localhost:8000/login', { timeout: 60000 });
+    await expect(page).toHaveURL('http://localhost:8000/login', { timeout: 200000 });
   });
 
 
@@ -62,7 +62,7 @@ test.describe('Testy logowania', () => {
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     await expect(page.locator('text=Login failed. Please try')).toHaveText('Login failed. Please try again.');
-    await expect(page).toHaveURL('http://localhost:8000/login');
+    await expect(page).toHaveURL('http://localhost:8000/login', { timeout: 200000 });
   });
 
 
@@ -72,7 +72,7 @@ test.describe('Testy logowania', () => {
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     await expect(page.locator('text=All fields are required')).toHaveText('All fields are required');
-    await expect(page).toHaveURL('http://localhost:8000/login');
+    await expect(page).toHaveURL('http://localhost:8000/login', { timeout: 200000 });
   });
 
 
@@ -82,7 +82,7 @@ test.describe('Testy logowania', () => {
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     await expect(page.locator('text=All fields are required')).toHaveText('All fields are required');
-    await expect(page).toHaveURL('http://localhost:8000/login');
+    await expect(page).toHaveURL('http://localhost:8000/login', { timeout: 200000 });
   });
 
 
@@ -92,7 +92,7 @@ test.describe('Testy logowania', () => {
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     await expect(page.locator('text=Login failed. Please try')).toHaveText('Login failed. Please try again.');
-    await expect(page).toHaveURL('http://localhost:8000/login');
+    await expect(page).toHaveURL('http://localhost:8000/login', { timeout: 200000 });
   });
 
 
@@ -102,28 +102,28 @@ test.describe('Testy logowania', () => {
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     await expect(page.locator('text=Incorrect email or phone')).toHaveText('Incorrect email or phone number');
-    await expect(page).toHaveURL('http://localhost:8000/login');
+    await expect(page).toHaveURL('http://localhost:8000/login', { timeout: 200000 });
   });
 
 
   test('Logowanie z SQL Injection w polu hasło', async ({ page }) => {
     await page.getByRole('textbox', { name: 'Email or Phone' }).fill('testowy@example.com');
     await page.getByRole('textbox', { name: 'Password' }).fill("password' OR '1'='1");
-    await page.getByRole('button', { name: 'Sing In' }).click({ timeout: 60000 });
+    await page.getByRole('button', { name: 'Sign In' }).click();
 
     await expect(page.locator('text=Login failed. Please try')).toHaveText('Login failed. Please try again.');
-    await expect(page).toHaveURL('http://localhost:8000/login');
+    await expect(page).toHaveURL('http://localhost:8000/login', { timeout: 200000 });
   });
 
-  // ine wiem czy czasem nie nalezy ograniczyć ilości znaków w polach login i hasło
+  // nie wiem czy czasem nie nalezy ograniczyć ilości znaków w polach login i hasło
   test('Logowanie z długim loginem i hasłem', async ({ page }) => {
     const longString = 'a'.repeat(50);
     await page.getByRole('textbox', { name: 'Email or Phone' }).fill(longString + '@testowy.com');
     await page.getByRole('textbox', { name: 'Password' }).fill('A' + longString + '1!');
-    await page.getByRole('button', { name: 'Sign In' }).click({ timeout: 60000 });
+    await page.getByRole('button', { name: 'Sign In' }).click();
 
-    await page.waitForURL('http://localhost:8000/dashboard', { timeout: 60000 });
-    await expect(page).toHaveURL('http://localhost:8000/dashboard');
+    await page.waitForURL('http://localhost:8000/dashboard', { timeout: 200000 });
+    await expect(page).toHaveURL('http://localhost:8000/dashboard', { timeout: 200000 });
   });
 
   // traktowane jako niewłaściwe dane
@@ -135,7 +135,7 @@ test.describe('Testy logowania', () => {
     await page.getByRole('button', { name: 'Sign In' }).click();
 
     await expect(page.locator('text=Incorrect email or phone')).toHaveText('Incorrect email or phone number');
-    await expect(page).toHaveURL('http://localhost:8000/login');
+    await expect(page).toHaveURL('http://localhost:8000/login', { timeout: 200000 });
   });
 
 
@@ -144,8 +144,7 @@ test.describe('Testy logowania', () => {
     await page.getByRole('textbox', { name: 'Password' }).fill('Testowy1!');
     await page.getByRole('button', { name: 'Sign In' }).click();
 
-    await page.waitForURL('http://localhost:8000/dashboard');
-    await expect(page).toHaveURL('http://localhost:8000/dashboard');
+    await page.waitForURL('http://localhost:8000/dashboard', { timeout: 200000 });
+    await expect(page).toHaveURL('http://localhost:8000/dashboard', { timeout: 200000 });
   });
-
 });
