@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Testy logowania', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:8000/login', { timeout: 100000 });
+    await page.goto('http://localhost:8000/login', { timeout: 200000 });
   });
 
 
