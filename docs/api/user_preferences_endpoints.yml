@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: User Preferences API
-  version: 1.0.0
+  version: 1.1.0
   description: API for managing user preferences.
 servers:
   - url: http://0.0.0.0:8000/api
@@ -26,7 +26,25 @@ paths:
                   preferences:
                     $ref: "#/components/schemas/UserPreference"
         "401":
-          description: Unauthorized
+          description: Unauthorized. User is not authenticated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+        "403":
+          description: Forbidden. User has not verified their email or phone number.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You need to verify either email or phone number.
     patch:
       summary: Update current user preferences
       operationId: updateCurrentUserPreferences
@@ -62,7 +80,25 @@ paths:
                     type: string
                   example: User does not have an e-mail provided, so it is not possible to notice over it.
         "401":
-          description: Unauthorized
+          description: Unauthorized. User is not authenticated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+        "403":
+          description: Forbidden. User has not verified their email or phone number.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You need to verify either email or phone number.
 
 components:
   schemas:
