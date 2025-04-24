@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\DeleteOldAirPollutionData;
 use App\Jobs\StoreCurrentAirPollution;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -35,4 +36,5 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })->withSchedule(function (Schedule $schedule) {
         $schedule->job(new StoreCurrentAirPollution)->everyThirtyMinutes();
+        $schedule->job(new DeleteOldAirPollutionData)->daily();
     })->create();
