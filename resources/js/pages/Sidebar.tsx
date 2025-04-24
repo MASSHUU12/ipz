@@ -22,7 +22,7 @@ import { Link } from "@inertiajs/react";
 const menuItems = [
   { text: "Dashboard", icon: <Home />, path: "/dashboard" },
   { text: "Profile", icon: <Person />, path: "/profile" },
-  { text: "Leaderboard", icon: <Leaderboard />, path: "/leaderboard" },
+  { text: "Leaderboard", icon: <Leaderboard />, path: "/air-quality-ranking" },
   { text: "Message", icon: <Message />, path: "/message" },
   { text: "Settings", icon: <Settings />, path: "/settings" },
   { text: "Favourite", icon: <Star />, path: "/favourite" },
