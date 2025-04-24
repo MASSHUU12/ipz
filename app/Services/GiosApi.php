@@ -9,6 +9,7 @@ use Exception;
 *
 * A PHP class for interacting with the air quality API provided by the
 * Chief Inspectorate of Environmental Protection (GIOŚ) in Poland.
+* https://powietrze.gios.gov.pl/pjp/content/api
 */
 class GiosApi
 {
