@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('air_pollution_leaderboard', function (Blueprint $table) {
             $table->id();
-            $table->integer('rank');
             $table->string('station_name');
             $table->string('city');
             $table->string('air_quality_index');
