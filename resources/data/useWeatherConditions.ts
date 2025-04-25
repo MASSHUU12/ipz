@@ -47,7 +47,7 @@ export const useWeatherConditions = (city: string) => {
       setLoading(true);
       try {
         const station = getStationName(city);
-        const res = await instance.get(`/synop?station=${station}`); // użycie instance
+        const res = await instance.get(`/synop?station=${station}`); 
         const entry = res.data;
         if (entry && entry.temperatura) {
           setWeather({

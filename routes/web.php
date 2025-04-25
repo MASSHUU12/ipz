@@ -35,6 +35,11 @@ Route::get('/email/verify/{id}/{hash}', [\App\Http\Controllers\Auth\VerifyEmailC
 Route::get('/email/verify/thank-you', function () {
 	return Inertia::render('pages/VerifyEmailThankYou');
 })->name('verify.email.thank-you');
+
+Route::get('/air-quality-ranking', function () {
+    return Inertia::render('airQualityRanking');
+})->name('air-quality-ranking');
+
 // Route::get('/', function () {
 //     return Inertia::render('welcome');
 // })->name('home');
