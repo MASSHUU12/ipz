@@ -22,7 +22,6 @@ class AirPollutionLeaderboard extends Model
      * @var array
      */
     protected $fillable = [
-        'rank',
         'station_name',
         'city',
         'air_quality_index',
@@ -32,7 +31,7 @@ class AirPollutionLeaderboard extends Model
         'so2',
         'o3',
         'co',
-        'timestamp',
+        'timestamp'
     ];
 
     /**
@@ -41,7 +40,6 @@ class AirPollutionLeaderboard extends Model
      * @var array<string, string>
      */
      protected $casts = [
-        'rank' => 'integer',
         'station_name' => 'string',
         'city' => 'string',
         'air_quality_index' => 'string',
@@ -52,5 +50,7 @@ class AirPollutionLeaderboard extends Model
         'o3' => 'float',
         'co' => 'float',
         'timestamp' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
      ];
 }
