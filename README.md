@@ -61,7 +61,7 @@ php artisan migrate:fresh --seed
 php artisan serve --host=0.0.0.0 --port=8000
 ```
 
-The application will be available at `http://localhost:8000`.
+API will be available at `http://localhost:8000`.
 
 8. **Run the React development server (frontend):**
 
@@ -69,3 +69,19 @@ The application will be available at `http://localhost:8000`.
 bun install
 bun run dev
 ```
+
+Frontend will be available at `http://localhost:8000`.
+
+9. **(Optional) Automatically run scheduled tasks:**
+
+The server is set up to perform certain actions every so often,
+but in order for them to execute,
+the scheduler and queue must run in the background:
+
+```sh
+php artisan schedule:work &
+php artisan queue:work &
+```
+
+> After each change to the dependent code,
+> it must be restarted for the changes to take effect.
