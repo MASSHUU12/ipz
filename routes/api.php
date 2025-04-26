@@ -3,6 +3,7 @@
 use App\Http\Controllers\AirQualityController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ImgwController;
+use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserPreferenceController;
 use App\Http\Middleware\CheckUserBlocked;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
+Route::get('/leaderboard', [LeaderboardController::class, 'index']);
 Route::get('/air-quality', [AirQualityController::class, 'getAirQuality']);
 
 Route::get('/synop', [ImgwController::class, 'synop']);
