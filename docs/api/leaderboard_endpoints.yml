@@ -1,0 +1,180 @@
+openapi: 3.0.3
+info:
+  title: Air Pollution Leaderboard API
+  version: 1.0.0
+
+servers:
+  - url: http://0.0.0.0:8000/api
+    description: Local API server
+  - url: https://185.238.73.59/api
+    description: Main API server
+
+paths:
+  /leaderboard:
+    get:
+      summary: Get air pollution leaderboard
+      description: >
+        Retrieve a paginated list of air pollution leaderboard entries,
+        ordered by air_quality_index in descending order.
+      parameters:
+        - name: per_page
+          in: query
+          description: "Number of items per page (default: 10)"
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Paginated list of leaderboard entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedAirPollutionLeaderboard"
+        "400":
+          description: Bad Request (e.g. invalid query parameter)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    AirPollutionLeaderboard:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Auto-incremented unique identifier
+        station_name:
+          type: string
+          description: Monitoring station name
+        city:
+          type: string
+          description: City where the station is located
+        air_quality_index:
+          type: string
+          description: Air Quality Index value (higher means worse air)
+        pm10:
+          type: number
+          format: float
+          description: Particulate matter ≤10 µm concentration
+        pm25:
+          type: number
+          format: float
+          description: Particulate matter ≤2.5 µm concentration
+        no2:
+          type: number
+          format: float
+          description: Nitrogen dioxide concentration
+        so2:
+          type: number
+          format: float
+          description: Sulfur dioxide concentration
+        o3:
+          type: number
+          format: float
+          description: Ozone concentration
+        co:
+          type: number
+          format: float
+          description: Carbon monoxide concentration
+        timestamp:
+          type: string
+          format: date-time
+          description: Time of measurement (ISO 8601)
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Record last update timestamp
+      required:
+        - id
+        - station_name
+        - city
+        - air_quality_index
+        - pm10
+        - pm25
+        - no2
+        - so2
+        - o3
+        - co
+        - timestamp
+
+    PaginatedAirPollutionLeaderboard:
+      type: object
+      properties:
+        current_page:
+          type: integer
+          description: The current page number
+        data:
+          type: array
+          description: Array of leaderboard entries
+          items:
+            $ref: "#/components/schemas/AirPollutionLeaderboard"
+        first_page_url:
+          type: string
+          format: uri
+          description: URL to the first page
+        from:
+          type: integer
+          nullable: true
+          description: Index of first item on current page
+        last_page:
+          type: integer
+          description: Total number of pages
+        last_page_url:
+          type: string
+          format: uri
+          description: URL to the last page
+        next_page_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the next page, if any
+        path:
+          type: string
+          format: uri
+          description: Base URL for pagination links
+        per_page:
+          type: integer
+          description: Number of items per page
+        prev_page_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the previous page, if any
+        to:
+          type: integer
+          nullable: true
+          description: Index of last item on current page
+        total:
+          type: integer
+          description: Total number of items
+      required:
+        - current_page
+        - data
+        - first_page_url
+        - last_page
+        - last_page_url
+        - path
+        - per_page
+        - total
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Human-readable error message
+      required:
+        - message
