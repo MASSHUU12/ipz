@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\AirPollutionHistoricalData;
 use App\Services\GiosApi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,10 +14,10 @@ class AirQualityController extends Controller
 {
     protected $giosApi;
 
-    const STATION_CACHE_TTL = 1440;   // 24 hours for station data
-    const AIR_QUALITY_CACHE_TTL = 30; // 30 minutes for air quality data
-    const SENSOR_CACHE_TTL = 60;      // 1 hour for sensor data
-    const FORECAST_CACHE_TTL = 60;    // 1 hour for forecast data
+    const STATION_CACHE_TTL = 1440;   // minutes
+    const AIR_QUALITY_CACHE_TTL = 30; // minutes
+    const SENSOR_CACHE_TTL = 60;      // minutes
+    const FORECAST_CACHE_TTL = 60;    // minutes
 
     /**
      * Constructor
@@ -45,9 +46,11 @@ class AirQualityController extends Controller
             $latitude = $request->input('lat');
             $longitude = $request->input('lon');
 
+            // Round coords for cache/key consistency
             $cacheCoords = [round($latitude, 3), round($longitude, 3)];
-            $stationCacheKey = 'station_' . implode('_', $cacheCoords);
 
+            // Find nearest station (cache hot)
+            $stationCacheKey = 'station_' . implode('_', $cacheCoords);
             $nearestStation = Cache::remember(
                 $stationCacheKey,
                 self::STATION_CACHE_TTL * 60,
@@ -72,14 +75,57 @@ class AirQualityController extends Controller
                 (float)$nearestStation['gegrLon']
             );
 
+            // Check historical data first
+            $historical = AirPollutionHistoricalData::where('station_id', $stationId)
+                ->latest('created_at')
+                ->first();
+
+            if ($historical && $historical->created_at->greaterThan(now()->subMinutes(self::AIR_QUALITY_CACHE_TTL))) {
+                return response()->json([
+                    'success' => true,
+                    'timestamp' => $historical->created_at->toDateTimeString(),
+                    'request' => [
+                        'latitude'  => $latitude,
+                        'longitude' => $longitude,
+                    ],
+                    'data' => [
+                        'station' => [
+                            'id'        => $stationId,
+                            'name'      => $stationName,
+                            'latitude'  => $nearestStation['gegrLat'],
+                            'longitude' => $nearestStation['gegrLon'],
+                            'distance'  => round($distance, 2) . ' km',
+                            'address'   => $nearestStation['addressStreet'] ?? null,
+                            'city'      => $nearestStation['city']['name'] ?? null,
+                            'commune'   => $nearestStation['city']['commune']['communeName'] ?? null,
+                            'district'  => $nearestStation['city']['commune']['districtName'] ?? null,
+                            'province'  => $nearestStation['city']['commune']['provinceName'] ?? null,
+                        ],
+                        'airQuality'  => [
+                            'index'      => $historical->air_quality_index,
+                            'pollutants' => [
+                                'pm10' => ['value' => $historical->pm10],
+                                'pm25' => ['value' => $historical->pm25],
+                                'no2'  => ['value' => $historical->no2],
+                                'so2'  => ['value' => $historical->so2],
+                                'o3'   => ['value' => $historical->o3],
+                                'co'   => ['value' => $historical->co],
+                            ],
+                        ],
+                        'measurements' => $historical->measurements,
+                        'forecasts'    => $historical->forecasts,
+                    ],
+                ]);
+            }
+
+            // No recent history -> fall back to cache / API
+
             // Cache air quality index by station ID
-            $airQualityIndexCacheKey = 'air_quality_index_' . $stationId;
+            $aqCacheKey = 'air_quality_index_' . $stationId;
             $airQualityIndex = Cache::remember(
-                $airQualityIndexCacheKey,
+                $aqCacheKey,
                 self::AIR_QUALITY_CACHE_TTL * 60,
-                function () use ($stationId) {
-                    return $this->giosApi->getAirQualityIndex($stationId);
-                }
+                fn() => $this->giosApi->getAirQualityIndex($stationId)
             );
 
             // Cache station sensors by station ID
@@ -87,13 +133,10 @@ class AirQualityController extends Controller
             $sensors = Cache::remember(
                 $sensorsCacheKey,
                 self::STATION_CACHE_TTL * 60,
-                function () use ($stationId) {
-                    return $this->giosApi->getStationSensors($stationId);
-                }
+                fn() => $this->giosApi->getStationSensors($stationId)
             );
 
             $measurementData = [];
-
             if ($sensors) {
                 foreach ($sensors as $sensor) {
                     $sensorId = $sensor['id'];
@@ -103,9 +146,7 @@ class AirQualityController extends Controller
                     $sensorData = Cache::remember(
                         $sensorDataCacheKey,
                         self::SENSOR_CACHE_TTL * 60,
-                        function () use ($sensorId) {
-                            return $this->giosApi->getSensorData($sensorId);
-                        }
+                        fn() => $this->giosApi->getSensorData($sensorId)
                     );
 
                     if ($sensorData && !empty($sensorData['values'])) {
@@ -133,11 +174,11 @@ class AirQualityController extends Controller
                 }
             }
 
-            // Get forecasts if possible (try to extract TERYT code from city property)
+            // Get forecasts if possible
             $forecasts = [];
             if (isset($nearestStation['city']['id'])) {
                 $terytCodes = [
-                    $nearestStation['city']['id'], // Try using city ID as TERYT
+                    $nearestStation['city']['id'],
                     '1465' // Default to Warsaw if the city ID doesn't work
                 ];
 
@@ -148,14 +189,12 @@ class AirQualityController extends Controller
                         $forecast = Cache::remember(
                             $forecastCacheKey,
                             self::FORECAST_CACHE_TTL * 60,
-                            function () use ($pollutant, $terytCode) {
-                                return $this->giosApi->getForecast($pollutant, $terytCode);
-                            }
+                            fn() => $this->giosApi->getForecast($pollutant, $terytCode)
                         );
 
                         if ($forecast) {
                             $forecasts[$pollutant] = $forecast;
-                            break;
+                            break 2;
                         }
                     }
                 }
@@ -165,23 +204,48 @@ class AirQualityController extends Controller
             $airQualityInfo = null;
             if ($airQualityIndex) {
                 $airQualityInfo = [
-                    'index' => isset($airQualityIndex['stIndexLevel']) ?
-                        $airQualityIndex['stIndexLevel']['indexLevelName'] : 'No data',
+                    'index'           => $airQualityIndex['stIndexLevel']['indexLevelName'] ?? 'No data',
                     'calculationTime' => $airQualityIndex['stCalcDate'] ?? null,
-                    'sourceDataTime' => $airQualityIndex['stSourceDataDate'] ?? null,
+                    'sourceDataTime'  => $airQualityIndex['stSourceDataDate'] ?? null,
                 ];
+                foreach (['pm10', 'pm25', 'o3', 'no2', 'so2', 'co'] as $p) {
+                    $idxKey = "{$p}IndexLevel";
+                    $dtKey  = "{$p}CalcDate";
 
-                foreach (['pm10', 'pm25', 'o3', 'no2', 'so2', 'co'] as $pollutant) {
-                    $indexKey = $pollutant . 'IndexLevel';
-                    $calcDateKey = $pollutant . 'CalcDate';
-
-                    if (isset($airQualityIndex[$indexKey]) && is_array($airQualityIndex[$indexKey])) {
-                        $airQualityInfo['pollutants'][$pollutant] = [
-                            'index' => $airQualityIndex[$indexKey]['indexLevelName'] ?? 'No data',
-                            'calculationTime' => $airQualityIndex[$calcDateKey] ?? null
+                    if (isset($airQualityIndex[$idxKey])) {
+                        $airQualityInfo['pollutants'][$p] = [
+                            'index'           => $airQualityIndex[$idxKey]['indexLevelName'] ?? 'No data',
+                            'calculationTime' => $airQualityIndex[$dtKey] ?? null,
                         ];
                     }
                 }
+            }
+
+            // Persist to historical DB
+            try {
+                $getVal = fn($code) => (optional(
+                    collect($measurementData)->firstWhere('code', $code)
+                )['value']) ?? null;
+
+                AirPollutionHistoricalData::updateOrCreate(
+                    [
+                        'station_id'        => $stationId,
+                        'latitude'          => $cacheCoords[0],
+                        'longitude'         => $cacheCoords[1],
+                        'station_name'      => $stationName,
+                        'air_quality_index' => $airQualityInfo['index'] ?? null,
+                        'pm10'              => $getVal('PM10'),
+                        'pm25'              => $getVal('PM2.5'),
+                        'no2'               => $getVal('NO2'),
+                        'so2'               => $getVal('SO2'),
+                        'o3'                => $getVal('O3'),
+                        'co'                => $getVal('CO'),
+                        'measurements'      => $measurementData,
+                        'forecasts'         => $forecasts,
+                    ]
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to save historical data: ' . $e->getMessage());
             }
 
             $response = [
@@ -211,7 +275,6 @@ class AirQualityController extends Controller
             ];
 
             return response()->json($response);
-
         } catch (\Exception $e) {
             Log::error('Air Quality API error: ' . $e->getMessage());
 
