@@ -15,7 +15,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
 Route::get('/leaderboard', [LeaderboardController::class, 'index']);
-Route::get('/air-quality', [AirQualityController::class, 'getAirQuality']);
+Route::get('/air-quality', [AirQualityController::class, '__invoke']);
 
 Route::get('/synop', [ImgwController::class, 'synop']);
 Route::get('/hydro', [ImgwController::class, 'hydro']);
