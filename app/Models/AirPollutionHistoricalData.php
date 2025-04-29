@@ -22,6 +22,7 @@ class AirPollutionHistoricalData extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'station_id',
         'latitude',
         'longitude',
         'station_name',

@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('air_pollution_historical_data', function (Blueprint $table) {
             $table->id();
+            $table->unsignedInteger('station_id')->nullable();
             $table->float('latitude', 8, 6);
             $table->float('longitude', 8, 6);
             $table->string('station_name');
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->json('measurements')->nullable();
             $table->json('forecasts')->nullable();
             $table->timestamps();
+            $table->index('station_id');
         });
     }
 
