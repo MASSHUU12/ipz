@@ -4,7 +4,7 @@ info:
   description: |
     API for retrieving air quality data for locations in Poland by leveraging
     the GIOŚ (Chief Inspectorate of Environmental Protection) data service.
-  version: 1.0.0
+  version: 1.0.1
 servers:
   - url: https://example.com
     description: Main API server
@@ -19,7 +19,7 @@ paths:
         Returns detailed air quality information for a specific location in Poland,
         including measurements from the nearest monitoring station, air quality index,
         and forecasts if available.
-      operationId: getAirQuality
+      operationId: __invoke
       tags:
         - Air Quality
       parameters:
