@@ -96,6 +96,7 @@ class StoreCurrentAirPollution implements ShouldQueue, ShouldBeUnique
             }
 
             AirPollutionHistoricalData::create([
+                'station_id'        => $$stationId,
                 'latitude'          => $latitude,
                 'longitude'         => $longitude,
                 'station_name'      => $stationName,
