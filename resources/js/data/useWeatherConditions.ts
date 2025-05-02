@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
-import { instance } from "../js/api/api";
 
 import { cityCoordinates } from "./cities";
+import { instance } from "@/api/api";
 
 const buildCityToStationMap = (): Record<string, string> => {
-  return Object.keys(cityCoordinates).reduce((map, city) => {
-    const key = city
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/ /g, "");
-    map[key] = city;
-    return map;
-  }, {} as Record<string, string>);
+  return Object.keys(cityCoordinates).reduce(
+    (map, city) => {
+      const key = city
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/ /g, "");
+      map[key] = city;
+      return map;
+    },
+    {} as Record<string, string>,
+  );
 };
 
 const cityToStation = buildCityToStationMap();
@@ -47,7 +50,7 @@ export const useWeatherConditions = (city: string) => {
       setLoading(true);
       try {
         const station = getStationName(city);
-        const res = await instance.get(`/synop?station=${station}`); 
+        const res = await instance.get(`/synop?station=${station}`);
         const entry = res.data;
         if (entry && entry.temperatura) {
           setWeather({
