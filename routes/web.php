@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Mail\SendMail;
+use App\Http\Controllers\Auth\EmailUpdateController;
 
 Route::get('/login', function() {
     return Inertia::render('login');
@@ -31,6 +32,9 @@ Route::get('/idkfa', function () {
 Route::get('/email/verify/{id}/{hash}', [\App\Http\Controllers\Auth\VerifyEmailController::class, '__invoke'])
 	//->middleware(['signed', 'throttle:6,1'])
 	->name('verification.verify');
+
+Route::post('/user/email', [EmailUpdateController::class, 'update'])
+    ->name('user.email.update');
 
 Route::get('/email/verify/thank-you', function () {
 	return Inertia::render('pages/VerifyEmailThankYou');

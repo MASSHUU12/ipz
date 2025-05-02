@@ -2,74 +2,111 @@
 
 namespace App\Mail;
 
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 
 class SendMail extends Mailable
 {
-	use Queueable, SerializesModels;
+    use Queueable, SerializesModels;
 
-	protected static $messages = [
-		'default' => [
-			'msg' => 'Jest to testowa wiadomość. Prosimy na nią nieodpowiadać',
-		],
-		'emailverify' => [
-			'msg' => '',
-		],
-	];
+    /**
+     * Predefiniowane typy wiadomości i ich podstawowe dane.
+     */
+    protected static $messages = [
+        'default'          => ['msg' => 'Jest to testowa wiadomość. Prosimy na nią nieodpowiadać'],
+        'emailverify'      => ['msg' => 'Potwierdź swój adres e-mail, klikając w link poniżej.'],
+        'warnings_meteo'   => ['msg' => 'Otrzymujesz najnowsze ostrzeżenia meteorologiczne dla Twojej lokalizacji.'],
+        'warnings_hydro'   => ['msg' => 'Otrzymujesz najnowsze ostrzeżenia hydrologiczne dla Twojej lokalizacji.'],
+        'temp_warning'     => ['msg' => 'Temperatura spadła poniżej Twojego progu.'],
+    ];
 
-	protected $chosenMsg;
-	protected $toEmail;
-	protected $messageType;
-	protected $userId;
-	public function __construct(string $messageType = 'default')
-	{
-		$this->messageType = $messageType;
+    protected $chosenMsg;
+    protected $messageType;
+    protected $payload;
 
-		if (!isset(self::$messages[$messageType])) {
-			$this->chosenMsg = ['msg' => 'Default message (type not recognized).'];
-		} else {
-			$this->chosenMsg = self::$messages[$messageType];
-		}
-	}
+    /**
+     * @param string $messageType Typ wiadomości
+     * @param mixed  $payload     Dodatkowe dane (np. ostrzeżenia lub wartość temperatury)
+     */
+    public function __construct(string $messageType = 'default', $payload = null)
+    {
+        $this->messageType = $messageType;
+        $this->payload     = $payload;
 
-	public function build()
-	{
-		$data = $this->chosenMsg;
-		$data['type'] = $this->messageType;
+        $this->chosenMsg = self::$messages[$messageType] ?? ['msg' => 'Domyślna wiadomość (typ nieznany).'];
+    }
 
-		if ($data['type'] === 'emailverify') {
-			$data['verify_link'] = URL::temporarySignedRoute(
-				'verification.verify',
-				now()->addMinutes(60),
-				[
-					'id'   => $this->userId,
-					'hash' => sha1($this->toEmail)
-				]
-			);
+    /**
+     * Buduje wiadomość e-mail.
+     */
+    public function build()
+    {
+        $data = $this->chosenMsg;
+        $data['type'] = $this->messageType;
 
-			//Log::info('Wygenerowany link weryfikacyjny', ['verify_link' => $data['verify_link']]);
-			//dd($data['verify_link']);
+        switch ($this->messageType) {
+            case 'emailverify':
+                $data['verify_link'] = URL::temporarySignedRoute(
+                    'verification.verify',
+                    now()->addMinutes(60),
+                    ['id' => $this->payload['userId'] ?? null, 'hash' => sha1($this->payload['toEmail'] ?? '')]
+                );
+                break;
+            case 'warnings_meteo':
+            case 'warnings_hydro':
+                $data['items'] = $this->payload; // tablica ostrzeżeń
+                break;
+            case 'temp_warning':
+                $data['city']    = $this->payload['city'] ?? '';
+                $data['current'] = $this->payload['current'] ?? '';
+                $data['value']   = $this->payload['value'] ?? '';
+                break;
+        }
 
-		}
+        $view = match ($this->messageType) {
+            'warnings_meteo', 'warnings_hydro' => 'emails.warnings',
+            'temp_warning'                     => 'emails.temp_warning',
+            default                            => 'emails.custom',
+        };
 
-		return $this
-			->from('zutweatherproject@gmail.com', 'ipz')
-			->subject('Testowa wiadomość od ipz')
-			->view('emails.custom')
-			->with([
-				'data' => $data,
-			]);
-	}
+        return $this->from('zutweatherproject@gmail.com', 'IPZ')
+            ->subject($this->getSubject())
+            ->view($view)
+            ->with(['data' => $data]);
+    }
 
-	public static function sendMail(string $to, int $userId, string $messageType)
-	{
-		$instance = new self($messageType);
-		$instance->toEmail = $to;
-		$instance->userId  = $userId;
-		\Illuminate\Support\Facades\Mail::to($to)->send($instance);
-	}
+    /**
+     * Generuje temat wiadomości w zależności od typu.
+     */
+    protected function getSubject(): string
+    {
+        return match ($this->messageType) {
+            'emailverify'      => 'Potwierdzenie adresu e-mail',
+            'warnings_meteo'   => 'Ostrzeżenia meteorologiczne',
+            'warnings_hydro'   => 'Ostrzeżenia hydrologiczne',
+            'temp_warning'     => 'Ostrzeżenie temperaturowe: poniżej progu',
+            default            => 'Powiadomienie z IPZ',
+        };
+    }
+
+    /**
+     * Wysyła maila.
+     *
+     * @param string $to          Adres odbiorcy
+     * @param int    $userId      ID użytkownika (tylko dla emailverify)
+     * @param string $messageType Typ wiadomości
+     * @param mixed  $payload     Dodatkowe dane do przekazania
+     */
+    public static function sendMail(string $to, int $userId, string $messageType, $payload = null)
+    {
+        $instance = new self($messageType, array_merge([
+            'userId'  => $userId,
+            'toEmail' => $to
+        ], is_array($payload) ? $payload : []));
+
+        Mail::to($to)->send($instance);
+    }
 }
