@@ -13,6 +13,7 @@ import { CityMap } from "./CityMap";
 export const Dashboard: React.FC = () => {
   const [searchValue, setSearchValue] = React.useState("");
   const [city, setCity] = React.useState("Szczecin");
+  const [mobileOpen, setMobileOpen] = React.useState(false);
   const isMobile = useMediaQuery("(max-width:900px)");
   const { data: airData, loading: airLoading } = useAirQuality(city);
   const { weather, loading: weatherLoading } = useWeatherConditions(city);
@@ -37,6 +38,10 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const handleDrawerToggle = () => {
+    setMobileOpen(open => !open);
+  };
+
   return (
     <Box
       sx={{
@@ -47,9 +52,13 @@ export const Dashboard: React.FC = () => {
       }}>
       {isMobile ? (
         <Drawer
-          open={false}
-          onClose={() => {}}
-          ModalProps={{ keepMounted: true }}>
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            "& .MuiDrawer-paper": { width: 240, backgroundColor: "#1e1e1e" },
+          }}>
           <Sidebar />
         </Drawer>
       ) : (
@@ -63,6 +72,7 @@ export const Dashboard: React.FC = () => {
           searchValue={searchValue}
           onSearchChange={setSearchValue}
           onSearchSubmit={handleSearch}
+          onMenuClick={handleDrawerToggle}
         />
 
         <Grid container spacing={3} sx={{ mt: 1 }}>

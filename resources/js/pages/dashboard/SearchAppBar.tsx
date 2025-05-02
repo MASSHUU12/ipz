@@ -5,23 +5,42 @@ import {
   TextField,
   InputAdornment,
   IconButton,
+  useMediaQuery,
 } from "@mui/material";
-import { Search as SearchIcon, Notifications } from "@mui/icons-material";
+import {
+  Menu as MenuIcon,
+  Search as SearchIcon,
+  Notifications,
+} from "@mui/icons-material";
 
 interface Props {
   searchValue: string;
   onSearchChange: (v: string) => void;
   onSearchSubmit: () => void;
+  onMenuClick?: () => void;
 }
 
 export const SearchAppBar: React.FC<Props> = ({
   searchValue,
   onSearchChange,
   onSearchSubmit,
+  onMenuClick,
 }) => {
+  const isMobile = useMediaQuery("(max-width:900px)");
+
   return (
-    <AppBar position="static" sx={{ backgroundColor: "#1e1e1e", p: 1 }}>
+    <AppBar position="static" sx={{ backgroundColor: "#1e1e1e" }}>
       <Toolbar sx={{ justifyContent: "space-between" }}>
+        {isMobile && (
+          <IconButton
+            edge="start"
+            color="inherit"
+            onClick={onMenuClick}
+            sx={{ mr: 1 }}>
+            <MenuIcon />
+          </IconButton>
+        )}
+
         <TextField
           fullWidth
           placeholder="Search city"
