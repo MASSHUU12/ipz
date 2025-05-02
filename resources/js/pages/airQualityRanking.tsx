@@ -10,7 +10,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import { instance } from "../../js/api/api";
-import { cityCoordinates } from "../../data/cities";
+import { cityCoordinates } from "../../js/data/cities";
 import Sidebar from "./Sidebar";
 import pLimit from "p-limit";
 const normalizeParameter = (label: string): string => {
