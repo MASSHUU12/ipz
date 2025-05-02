@@ -1,4 +1,5 @@
 import { cityCoordinates } from "@/data/cities";
+import { LatLngExpression } from "leaflet";
 
 const mapping: Record<string, string> = {
   "pył zawieszony pm10": "pm10",
@@ -9,9 +10,7 @@ const mapping: Record<string, string> = {
   "tlenek węgla": "co",
 };
 
-export const getCityLatLng = (
-  city: string,
-): { lat: number; lng: number } | undefined => {
+export const getCityLatLng = (city: string): LatLngExpression | undefined => {
   const coords = cityCoordinates[city];
   return coords && { lat: coords.lat, lng: coords.lon };
 };

@@ -21,7 +21,13 @@ export const WeatherCard: React.FC<Props> = ({
   weather,
   loading,
 }) => (
-  <Card sx={{ backgroundColor: "#222", color: "#fff", p: 2, borderRadius: 2 }}>
+  <Card
+    sx={{
+      backgroundColor: "#222",
+      color: "#fff",
+      borderRadius: 2,
+      height: "100%",
+    }}>
     <CardContent>
       <Typography variant="h6">{dateStr}</Typography>
       <Typography variant="subtitle1">{city}</Typography>
