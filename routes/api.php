@@ -10,6 +10,10 @@ use App\Http\Middleware\CheckUserBlocked;
 use App\Http\Middleware\EnsureUserIsVerified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AddressSuggestionController;
+
+Route::get('/addresses/suggest', [AddressSuggestionController::class, 'suggest'])
+    ->name('addresses.suggest');
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
