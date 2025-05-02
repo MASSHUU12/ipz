@@ -1,0 +1,108 @@
+openapi: 3.0.3
+info:
+  title: Address Suggestions API
+  description: >
+    Endpoint for retrieving fuzzy‑matched location name suggestions
+    based on a partial query string.
+  version: 1.0.0
+servers:
+  - url: https://example.com/api
+    description: Main API server
+tags:
+  - name: Addresses
+    description: Suggestion endpoints for locations
+
+paths:
+  /addresses/suggest:
+    get:
+      summary: Suggest available location names
+      description: >
+        Returns up to 10 suggested station or city names based on a fuzzy match
+        of the supplied partial query string. Useful for autocompletion.
+      operationId: suggestAddresses
+      tags:
+        - Addresses
+      parameters:
+        - name: q
+          in: query
+          description: Partial name fragment of the city or station
+          required: true
+          schema:
+            type: string
+            example: "warsz"
+      responses:
+        "200":
+          description: A list of suggested names
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suggestions:
+                    type: array
+                    description: Array of matching location names
+                    items:
+                      type: string
+                    example:
+                      - "Warszawa-Centrum"
+                      - "Warszawa-Wawer"
+        "400":
+          description: Validation error (missing or invalid `q`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse422"
+        "401":
+          description: Unauthorized (if protected by auth)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse500"
+
+components:
+  schemas:
+    ErrorResponse401:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Unauthorized"
+    ErrorResponse422:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Validation error"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            q:
+              - "The q field is required."
+    ErrorResponse500:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Server error"
+        error:
+          type: string
+          example: "Exception details"
