@@ -9,7 +9,7 @@ Route::get('/login', function() {
 })->name('login');
 
 Route::get('/', function () {
-    return Inertia::render('dashboard');
+    return Inertia::render('dashboard/Dashboard');
 })->name('dashboard');
 
 Route::get('profile', function () {
@@ -17,8 +17,8 @@ Route::get('profile', function () {
 })->name('profile');
 
 Route::get('/dashboard', function () {
-    return Inertia::render('dashboard');
-});
+    return Inertia::render('dashboard/Dashboard');
+})->name('dashboard');
 
 Route::get('/register', function () {
     return Inertia::render('register');
