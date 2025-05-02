@@ -1,0 +1,112 @@
+openapi: 3.0.3
+info:
+  title: User Email Update API
+  description: >
+    Endpoint for authenticated users to update their email address.
+    Clears the old verification flag and sends a new verification link.
+  version: 1.0.0
+servers:
+  - url: https://example.com/api
+    description: Main API server
+tags:
+  - name: User
+    description: Operations related to the authenticated user
+
+paths:
+  /user/email:
+    patch:
+      summary: Update user email address
+      description: >
+        Allows a logged‑in user to change their email. The old
+        `email_verified_at` timestamp is cleared, and a new
+        verification link is sent to the new address.
+      operationId: updateUserEmail
+      tags:
+        - User
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: New email address (must be unique)
+                  example: "newuser@example.com"
+              required:
+                - email
+      responses:
+        "200":
+          description: Email updated and verification link sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "E-mail został zaktualizowany, wysłaliśmy link weryfikacyjny."
+        "401":
+          description: Unauthorized (user not logged in)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+        "422":
+          description: Validation error (invalid or non‐unique email)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse422"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse500"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse401:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Unauthenticated."
+    ErrorResponse422:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "The given data was invalid."
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            email:
+              - "The email has already been taken."
+    ErrorResponse500:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Server error"
+        error:
+          type: string
+          example: "Detailed exception message"

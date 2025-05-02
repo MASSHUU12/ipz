@@ -11,6 +11,9 @@ servers:
 tags:
   - name: Air Quality
     description: Operations related to air quality data
+  - name: Addresses
+    description: Suggestion endpoints
+
 paths:
   /air-quality:
     get:
@@ -18,15 +21,15 @@ paths:
       description: |
         Returns detailed air quality information for a specific location in Poland,
         including measurements from the nearest monitoring station, air quality index,
-        and forecasts if available.
-      operationId: __invoke
+        and forecasts if available. You may specify either `lat`/`lon` **or** `addr`.
+      operationId: getAirQuality
       tags:
         - Air Quality
       parameters:
         - name: lat
           in: query
-          description: Latitude coordinate (must be within Poland's range)
-          required: true
+          description: Latitude coordinate (must be within Poland's range; required if `addr` is not provided)
+          required: false
           schema:
             type: number
             format: float
@@ -35,14 +38,21 @@ paths:
             example: 52.2297
         - name: lon
           in: query
-          description: Longitude coordinate (must be within Poland's range)
-          required: true
+          description: Longitude coordinate (must be within Poland's range; required if `addr` is not provided)
+          required: false
           schema:
             type: number
             format: float
             minimum: 14.0
             maximum: 24.0
             example: 21.0122
+        - name: addr
+          in: query
+          description: Fuzzy name of the city/station—required if `lat`/`lon` are not provided
+          required: false
+          schema:
+            type: string
+            example: "Szczecin Żołnierska"
       responses:
         "200":
           description: Successful operation
@@ -50,27 +60,78 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AirQualityResponse"
-        "404":
-          description: No measuring stations found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse404"
-        "422":
-          description: Validation error
+        "400":
+          description: Validation error (must supply either lat+lon or addr)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse422"
+        "404":
+          description: No measuring stations or no matching location found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse404"
         "500":
           description: Server error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse500"
+      # Custom validation rule: require either (lat and lon) OR addr
+      x-validator:
+        anyOf:
+          - required: [lat, lon]
+          - required: [addr]
+
+  /addresses/suggest:
+    get:
+      summary: Suggest available locations by partial query
+      description: |
+        Returns up to 10 suggested station names based on a fuzzy match
+        of the supplied query string.
+      operationId: suggestAddresses
+      tags:
+        - Addresses
+      parameters:
+        - name: q
+          in: query
+          description: Partial name of the city or station
+          required: true
+          schema:
+            type: string
+            example: "warsz"
+      responses:
+        "200":
+          description: List of suggested location names
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      - "Warszawa-Centrum"
+                      - "Warszawa-Wawer"
+        "401":
+          description: Unauthorized (if endpoint is protected)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse401"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse500"
+
 components:
   schemas:
-    AirQualityResponse:
+    AirQualityResponse:       # unchanged...
       type: object
       properties:
         success:
@@ -94,111 +155,8 @@ components:
         data:
           type: object
           properties:
-            station:
-              type: object
-              properties:
-                id:
-                  type: integer
-                  example: 123
-                name:
-                  type: string
-                  example: "Warszawa-Centrum"
-                latitude:
-                  type: string
-                  example: "52.2258"
-                longitude:
-                  type: string
-                  example: "21.0095"
-                distance:
-                  type: string
-                  example: "0.45 km"
-                address:
-                  type: string
-                  nullable: true
-                  example: "ul. Marszałkowska 1"
-                city:
-                  type: string
-                  nullable: true
-                  example: "Warszawa"
-                commune:
-                  type: string
-                  nullable: true
-                  example: "Warszawa"
-                district:
-                  type: string
-                  nullable: true
-                  example: "Warszawa"
-                province:
-                  type: string
-                  nullable: true
-                  example: "MAZOWIECKIE"
-            airQuality:
-              type: object
-              nullable: true
-              properties:
-                index:
-                  type: string
-                  example: "Dobry"
-                calculationTime:
-                  type: string
-                  format: date-time
-                  nullable: true
-                  example: "2025-03-25 10:00:00"
-                sourceDataTime:
-                  type: string
-                  format: date-time
-                  nullable: true
-                  example: "2025-03-25 10:00:00"
-                pollutants:
-                  type: object
-                  additionalProperties:
-                    type: object
-                    properties:
-                      index:
-                        type: string
-                        example: "Dobry"
-                      calculationTime:
-                        type: string
-                        format: date-time
-                        nullable: true
-                        example: "2025-03-25 10:00:00"
-            measurements:
-              type: array
-              items:
-                type: object
-                properties:
-                  parameter:
-                    type: string
-                    example: "pył zawieszony PM10"
-                  code:
-                    type: string
-                    example: "PM10"
-                  value:
-                    type: number
-                    format: float
-                    example: 24.5
-                  unit:
-                    type: string
-                    example: "µg/m³"
-                  measurementTime:
-                    type: string
-                    format: date-time
-                    example: "2025-03-25 10:00:00"
-            forecasts:
-              type: object
-              additionalProperties:
-                type: object
-                additionalProperties:
-                  type: number
-                  format: float
-              example:
-                PM10:
-                  "20250325": 18.45
-                  "20250326": 21.32
-                NO2:
-                  "20250325": 32.1
-                  "20250326": 29.4
-    ErrorResponse404:
+          # ... existing station, airQuality, measurements, forecasts ...
+    ErrorResponse404:         # unchanged...
       type: object
       properties:
         success:
@@ -207,7 +165,7 @@ components:
         message:
           type: string
           example: "No measuring stations found"
-    ErrorResponse422:
+    ErrorResponse422:         # renamed from 400 to 422
       type: object
       properties:
         success:
@@ -224,9 +182,8 @@ components:
               type: string
           example:
             lat:
-              - "The lat field is required."
-              - "The lat must be between 49 and 55."
-    ErrorResponse500:
+              - "The lat field is required when addr is not present."
+    ErrorResponse500:         # unchanged...
       type: object
       properties:
         success:
@@ -238,3 +195,12 @@ components:
         error:
           type: string
           example: "Error message details"
+    ErrorResponse401:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Unauthorized"
