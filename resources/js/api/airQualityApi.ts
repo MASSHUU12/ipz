@@ -23,22 +23,21 @@ export interface Pollutant {
 export interface AirQuality {
   index: string;
   pollutants: {
-    pm10: Pollutant;
-    pm25: Pollutant;
-    no2: Pollutant;
-    so2: Pollutant;
-    o3: Pollutant;
-    co: Pollutant;
+    pm10?: Pollutant;
+    pm25?: Pollutant;
+    no2?: Pollutant;
+    so2?: Pollutant;
+    o3?: Pollutant;
+    co?: Pollutant;
   };
 }
 
 export interface Measurement {
-  date: string;
+  parameter: string;
+  code: string;
   value: number;
-}
-
-export interface Measurements {
-  [key: string]: Measurement[];
+  unit: string;
+  measurementTime: string;
 }
 
 export interface AirQualityResponse {
@@ -47,7 +46,7 @@ export interface AirQualityResponse {
   request: Coords;
   station: Station;
   airQuality: AirQuality;
-  measurements: Measurements[];
+  measurements: Measurement[];
   forecasts: unknown[];
 }
 

@@ -1,17 +1,11 @@
 import React from "react";
 import { Card, CardContent, Typography, Box } from "@mui/material";
-
-interface Weather {
-  temperature: number;
-  humidity: number;
-  wind_speed: number;
-  pressure: number;
-}
+import { SynopDataConverted } from "@/api/synopApi";
 
 interface Props {
   city: string;
   dateStr: string;
-  weather: Weather | null;
+  weather: SynopDataConverted | null;
   loading: boolean;
 }
 
@@ -36,7 +30,7 @@ export const WeatherCard: React.FC<Props> = ({
       ) : (
         <Box mt={2} textAlign="center">
           <Typography variant="h4">🌤 {weather.temperature}°C</Typography>
-          <Typography>💧 {weather.humidity}%</Typography>
+          <Typography>💧 {weather.relative_humidity}%</Typography>
           <Typography>💨 {weather.wind_speed} m/s</Typography>
           <Typography>🌡 {weather.pressure} hPa</Typography>
         </Box>

@@ -9,15 +9,16 @@ export const useAirQuality = (city: string) => {
     const fetchData = async () => {
       setLoading(true);
 
-      setData(await getAirQuality(city));
+      const r = await getAirQuality(city);
+      setData(r);
 
-      console.log(`API Response dla ${city}:`, data);
+      console.log(`API Response dla ${city}:`, r);
 
       setLoading(false);
     };
 
     fetchData();
-  }, [city, data]);
+  }, [city]);
 
   return { data, loading };
 };
