@@ -23,7 +23,8 @@ class AdminTest extends TestCase
     /** @test */
     public function testRenderAdminPage()
     {
-        $response = $this->get('/idkfa');
+        // Wysyłamy GET z Accept: application/json
+        $response = $this->getJson('/idkfa');
 
         $response->assertStatus(200)
             ->assertInertia(
