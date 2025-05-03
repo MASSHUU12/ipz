@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
 use Inertia\Testing\AssertableInertia as Assert;
 use Database\Seeders\RolesAndPermissionsSeeder;
 
@@ -16,8 +17,13 @@ class AdminTest extends TestCase
     {
         parent::setUp();
 
-        // Zasadź role i uprawnienia
+        // Zasadź role (w razie potrzeby dla innych testów)
         $this->seed(RolesAndPermissionsSeeder::class);
+
+        // Zapobiegamy próbom odczytu mix-manifest.json
+        Config::set('inertia.version', function ($request) {
+            return 'test';
+        });
     }
 
     /** @test */
