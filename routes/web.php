@@ -19,7 +19,7 @@ Route::get('profile', function () {
 
 Route::get('/dashboard', function () {
     return Inertia::render('dashboard/Dashboard');
-})->name('dashboard');
+})->name('dashboard.dashboard');
 
 Route::get('/register', function () {
     return Inertia::render('register');
