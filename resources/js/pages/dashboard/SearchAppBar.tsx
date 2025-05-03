@@ -59,42 +59,7 @@ export const SearchAppBar: React.FC<Props> = ({
       .catch(console.error);
   }, [debouncedSearch]);
 
-    const [suggestions, setSuggestions] = useState<string[]>([]);
-    const [open, setOpen] = useState(false);
-
-    function useDebounce(value: string, delay = 300) {
-        const [debounced, setDebounced] = useState(value);
-        useEffect(() => {
-            const handler = setTimeout(() => setDebounced(value), delay);
-            return () => clearTimeout(handler);
-        }, [value, delay]);
-        return debounced;
-    }
-
-    const debouncedSearch = useDebounce(searchValue, 300);
-    const token = localStorage.getItem("token") || "";
-
-
-    useEffect(() => {
-        if (!debouncedSearch.trim() || !token) {
-            setSuggestions([]);
-            setOpen(false);
-            return;
-        }
-
-        suggestAddresses({ token, q: debouncedSearch })
-            .then(data => {
-                if (data) {
-                    setSuggestions(data.suggestions);
-                    setOpen(data.suggestions.length > 0);
-                }
-            })
-            .catch(console.error);
-    }, [debouncedSearch, token]);
-
-
-
-    return (
+  return (
     <AppBar position="static" sx={{ backgroundColor: "#1e1e1e" }}>
       <Toolbar sx={{ justifyContent: "space-between" }}>
         {isMobile && (
