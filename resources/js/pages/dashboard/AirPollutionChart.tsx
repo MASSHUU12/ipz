@@ -1,3 +1,4 @@
+import { Measurement, Measurements } from "@/api/airQualityApi";
 import { getAirQualityLevel, normalizeParameter } from "@/utils/airQuality";
 import React, { useMemo } from "react";
 import {
@@ -11,25 +12,29 @@ import {
   Cell,
 } from "recharts";
 
-interface Measurement {
-  parameter: string;
-  value: number | string;
-}
-
 interface Props {
-  measurements?: Measurement[];
+  measurements?: Measurements[];
 }
 
 export const AirPollutionChart: React.FC<Props> = ({ measurements }) => {
-  const data = useMemo(
-    () =>
-      measurements?.map(m => {
-        const param = normalizeParameter(m.parameter);
-        const { level, color } = getAirQualityLevel(param, m.value);
-        return { name: param.toUpperCase(), value: +m.value, level, color };
-      }) || [],
-    [measurements],
-  );
+  const data = useMemo(() => {
+    if (!measurements) return [];
+
+    return measurements.flatMap(measurementObj =>
+      Object.entries(measurementObj).flatMap(([key, values]) =>
+        values.map((m: Measurement) => {
+          const param = normalizeParameter(key);
+          const { level, color } = getAirQualityLevel(param, m.value);
+          return {
+            name: param.toUpperCase(),
+            value: +m.value,
+            level,
+            color,
+          };
+        }),
+      ),
+    );
+  }, [measurements]);
 
   return (
     <ResponsiveContainer width="100%" height={250}>
