@@ -80,6 +80,7 @@ export const Dashboard: React.FC = () => {
         />
 
         <Grid container spacing={3} sx={{ mt: 1 }}>
+          {/* Weather card */}
           <Grid item xs={12} md={6}>
             <WeatherCard
               city={city}
@@ -88,6 +89,7 @@ export const Dashboard: React.FC = () => {
               loading={weatherLoading}
             />
           </Grid>
+          {/* Air pollution chart */}
           <Grid item xs={12} md={6}>
             <Card
               sx={{
@@ -101,6 +103,7 @@ export const Dashboard: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
+          {/* Map */}
           <Grid item xs={12} md={6}>
             <Card sx={{ height: 400, borderRadius: 2 }}>
               <CityMap coords={getCoords()} city={city} />
