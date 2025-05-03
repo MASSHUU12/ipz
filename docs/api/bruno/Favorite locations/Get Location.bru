@@ -1,0 +1,19 @@
+meta {
+  name: Get Location
+  type: http
+  seq: 1
+}
+
+get {
+  url: 0.0.0.0:8000/api/favorites/:favorite
+  body: none
+  auth: bearer
+}
+
+params:path {
+  favorite: 1
+}
+
+headers {
+  Accept: application/json
+}
