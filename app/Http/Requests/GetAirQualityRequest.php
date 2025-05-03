@@ -62,7 +62,7 @@ class GetAirQualityRequest extends FormRequest
             ->all();
 
         if (empty($candidates)) {
-            throw new \RuntimeException("Nie znaleziono lokalizacji podobnej do \"{$this->input('addr')}\"");
+            throw new \RuntimeException("No location similar to \"{$this->input('addr')}\"");
         }
 
         // Compute Levenshtein distances

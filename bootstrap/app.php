@@ -37,11 +37,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->withSchedule(function (Schedule $schedule) {
-        $schedule->call(function () {
-            Bus::chain([
-                new StoreCurrentAirPollution,
-                new CreateNewLeaderboard
-            ])->dispatch();
-        })->everyThirtyMinutes();
-        // $schedule->job(new DeleteOldAirPollutionData)->daily();
+//        $schedule->call(function () {
+//            Bus::chain([
+//                new StoreCurrentAirPollution,
+//                new CreateNewLeaderboard
+//            ])->dispatch();
+//        })->everyThirtyMinutes();
+//        $schedule->job(new DeleteOldAirPollutionData)->daily();
+        $schedule->job(new StoreCurrentAirPollution)->everyThirtyMinutes();
+        $schedule->job(new CreateNewLeaderboard)->everyThirtyMinutes();
     })->create();
