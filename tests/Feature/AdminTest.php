@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Inertia\Testing\AssertableInertia as Assert;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use App\Http\Middleware\HandleInertiaRequests;
 
 class AdminTest extends TestCase
 {
@@ -17,20 +18,18 @@ class AdminTest extends TestCase
     {
         parent::setUp();
 
-        // Zasadź role (w razie potrzeby dla innych testów)
+        // Zasadź role (potrzebne w pozostałych testach)
         $this->seed(RolesAndPermissionsSeeder::class);
 
-        // Zapobiegamy próbom odczytu mix-manifest.json
-        Config::set('inertia.version', function ($request) {
-            return 'test';
-        });
+        // Wyłączamy tylko Inertia-middleware, żeby nie próbowało czytać manifestu
+        $this->withoutMiddleware(HandleInertiaRequests::class);
     }
 
     /** @test */
     public function testRenderAdminPage()
     {
-        // Wysyłamy GET z Accept: application/json
-        $response = $this->getJson('/idkfa');
+        // Teraz prostym GET bez dodatkowych nagłówków
+        $response = $this->get('/idkfa');
 
         $response->assertStatus(200)
             ->assertInertia(
@@ -42,37 +41,30 @@ class AdminTest extends TestCase
     /** @test */
     public function testAccessAdmintestAsSuperAdmin()
     {
-        // Utwórz użytkownika i nadaj mu rolę Super Admin
         $user = User::factory()->create();
         $user->assignRole('Super Admin');
 
-        $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admintest');
-
-        $response->assertStatus(200)
-            ->assertJson([
-                'message' => 'Sphinx of black quartz, judge my vow',
-            ]);
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/admintest')
+            ->assertStatus(200)
+            ->assertJson(['message' => 'Sphinx of black quartz, judge my vow']);
     }
 
     /** @test */
     public function testForbiddenAccessAdmintestAsRegularUser()
     {
-        // Utwórz użytkownika z rolą User
         $user = User::factory()->create();
         $user->assignRole('User');
 
-        $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admintest');
-
-        $response->assertStatus(403);
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/admintest')
+            ->assertStatus(403);
     }
 
     /** @test */
     public function testUnauthorizedAccessAdmintestWithoutAuthentication()
     {
-        $response = $this->getJson('/api/admintest');
-
-        $response->assertStatus(401);
+        $this->getJson('/api/admintest')
+            ->assertStatus(401);
     }
 }
