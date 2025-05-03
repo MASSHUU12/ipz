@@ -10,7 +10,6 @@ import {
   MenuItem,
 } from "@mui/material";
 import { instance } from "../../js/api/api";
-import { cityCoordinates } from "../../js/data/cities";
 import Sidebar from "./Sidebar";
 import pLimit from "p-limit";
 const normalizeParameter = (label: string): string => {
@@ -19,17 +18,15 @@ const normalizeParameter = (label: string): string => {
     "pył zawieszony pm2.5": "pm25",
     "particulate matter pm10": "pm10",
     "particulate matter pm2.5": "pm25",
-    "pm10": "pm10",
+    pm10: "pm10",
     "pm2.5": "pm25",
-    "no2": "no2",
-    "so2": "so2",
-    "o3": "o3",
-    "co": "co",
+    no2: "no2",
+    so2: "so2",
+    o3: "o3",
+    co: "co",
   };
   return mapping[label.toLowerCase()] || label.toLowerCase();
 };
-
-
 
 const parameterOptions = [
   { label: "PM10 (Particulate Matter)", value: "pm10" },
@@ -56,7 +53,7 @@ const fetchValueForCity = async (
   city: string,
   lat: number,
   lon: number,
-  parameter: string
+  parameter: string,
 ): Promise<CityEntry | null> => {
   try {
     const res = await instance.get(`/air-quality?lat=${lat}&lon=${lon}`, {
@@ -66,12 +63,15 @@ const fetchValueForCity = async (
     const measurements: Measurement[] = json?.data?.measurements ?? [];
 
     const data = measurements.find(
-      (m: Measurement) => normalizeParameter(m.parameter) === parameter
+      (m: Measurement) => normalizeParameter(m.parameter) === parameter,
     );
-    
+
     if (!data || isNaN(Number(data.value))) {
       console.warn(`Brak danych ${parameter.toUpperCase()} dla ${city}`);
-      console.log(`Miasto ${city} ma dostępne parametry:`, measurements.map(m => m.parameter));
+      console.log(
+        `Miasto ${city} ma dostępne parametry:`,
+        measurements.map(m => m.parameter),
+      );
 
       return null;
     }
@@ -79,7 +79,7 @@ const fetchValueForCity = async (
     return { city, value: Number(data.value) };
   } catch (err) {
     console.error(`Błąd pobierania danych dla ${city}:`, err);
-    
+
     return null;
   }
 };
@@ -96,7 +96,9 @@ const AirQualityRanking = () => {
       const limit = pLimit(1);
 
       const limitedFetches = cities.map(([city, coords]) =>
-        limit(() => fetchValueForCity(city, coords.lat, coords.lon, selectedParam))
+        limit(() =>
+          fetchValueForCity(city, coords.lat, coords.lon, selectedParam),
+        ),
       );
 
       const results = await Promise.all(limitedFetches);
@@ -111,7 +113,13 @@ const AirQualityRanking = () => {
   }, [selectedParam]);
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#1e1e1e", color: "#fff" }}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "100vh",
+        backgroundColor: "#1e1e1e",
+        color: "#fff",
+      }}>
       <Box sx={{ width: 240, flexShrink: 0 }}>
         <Sidebar />
       </Box>
@@ -124,21 +132,21 @@ const AirQualityRanking = () => {
             p: 4,
             boxShadow: "0 0 15px rgba(0,0,0,0.5)",
             borderRadius: "12px",
-          }}
-        >
+          }}>
           <Typography variant="h5" gutterBottom>
             Top 10 Cities by Parameter: {selectedParam.toUpperCase()}
           </Typography>
 
           <FormControl fullWidth sx={{ maxWidth: 300, my: 2 }}>
-            <InputLabel id="param-label" sx={{ color: "#ccc" }}>Select parameter</InputLabel>
+            <InputLabel id="param-label" sx={{ color: "#ccc" }}>
+              Select parameter
+            </InputLabel>
             <Select
               labelId="param-label"
               value={selectedParam}
-              onChange={(e) => setSelectedParam(e.target.value)}
-              sx={{ color: "#fff", backgroundColor: "#1e1e1e" }}
-            >
-              {parameterOptions.map((option) => (
+              onChange={e => setSelectedParam(e.target.value)}
+              sx={{ color: "#fff", backgroundColor: "#1e1e1e" }}>
+              {parameterOptions.map(option => (
                 <MenuItem key={option.value} value={option.value}>
                   {option.label}
                 </MenuItem>
@@ -151,7 +159,8 @@ const AirQualityRanking = () => {
           ) : ranking.length === 0 ? (
             <Typography>Brak danych dla wybranego parametru.</Typography>
           ) : (
-            <Box sx={{ mt: 4, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box
+              sx={{ mt: 4, display: "flex", flexDirection: "column", gap: 2 }}>
               {ranking.map((entry, index) => (
                 <Box
                   key={entry.city}
@@ -168,12 +177,13 @@ const AirQualityRanking = () => {
                     "&:hover": {
                       backgroundColor: "#2a2a2a",
                     },
-                  }}
-                >
+                  }}>
                   <Typography variant="h6" sx={{ fontWeight: 500 }}>
                     <strong>{index + 1}.</strong> {entry.city}
                   </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: "bold", color: "#00c8ff" }}>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: "bold", color: "#00c8ff" }}>
                     {entry.value.toFixed(1)} µg/m³
                   </Typography>
                 </Box>
