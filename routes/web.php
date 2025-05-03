@@ -44,6 +44,8 @@ Route::get('/air-quality-ranking', function () {
     return Inertia::render('airQualityRanking');
 })->name('air-quality-ranking');
 
+Route::inertia('/EditProfile', 'EditProfile');
+
 // Route::get('/', function () {
 //     return Inertia::render('welcome');
 // })->name('home');

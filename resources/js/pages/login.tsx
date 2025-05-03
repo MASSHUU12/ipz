@@ -41,9 +41,9 @@ const Login = () => {
       }
 
       const response = await instance.post("/login", payload);
-      const token = response.data.token;
-
+      const { token, user } = response.data;
       localStorage.setItem('authToken', token);
+      localStorage.setItem('user', JSON.stringify(user));
   
       router.visit('/dashboard');
     }catch (error: any) {
