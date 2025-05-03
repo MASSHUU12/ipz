@@ -53,6 +53,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function favoriteLocations()
+    {
+        return $this->hasMany(UserFavoriteLocation::class);
+    }
+
     /**
      * Get the user preference associated with the user.
      */
