@@ -105,9 +105,9 @@ export const Dashboard: React.FC = () => {
           </Grid>
           {/* Map */}
           <Grid item xs={12} md={6}>
-            <Card sx={{ height: 400, borderRadius: 2 }}>
-              <CityMap coords={getCoords()} city={city} />
-            </Card>
+          <Card sx={{ height: 400, borderRadius: 2, boxShadow: 3 }}>
+            <CityMap coords={getCoords()} city={city} />
+          </Card>
           </Grid>
         </Grid>
       </Box>
