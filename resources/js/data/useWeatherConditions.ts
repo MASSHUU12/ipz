@@ -1,39 +1,5 @@
 import { useEffect, useState } from "react";
-
-import { cityCoordinates } from "./cities";
 import { instance } from "@/api/api";
-
-const buildCityToStationMap = (): Record<string, string> => {
-  return Object.keys(cityCoordinates).reduce(
-    (map, city) => {
-      const key = city
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .replace(/ /g, "");
-      map[key] = city;
-      return map;
-    },
-    {} as Record<string, string>,
-  );
-};
-
-const cityToStation = buildCityToStationMap();
-
-const getStationName = (city: string): string => {
-  const key = city
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/ /g, "");
-
-  const mapped = cityToStation[key] || city;
-
-  return mapped
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ /g, "");
-};
 
 export const useWeatherConditions = (city: string) => {
   const [weather, setWeather] = useState<null | {
@@ -49,7 +15,10 @@ export const useWeatherConditions = (city: string) => {
     const fetchWeather = async () => {
       setLoading(true);
       try {
-        const station = getStationName(city);
+        const station = city
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/ /g, "");
         const res = await instance.get(`/synop?station=${station}`);
         const entry = res.data;
         if (entry && entry.temperatura) {
