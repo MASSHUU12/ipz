@@ -10,7 +10,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import { instance } from "../../js/api/api";
-import { cityCoordinates } from "../../data/cities";
+import { cityCoordinates } from "../../js/data/cities";
 import Sidebar from "./Sidebar";
 import pLimit from "p-limit";
 const normalizeParameter = (label: string): string => {
@@ -68,7 +68,7 @@ const fetchValueForCity = async (
     const data = measurements.find(
       (m: Measurement) => normalizeParameter(m.parameter) === parameter
     );
-    
+
     if (!data || isNaN(Number(data.value))) {
       console.warn(`Brak danych ${parameter.toUpperCase()} dla ${city}`);
       console.log(`Miasto ${city} ma dostępne parametry:`, measurements.map(m => m.parameter));
@@ -79,7 +79,7 @@ const fetchValueForCity = async (
     return { city, value: Number(data.value) };
   } catch (err) {
     console.error(`Błąd pobierania danych dla ${city}:`, err);
-    
+
     return null;
   }
 };
