@@ -5,6 +5,7 @@ import { LatLngExpression } from "leaflet";
 const MapUpdater: React.FC<{ coords: LatLngExpression }> = ({ coords }) => {
   const map = useMap();
   useEffect(() => {
+    // map.invalidateSize();
     map.flyTo(coords, 13);
   }, [coords, map]);
   return null;
