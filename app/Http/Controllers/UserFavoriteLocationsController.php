@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\UserFavoriteLocation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -44,8 +43,16 @@ class UserFavoriteLocationsController extends Controller
      * GET /api/favorites/{favorite}
      * Display the specified favorite location.
      */
-    public function show(UserFavoriteLocation $favorite)
+    public function show(int $id)
     {
+        $favorite = Auth::user()->favoriteLocations()->find($id);
+
+        if (!$favorite) {
+            return response()->json([
+                'error' => 'Favorite location not found.'
+            ], 404);
+        }
+
         if ($favorite->user_id !== Auth::id()) {
             return response()->json(
                 ['message' => 'This resource does not exist.'],
@@ -60,9 +67,16 @@ class UserFavoriteLocationsController extends Controller
      * PATCH /api/favorites/{favorite}
      * Update the specified favorite location.
      */
-    public function update(Request $request, UserFavoriteLocation $favorite)
+    public function update(Request $request, int $id)
     {
-        // TODO: Check if favorite exist
+        $favorite = $request->user()->favoriteLocations()->find($id);
+
+        if (!$favorite) {
+            return response()->json([
+                'error' => 'Favorite location not found.'
+            ], 404);
+        }
+
         if ($favorite->user_id !== $request->user()->id) {
             return response()->json(
                 ['message' => 'This resource does not exist.'],
@@ -85,8 +99,16 @@ class UserFavoriteLocationsController extends Controller
      * DELETE /api/favorites/{favorite}
      * Remove the specified favorite location.
      */
-    public function destroy(UserFavoriteLocation $favorite)
+    public function destroy(int $id)
     {
+        $favorite = Auth::user()->favoriteLocations()->find($id);
+
+        if (!$favorite) {
+            return response()->json([
+                'error' => 'Favorite location not found.'
+            ], 404);
+        }
+
         if ($favorite->user_id !== Auth::id()) {
             return response()->json(
                 ['message' => 'This resource does not exist.'],
