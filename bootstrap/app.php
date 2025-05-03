@@ -43,5 +43,5 @@ return Application::configure(basePath: dirname(__DIR__))
                 new CreateNewLeaderboard
             ])->dispatch();
         })->everyThirtyMinutes();
-        $schedule->job(new DeleteOldAirPollutionData)->daily();
+        // $schedule->job(new DeleteOldAirPollutionData)->daily();
     })->create();
