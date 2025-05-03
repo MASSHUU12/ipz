@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreFavoriteLocationRequest;
+use App\Http\Requests\UpdateFavoriteLocationRequest;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
@@ -26,15 +27,11 @@ class UserFavoriteLocationsController extends Controller
      * POST /api/favorites
      * Store a newly created favorite location.
      */
-    public function store(Request $request)
+    public function store(StoreFavoriteLocationRequest $request)
     {
-        $data = $request->validate([
-            'city'      => 'required|string|max:255',
-            'lat'  => 'required|numeric|between:-90,90',
-            'lng' => 'required|numeric|between:-180,180',
-        ]);
-
-        $favorite = $request->user()->favoriteLocations()->create($data);
+        $favorite = $request->user()
+            ->favoriteLocations()
+            ->create($request->validated());
 
         return response()->json($favorite, Response::HTTP_CREATED);
     }
@@ -67,7 +64,7 @@ class UserFavoriteLocationsController extends Controller
      * PATCH /api/favorites/{favorite}
      * Update the specified favorite location.
      */
-    public function update(Request $request, int $id)
+    public function update(UpdateFavoriteLocationRequest $request, int $id)
     {
         $favorite = $request->user()->favoriteLocations()->find($id);
 
@@ -84,13 +81,7 @@ class UserFavoriteLocationsController extends Controller
             );
         }
 
-        $data = $request->validate([
-            'city'      => 'sometimes|required|string|max:255',
-            'lat'  => 'sometimes|required|numeric|between:-90,90',
-            'lng' => 'sometimes|required|numeric|between:-180,180',
-        ]);
-
-        $favorite->update($data);
+        $favorite->update($request->validated());
 
         return response()->json($favorite);
     }
