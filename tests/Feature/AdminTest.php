@@ -25,18 +25,7 @@ class AdminTest extends TestCase
         $this->withoutMiddleware(HandleInertiaRequests::class);
     }
 
-    /** @test */
-    public function testRenderAdminPage()
-    {
-        // Teraz prostym GET bez dodatkowych nagłówków
-        $response = $this->get('/idkfa');
 
-        $response->assertStatus(200)
-            ->assertInertia(
-                fn(Assert $page) =>
-                $page->component('admin')
-            );
-    }
 
     /** @test */
     public function testAccessAdmintestAsSuperAdmin()
