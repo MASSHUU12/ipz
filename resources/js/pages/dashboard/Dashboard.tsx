@@ -16,18 +16,21 @@ export const Dashboard: React.FC = () => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const isMobile = useMediaQuery("(max-width:900px)");
   const { data: airData, loading: airLoading } = useAirQuality(city);
-  const { weather, loading: weatherLoading } = useWeatherConditions(city);
-  const getCoords = (): LatLng | undefined => {
-    return airData === null
-      ? undefined
-      : new LatLng(airData.station.latitude, airData.station.longitude);
-  };
+  const { weather, loading: weatherLoading } = useWeatherConditions(
+    airData?.station.city ?? city,
+  );
   const todayStr = new Date().toLocaleDateString("en-GB", {
     weekday: "short",
     day: "numeric",
     month: "short",
     year: "numeric",
   });
+
+  const getCoords = (): LatLng | undefined => {
+    return airData === null
+      ? undefined
+      : new LatLng(airData.station.latitude, airData.station.longitude);
+  };
 
   const canSearch = useMemo(() => {
     return searchValue.trim().length > 0;
