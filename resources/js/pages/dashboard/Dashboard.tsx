@@ -4,11 +4,11 @@ import { useMediaQuery } from "@mui/material";
 import Sidebar from "../Sidebar";
 import { useAirQuality } from "../../data/useAirQuality";
 import { useWeatherConditions } from "../../data/useWeatherConditions";
-import { getCityLatLng } from "../../utils/airQuality";
 import { SearchAppBar } from "./SearchAppBar";
 import { WeatherCard } from "./WeatherCard";
 import { AirPollutionChart } from "./AirPollutionChart";
 import { CityMap } from "./CityMap";
+import { LatLng } from "leaflet";
 
 export const Dashboard: React.FC = () => {
   const [searchValue, setSearchValue] = React.useState("");
@@ -16,8 +16,9 @@ export const Dashboard: React.FC = () => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const isMobile = useMediaQuery("(max-width:900px)");
   const { data: airData, loading: airLoading } = useAirQuality(city);
-  const { weather, loading: weatherLoading } = useWeatherConditions(city);
-  const coords = getCityLatLng(city);
+  const { weather, loading: weatherLoading } = useWeatherConditions(
+    airData?.station.city ?? city,
+  );
   const todayStr = new Date().toLocaleDateString("en-GB", {
     weekday: "short",
     day: "numeric",
@@ -25,12 +26,15 @@ export const Dashboard: React.FC = () => {
     year: "numeric",
   });
 
-  const canSearch = useMemo(
-    () =>
-      searchValue.trim().length > 0 &&
-      Boolean(getCityLatLng(searchValue.trim())),
-    [searchValue],
-  );
+  const getCoords = (): LatLng | undefined => {
+    return airData === null
+      ? undefined
+      : new LatLng(airData.station.latitude, airData.station.longitude);
+  };
+
+  const canSearch = useMemo(() => {
+    return searchValue.trim().length > 0;
+  }, [searchValue]);
 
   const handleSearch = () => {
     if (canSearch) {
@@ -76,6 +80,7 @@ export const Dashboard: React.FC = () => {
         />
 
         <Grid container spacing={3} sx={{ mt: 1 }}>
+          {/* Weather card */}
           <Grid item xs={12} md={6}>
             <WeatherCard
               city={city}
@@ -84,6 +89,7 @@ export const Dashboard: React.FC = () => {
               loading={weatherLoading}
             />
           </Grid>
+          {/* Air pollution chart */}
           <Grid item xs={12} md={6}>
             <Card
               sx={{
@@ -97,9 +103,10 @@ export const Dashboard: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
+          {/* Map */}
           <Grid item xs={12} md={6}>
             <Card sx={{ height: 400, borderRadius: 2 }}>
-              <CityMap coords={coords} city={city} />
+              <CityMap coords={getCoords()} city={city} />
             </Card>
           </Grid>
         </Grid>

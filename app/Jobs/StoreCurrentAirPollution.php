@@ -7,10 +7,11 @@ use App\Services\GiosApi;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 
 class StoreCurrentAirPollution implements ShouldQueue, ShouldBeUnique
 {
-    use Queueable;
+    use Queueable, Dispatchable;
 
     /**
      * Create a new job instance.
@@ -96,7 +97,7 @@ class StoreCurrentAirPollution implements ShouldQueue, ShouldBeUnique
             }
 
             AirPollutionHistoricalData::create([
-                'station_id'        => $$stationId,
+                'station_id'        => $stationId,
                 'latitude'          => $latitude,
                 'longitude'         => $longitude,
                 'station_name'      => $stationName,

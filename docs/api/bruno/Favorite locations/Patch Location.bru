@@ -1,0 +1,29 @@
+meta {
+  name: Patch Location
+  type: http
+  seq: 4
+}
+
+patch {
+  url: 0.0.0.0:8000/api/favorites/:favorite
+  body: formUrlEncoded
+  auth: bearer
+}
+
+params:path {
+  favorite: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+auth:bearer {
+  token: 
+}
+
+body:form-urlencoded {
+  city: Jajomyje
+  lat: 52.85548473966234
+  lng: 14.393764954877698
+}

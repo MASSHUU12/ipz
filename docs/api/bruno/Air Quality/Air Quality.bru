@@ -5,14 +5,15 @@ meta {
 }
 
 get {
-  url: 0.0.0.0:8000/api/air-quality?lat=53.44716060303958&lon=14.491921284338622
+  url: 0.0.0.0:8000/api/air-quality?addr=Szczecin, ul. Piłsudskiego
   body: none
   auth: none
 }
 
 params:query {
-  lat: 53.44716060303958
-  lon: 14.491921284338622
+  addr: Szczecin, ul. Piłsudskiego
+  ~lat: 53.44716060303958
+  ~lon: 14.491921284338622
 }
 
 headers {

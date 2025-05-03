@@ -1,10 +1,12 @@
 import React, { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { LatLngExpression } from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 const MapUpdater: React.FC<{ coords: LatLngExpression }> = ({ coords }) => {
   const map = useMap();
   useEffect(() => {
+    // map.invalidateSize();
     map.flyTo(coords, 13);
   }, [coords, map]);
   return null;
