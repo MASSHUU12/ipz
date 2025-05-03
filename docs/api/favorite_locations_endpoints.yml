@@ -1,0 +1,222 @@
+openapi: 3.0.3
+info:
+  title: Favorites API
+  version: 1.0.0
+  description: |
+    Endpoints to manage a user's favorite locations.
+    All operations require a valid Bearer token for authentication.
+
+servers:
+  - url: http://0.0.0.0:8000/api
+    description: Local API server
+  - url: https://185.238.73.59/api
+    description: Main API server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    FavoriteLocation:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        city:
+          type: string
+          example: "Warsaw"
+        lat:
+          type: number
+          format: float
+          example: 52.2297
+        lng:
+          type: number
+          format: float
+          example: 21.0122
+      required:
+        - id
+        - city
+        - lat
+        - lng
+
+    StoreFavoriteLocation:
+      type: object
+      properties:
+        city:
+          type: string
+          maxLength: 255
+          example: "Kraków"
+        lat:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          example: 50.0614
+        lng:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          example: 19.9372
+      required:
+        - city
+        - lat
+        - lng
+
+    UpdateFavoriteLocation:
+      type: object
+      properties:
+        city:
+          type: string
+          maxLength: 255
+          example: "Gdańsk"
+        lat:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          example: 54.3520
+        lng:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          example: 18.6466
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Favorite location not found."
+      required:
+        - error
+
+paths:
+  /favorites:
+    get:
+      tags:
+        - Favorites
+      summary: List current user’s favorites
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: A list of favorite locations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FavoriteLocation"
+    post:
+      tags:
+        - Favorites
+      summary: Create a new favorite location
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StoreFavoriteLocation"
+      responses:
+        "201":
+          description: Favorite created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FavoriteLocation"
+        "422":
+          description: Validation error or too many favorites
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /favorites/{favorite}:
+    parameters:
+      - in: path
+        name: favoriteId
+        schema:
+          type: integer
+        required: true
+        description: The ID of the favorite location
+    get:
+      tags:
+        - Favorites
+      summary: Retrieve a specific favorite
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Favorite location details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FavoriteLocation"
+        "404":
+          description: Favorite not found or not owned by user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags:
+        - Favorites
+      summary: Update a specific favorite
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFavoriteLocation"
+      responses:
+        "200":
+          description: Favorite updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FavoriteLocation"
+        "404":
+          description: Favorite not found or not owned by user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags:
+        - Favorites
+      summary: Delete a specific favorite
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Favorite deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Favorite location deleted."
+        "404":
+          description: Favorite not found or not owned by user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
