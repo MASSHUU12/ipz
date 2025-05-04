@@ -4,6 +4,14 @@ on:
   pull_request:
     branches:
       - main
+    paths:
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.css"
+      - "package.json"
+      - "playwright.config.ts"
+      - "vite.config.ts"
+      - "tsconfig.json"
 
 jobs:
   phpunit:
