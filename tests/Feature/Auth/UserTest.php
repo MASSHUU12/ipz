@@ -29,7 +29,7 @@ class UserTest extends TestCase
     }
 
     /** @test */
-    public function testSuccessGetCurrentUser()
+    public function testSuccessGetCurrentUser(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
             ->getJson('/api/user');
@@ -45,7 +45,7 @@ class UserTest extends TestCase
     }
 
     /** @test */
-    public function testSuccessUpdateOnlyEmail()
+    public function testSuccessUpdateOnlyEmail(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
             ->patchJson('/api/user', [
@@ -63,23 +63,25 @@ class UserTest extends TestCase
     }
 
     /** @test */
-    public function testSuccessUpdatePassword()
+    public function testSuccessUpdatePassword(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson('/api/user', [
-                'password' => 'NewPass1!',
+            ->patchJson('/api/user/password', [
+                'current_password' => 'Password1!',
+                'new_password' => 'Zaq1@wsx',
+                'new_password_confirmation' => 'Zaq1@wsx'
             ]);
 
         $response->assertStatus(200)
-            ->assertJsonFragment(['message' => 'User updated successfully']);
+            ->assertJsonFragment(['message' => 'Password updated successfully.']);
 
         // Sprawdzamy, że hasło zostało faktycznie zaktualizowane
         $fresh = User::find($this->user->id);
-        $this->assertTrue(password_verify('NewPass1!', $fresh->password));
+        $this->assertTrue(password_verify('Zaq1@wsx', $fresh->password));
     }
 
     /** @test */
-    public function testFailsUpdateInvalidEmailFormat()
+    public function testFailsUpdateInvalidEmailFormat(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
             ->patchJson('/api/user', [
@@ -91,7 +93,7 @@ class UserTest extends TestCase
     }
 
     /** @test */
-    public function testFailsUpdateDuplicateEmail()
+    public function testFailsUpdateDuplicateEmail(): void
     {
         // Tworzymy drugi użytkownik z tym samym emailem
         User::factory()->create(['email' => 'existing@example.com']);
@@ -106,7 +108,7 @@ class UserTest extends TestCase
     }
 
     /** @test */
-    public function testFailsUpdateTooLongPhoneNumber()
+    public function testFailsUpdateTooLongPhoneNumber(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
             ->patchJson('/api/user', [
@@ -118,19 +120,21 @@ class UserTest extends TestCase
     }
 
     /** @test */
-    public function testFailsUpdateWeakPassword()
+    public function testFailsUpdateWeakPassword(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
-            ->patchJson('/api/user', [
-                'password' => 'weakpass',
+            ->patchJson('/api/user/password', [
+                'current_password' => 'Password1!',
+                'new_password' => 'yo',
+                'new_password_confirmation' => 'yo'
             ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['password']);
+            ->assertJsonValidationErrors(['new_password']);
     }
 
     /** @test */
-    public function testSuccessDeleteCurrentUser()
+    public function testSuccessDeleteCurrentUser(): void
     {
         $response = $this->actingAs($this->user, 'sanctum')
             ->deleteJson('/api/user');
