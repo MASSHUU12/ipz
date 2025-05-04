@@ -2,10 +2,14 @@ openapi: 3.0.3
 info:
   title: User API
   description: API for managing the current authenticated user's account
-  version: 1.1.0
+  version: 1.2.0
+
 servers:
-  - url: https://example.com
+  - url: http://0.0.0.0:8000/api
+    description: Local API server
+  - url: https://185.238.73.59/api
     description: Main API server
+
 paths:
   /api/user:
     get:
@@ -54,13 +58,6 @@ paths:
                   type: string
                   description: User's phone number in international format (must be unique among all users except current user)
                   maxLength: 20
-                password:
-                  type: string
-                  format: password
-                  description: User's new password
-                  minLength: 8
-                  maxLength: 255
-                  pattern: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$
       responses:
         "200":
           description: OK
@@ -93,15 +90,6 @@ paths:
                     message: "The email has already been taken."
                     errors:
                       email: ["The email has already been taken."]
-                invalidPassword:
-                  summary: Password Validation Error
-                  value:
-                    message: "The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character."
-                    errors:
-                      password:
-                        [
-                          "The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.",
-                        ]
     delete:
       operationId: destroyCurrentUser
       summary: Delete Current User
@@ -244,11 +232,3 @@ components:
         - Must be unique in the system
         - Maximum length: 20 characters
         - Must be a valid international phone number format
-    password:
-      description: |
-        - Minimum length: 8 characters
-        - Maximum length: 255 characters
-        - Must contain at least one lowercase letter
-        - Must contain at least one uppercase letter
-        - Must contain at least one number
-        - Must contain at least one special character (@$!%*?&)

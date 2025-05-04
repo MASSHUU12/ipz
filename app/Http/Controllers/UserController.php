@@ -42,18 +42,6 @@ class UserController extends Controller
         $request->validate([
             'email' => 'sometimes|email|unique:users,email,',
             'phone_number' => 'sometimes|unique:users,phone_number|phone:INTERNATIONAL',
-            'password' => [
-                'sometimes',
-                'string',
-                'max:255',
-                'min:8',
-                'regex:/[a-z]/',
-                'regex:/[A-Z]/',
-                'regex:/[0-9]/',
-                'regex:/[@$!%*?&]/',
-            ],
-        ], [
-            'password.regex' => 'The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.',
         ]);
 
         $user = $request->user();
@@ -64,10 +52,6 @@ class UserController extends Controller
 
         if ($request->has('phone_number')) {
             $user->phone_number = $request->input('phone_number');
-        }
-
-        if ($request->has('password')) {
-            $user->password = password_hash($request->input('password'), PASSWORD_DEFAULT);
         }
 
         $user->save();
@@ -90,8 +74,7 @@ class UserController extends Controller
     {
         try {
             $request->user()->delete();
-        } catch (\Exception)
-        {
+        } catch (\Exception) {
             return response(
                 ['message' => 'There was an error during user deletion'],
                 500

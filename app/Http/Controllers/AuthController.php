@@ -2,85 +2,53 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\UpdatePasswordRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
-use Propaganistas\LaravelPhone\PhoneNumber;
+use Illuminate\Http\Response;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function register(RegisterRequest $request): Response
     {
-        if ($request->has('phone_number')) {
-            $request->validate([
-                'phone_number' => 'phone:INTERNATIONAL',
-            ]);
-
-            $phone = new PhoneNumber($request->phone_number);
-            $request->merge(['phone_number' => $phone->formatE164()]);
-        }
-
-        $validated = $request->validate([
-            'email' => 'required_without:phone_number|email|unique:users,email',
-            'phone_number' => 'required_without:email|unique:users,phone_number|phone:INTERNATIONAL',
-            'password' => [
-                'required',
-                'string',
-                'confirmed',
-                'max:255',
-                'min:8',
-                'regex:/[a-z]/',
-                'regex:/[A-Z]/',
-                'regex:/[0-9]/',
-                'regex:/[@$!%*?&]/',
-            ],
-        ], [
-            'password.regex' => 'The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.',
-        ]);
+        $data = $request->only(['email', 'phone_number', 'password']);
 
         // try {
-            $user = User::create([
-                'email' => $validated['email'] ?? null,
-                'phone_number' => $validated['phone_number'] ?? null,
-                'password' => password_hash($validated['password'], PASSWORD_DEFAULT)
-            ]);
-            $user->assignRole('User');
-            if ($request->has('email')) {
-                if (!app()->runningUnitTests()) {
-                    EmailVerificationNotificationController::store($user);
-                }
-            }
+        $user = User::create([
+            'email' => $data['email'] ?? null,
+            'phone_number' => $data['phone_number'] ?? null,
+            'password' => password_hash($data['password'], PASSWORD_DEFAULT)
+        ]);
+        $user->assignRole('User');
+
+        if ($user->email && !app()->runningUnitTests()) {
+            EmailVerificationNotificationController::store($user);
+        }
         // } catch (\Exception) {
         //     return response([
         //         'message' => 'There was an error during user registration. Please try again.'
         //     ], 500);
         // }
 
-        $token = $user->createToken('token')->plainTextToken;
-        $response = [
-            'user' => $user,
-            'token' => $token
-        ];
-
-        return response($response, 201);
+        return response([
+            'user'  => $user,
+            'token' => $user->createToken('token')->plainTextToken,
+        ], 201);
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request): Response
     {
-        $request->validate([
-            'email' => 'required_without:phone_number|email',
-            'phone_number' => 'required_without:email|phone:INTERNATIONAL',
-            'password' => 'required',
-        ]);
+        $credentials = $request->only(['email', 'phone_number', 'password']);
 
-        if ($request->has('email')) {
-            $user = User::where('email', $request->email)->first();
-        } else {
-            $user = User::where('phone_number', $request->phone_number)->first();
-        }
+        $user = $credentials['email']
+            ? User::where('email', $credentials['email'])->first()
+            : User::where('phone_number', $credentials['phone_number'])->first();
 
-        if ($user && $user->blocked_until && $user->blocked_until > now()) {
+        if ($user && $user->blocked_until && $user->blocked_until->isFuture()) {
             return response(
                 ['message' => 'Your account is temporarily blocked. Please try again later.'],
                 401
@@ -102,9 +70,10 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $user->failed_login_attempts = 0;
-        $user->blocked_until = null;
-        $user->save();
+        $user->update([
+            'failed_login_attempts' => 0,
+            'blocked_until'         => null,
+        ]);
 
         $response = [
             'user' => $user,
@@ -113,7 +82,7 @@ class AuthController extends Controller
         return response($response, 201);
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request): Response
     {
         $request->user()->tokens()->delete();
 
@@ -137,5 +106,22 @@ class AuthController extends Controller
                 'message' => 'Invalid token'
             ], 401);
         }
+    }
+
+    /**
+     * Update the authenticated user’s password.
+     */
+    public function updatePassword(UpdatePasswordRequest $request): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        // Hash & save the new password
+        $user->password = password_hash($request->input('new_password'), PASSWORD_DEFAULT);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password updated successfully.',
+        ], 200);
     }
 }
