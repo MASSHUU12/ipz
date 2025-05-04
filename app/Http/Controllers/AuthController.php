@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\UpdatePasswordRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -105,5 +106,22 @@ class AuthController extends Controller
                 'message' => 'Invalid token'
             ], 401);
         }
+    }
+
+    /**
+     * Update the authenticated user’s password.
+     */
+    public function updatePassword(UpdatePasswordRequest $request): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        // Hash & save the new password
+        $user->password = password_hash($request->input('new_password'), PASSWORD_DEFAULT);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password updated successfully.',
+        ], 200);
     }
 }

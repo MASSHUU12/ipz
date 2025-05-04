@@ -47,6 +47,7 @@ Route::group(
             Route::get('/user', [UserController::class, 'showCurrentUser']);
             Route::patch('/user', [UserController::class, 'updateCurrentUser']);
             Route::delete('/user', [UserController::class, 'destroyCurrentUser']);
+            Route::patch('/user/password', [AuthController::class, 'updatePassword']);
         });
 
         Route::group(['middleware' => ['role:Super Admin']], function () {
