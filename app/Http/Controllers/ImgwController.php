@@ -14,6 +14,8 @@ class ImgwController extends Controller
     protected const CACHE_TTL          = 30;  // minutes
     protected const PRODUCTS_CACHE_TTL = 120; // minutes
 
+    protected const MAX_LEVENSHTEIN_FRACTION = 0.4;
+
     protected $client;
 
     public function __construct(ImgwApiClient $client)
@@ -38,7 +40,19 @@ class ImgwController extends Controller
         $station = $request->query('station');
         $format  = $request->query('format', 'json');
 
-        // Try to load the latest from your historical table
+        // If station contains a comma (e.g. user pasted an address), drop everything after it
+        if (!$id && $station && false !== strpos($station, ',')) {
+            $station = trim(substr($station, 0, strpos($station, ',')));
+        }
+
+        // If station was provided, try fuzzy‐matching it against saved names
+        if (!$id && $station) {
+            $matched = $this->findClosestStationName($station);
+            if ($matched) {
+                $station = $matched;
+            }
+        }
+
         $histQuery = SynopticHistoricalData::query();
 
         if ($id) {
@@ -100,6 +114,40 @@ class ImgwController extends Controller
         }
 
         return response()->json($data);
+    }
+
+    /**
+     * Try to find the closest‐matching saved station_name using Levenshtein.
+     * Returns the best match if within threshold, or null.
+     */
+    protected function findClosestStationName(string $input): ?string
+    {
+        $inputLower = mb_strtolower($input);
+        $allNames = SynopticHistoricalData::query()
+            ->selectRaw('DISTINCT station_name')
+            ->pluck('station_name')
+            ->map(fn($n) => (string)$n);  // ensure string
+
+        $bestName     = null;
+        $bestDistance = PHP_INT_MAX;
+
+        foreach ($allNames as $name) {
+            $distance = levenshtein($inputLower, mb_strtolower($name));
+            if ($distance < $bestDistance) {
+                $bestDistance = $distance;
+                $bestName     = $name;
+            }
+        }
+
+        if (! $bestName) {
+            return null;
+        }
+
+        // threshold = fraction of the longer string length
+        $maxLen   = max(mb_strlen($inputLower), mb_strlen(mb_strtolower($bestName)));
+        $threshold = (int) floor($maxLen * self::MAX_LEVENSHTEIN_FRACTION);
+
+        return ($bestDistance <= $threshold) ? $bestName : null;
     }
 
     public function hydro(Request $request): JsonResponse
