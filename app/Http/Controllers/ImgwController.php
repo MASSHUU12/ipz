@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SynopticHistoricalData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Services\ImgwApiClient;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class ImgwController extends Controller
 {
+    protected const CACHE_TTL          = 30;  // minutes
+    protected const PRODUCTS_CACHE_TTL = 120; // minutes
+
     protected $client;
 
     public function __construct(ImgwApiClient $client)
@@ -33,21 +38,68 @@ class ImgwController extends Controller
         $station = $request->query('station');
         $format  = $request->query('format', 'json');
 
+        // Try to load the latest from your historical table
+        $histQuery = SynopticHistoricalData::query();
+
+        if ($id) {
+            $histQuery->where('station_id', $id);
+        } elseif ($station) {
+            $histQuery->where('station_name', $station);
+        }
+
+        $latest = $histQuery
+            ->orderByDesc('measurement_date')
+            ->orderByDesc('measurement_hour')
+            ->first();
+
+        if ($latest) {
+            return response()->json([
+                'station_id'        => $latest->station_id,
+                'station_name'      => $latest->station_name,
+                'measurement_date'  => $latest->measurement_date->toDateString(),
+                'measurement_hour'  => $latest->measurement_hour,
+                'temperature'       => $latest->temperature,
+                'wind_speed'        => $latest->wind_speed,
+                'wind_direction'    => $latest->wind_direction,
+                'relative_humidity' => $latest->relative_humidity,
+                'rainfall_total'    => $latest->rainfall_total,
+                'pressure'          => $latest->pressure,
+            ]);
+        }
+
+        // If no historical data, fall back to the API + cache
         $cacheKey = 'synop_' . md5("id:{$id}_station:{$station}_format:{$format}");
 
         $data = Cache::remember(
             $cacheKey,
-            now()->addMinutes(10),
+            now()->addMinutes(self::CACHE_TTL),
             function () use ($id, $station, $format) {
                 return $this->client->getSynopData($id, $station, $format);
             }
         );
 
-        if ($data) {
-            return response()->json($data);
+        if (!$data) {
+            return response()->json(['error' => 'Unable to retrieve synoptic data'], 500);
         }
 
-        return response()->json(['error' => 'Unable to retrieve synoptic data'], 500);
+        try {
+            SynopticHistoricalData::create([
+                'station_id'        => $data['station_id'],
+                'station_name'      => $data['station_name'],
+                'measurement_date'  => $data['measurement_date'],
+                'measurement_hour'  => $data['measurement_hour'],
+                'temperature'       => $data['temperature']       ?? null,
+                'wind_speed'        => $data['wind_speed']        ?? null,
+                'wind_direction'    => $data['wind_direction']    ?? null,
+                'relative_humidity' => $data['relative_humidity'] ?? null,
+                'rainfall_total'    => $data['rainfall_total']    ?? null,
+                'pressure'          => $data['pressure']          ?? null,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Could not persist synop data: ' . $e->getMessage());
+        }
+
+        return response()->json($data);
     }
 
     public function hydro(Request $request): JsonResponse
@@ -57,7 +109,7 @@ class ImgwController extends Controller
 
         $data = Cache::remember(
             $cacheKey,
-            now()->addMinutes(10),
+            now()->addMinutes(self::CACHE_TTL),
             function () use ($variant) {
                 return $this->client->getHydroData($variant);
             }
@@ -74,7 +126,7 @@ class ImgwController extends Controller
     {
         $cacheKey = 'meteo_data';
 
-        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () {
+        $data = Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL), function () {
             return $this->client->getMeteoData();
         });
 
@@ -89,7 +141,7 @@ class ImgwController extends Controller
     {
         $cacheKey = 'warnings_meteo';
 
-        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () {
+        $data = Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL), function () {
             return $this->client->getWarningsMeteo();
         });
 
@@ -104,7 +156,7 @@ class ImgwController extends Controller
     {
         $cacheKey = 'warnings_hydro';
 
-        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () {
+        $data = Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL), function () {
             return $this->client->getWarningsHydro();
         });
 
@@ -119,7 +171,7 @@ class ImgwController extends Controller
     {
         $cacheKey = 'products_data';
 
-        $data = Cache::remember($cacheKey, now()->addMinutes(60), function () {
+        $data = Cache::remember($cacheKey, now()->addMinutes(self::PRODUCTS_CACHE_TTL), function () {
             return $this->client->getProducts();
         });
 
