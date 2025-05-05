@@ -17,11 +17,17 @@ class RegisterRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if ($this->has('phone_number')) {
+        if (!$this->filled('phone_number')) {
+            return;
+        }
+
+        try {
             $phone = new PhoneNumber($this->input('phone_number'));
             $this->merge([
                 'phone_number' => $phone->formatE164(),
             ]);
+        } catch (\Exception $e) {
+            // Let the validator handle the invalid case
         }
     }
 
@@ -30,7 +36,7 @@ class RegisterRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-     public function rules(): array
+    public function rules(): array
     {
         return [
             'email'        => 'required_without:phone_number|email|unique:users,email',
