@@ -15,19 +15,34 @@ import {
   Settings,
   Star,
   Logout,
+  PersonAdd,
 } from "@mui/icons-material";
 import { Link } from "@inertiajs/react";
+import Register from "./register";
 
-// Menu definicja
-const menuItems = [
+const isAuthenticated = !!localStorage.getItem('authToken');
+
+const menuItems = isAuthenticated ?
+[
   { text: "Dashboard", icon: <Home />, path: "/dashboard" },
   { text: "Profile", icon: <Person />, path: "/profile" },
   { text: "Leaderboard", icon: <Leaderboard />, path: "/air-quality-ranking" },
   { text: "Message", icon: <Message />, path: "/message" },
   { text: "Settings", icon: <Settings />, path: "/settings" },
   { text: "Favourite", icon: <Star />, path: "/favourite" },
-  { text: "Signout", icon: <Logout />, path: "/signout" },
-];
+  {
+    text: "Signout",
+    icon: <Logout />,
+    action: () => {
+      localStorage.removeItem("authToken");
+      window.location.href = "/login";
+    },
+  },
+]:
+[{ text: "Dashboard", icon: <Home />, path: "/dashboard" },
+  { text: "Leaderboard", icon: <Leaderboard />, path: "/air-quality-ranking" },
+  { text: "Register", icon: <PersonAdd />, path: "/register" },
+]
 
 const Sidebar = () => {
   // Aktualna ścieżka URL (np. "/profile")
@@ -54,8 +69,9 @@ const Sidebar = () => {
           return (
             <ListItem key={item.text} disablePadding>
               <ListItemButton
-                component={Link}
+                component={item.path ? Link : "button"}
                 href={item.path}
+                onClick={item.action}
                 selected={isSelected}
                 sx={{
                   borderRadius: "10px",

@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { router } from "@inertiajs/react";
 import Sidebar from "./Sidebar";
+import { RequireAuth } from "./RequireAuth";
 
 const EditProfile = () => {
   const isMobile = useMediaQuery("(max-width:900px)");
@@ -63,6 +64,7 @@ const EditProfile = () => {
   };
 
   return (
+    <RequireAuth>
     <Box sx={{ display: "flex", backgroundColor: "#1e1e1e", minHeight: "100vh", color: "#fff" }}>
         
       {isMobile ? (
@@ -170,6 +172,7 @@ const EditProfile = () => {
         </Box>
       </Box>
     </Box>
+    </RequireAuth>
   );
 };
 

@@ -15,6 +15,7 @@ import {
 import { Favorite, LocationCity, Menu as MenuIcon } from "@mui/icons-material";
 import Sidebar from "./Sidebar";
 import { Link } from "@inertiajs/react";
+import { RequireAuth } from "./RequireAuth";
 
 const Profile = () => {
   const [city, setCity] = React.useState("");
@@ -43,6 +44,7 @@ const Profile = () => {
   };
 
   return (
+    <RequireAuth>
     <Box sx={{ display: "flex", backgroundColor: "#1e1e1e", minHeight: "100vh", color: "#fff" }}>
       {isMobile ? (
         <Drawer
@@ -135,7 +137,7 @@ const Profile = () => {
                   }}
                   InputProps={{
                     startAdornment: (
-                      <InputAdornment position="start">
+                      <InputAdornment position="start"> 
                         <LocationCity sx={{ color: "#90caf9" }} />
                       </InputAdornment>
                     ),
@@ -150,6 +152,7 @@ const Profile = () => {
         </Box>
       </Box>
     </Box>
+    </RequireAuth>
   );
 };
 
