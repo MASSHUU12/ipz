@@ -19,8 +19,12 @@ jobs:
           php-version: "8.3"
           extensions: mbstring, intl, xml, zip, pdo_mysql
 
-      - name: Install dependencies
-        run: composer install --no-dev --optimize-autoloader
+      - name: Install PHP dependencies (build vendor/)
+        run: |
+          composer install \
+            --no-dev \
+            --optimize-autoloader \
+            --classmap-authoritative
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -41,15 +45,16 @@ jobs:
         env:
           SSHPASS: ${{ secrets.SSH_PASSWORD }}
         run: |
-          sshpass -e rsync -avz --exclude='.git' --delete \
-                          --exclude='.github' \
-                          --exclude='node_modules' \
-                          --exclude='.bun' \
-                          --exclude='tests' \
-                          --exclude='.env.example' \
-                          --exclude='.env.testing' \
-                          --exclude='phpunit.xml' \
-                          ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}
+          sshpass -e rsync -avz --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='.bun' \
+            --exclude='tests' \
+            --exclude='.env.example' \
+            --exclude='.env.testing' \
+            --exclude='phpunit.xml' \
+            ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}
 
       - name: Run deployment commands
         uses: appleboy/ssh-action@master
