@@ -41,7 +41,7 @@ jobs:
         env:
           SSHPASS: ${{ secrets.SSH_PASSWORD }}
         run: |
-          sshpass -e rsync -avz --exclude='.git' \
+          sshpass -e rsync -avz --exclude='.git' --delete \
                           --exclude='.github' \
                           --exclude='node_modules' \
                           --exclude='.bun' \
