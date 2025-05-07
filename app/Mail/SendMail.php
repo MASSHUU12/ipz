@@ -7,6 +7,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use App\Models\User;
 
 class SendMail extends Mailable
 {
@@ -18,6 +21,9 @@ class SendMail extends Mailable
 		],
 		'emailverify' => [
 			'msg' => '',
+		],
+		'resetpassword' => [
+    		'msg' => '',
 		],
 	];
 
@@ -37,33 +43,47 @@ class SendMail extends Mailable
 	}
 
 	public function build()
-	{
-		$data = $this->chosenMsg;
-		$data['type'] = $this->messageType;
+{
+    $data = $this->chosenMsg;
+    $data['type'] = $this->messageType;
 
-		if ($data['type'] === 'emailverify') {
-			$data['verify_link'] = URL::temporarySignedRoute(
-				'verification.verify',
-				now()->addMinutes(60),
-				[
-					'id'   => $this->userId,
-					'hash' => sha1($this->toEmail)
-				]
-			);
+    if ($data['type'] === 'emailverify') {
+        $data['verify_link'] = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            [
+                'id' => $this->userId,
+                'hash' => sha1($this->toEmail)
+            ]
+        );
 
-			//Log::info('Wygenerowany link weryfikacyjny', ['verify_link' => $data['verify_link']]);
-			//dd($data['verify_link']);
+        return $this
+            ->from('zutweatherproject@gmail.com', 'ipz')
+            ->subject('Weryfikacja adresu e-mail')
+            ->view('emails.confirmation')
+            ->with(['data' => $data]);
+    }
+    elseif ($data['type'] === 'resetpassword') {
+        $user = \App\Models\User::find($this->userId);
+        $token = \Illuminate\Support\Facades\Password::createToken($user);
+        $data['reset_link'] = url('/reset-password/' . $token);
+        $data['username'] = $user->name ?? 'Użytkowniku';
 
-		}
+        return $this
+            ->from('zutweatherproject@gmail.com', 'ipz')
+            ->subject('Resetowanie hasła')
+            ->view('emails.resetpwd')
+            ->with(['data' => $data]);
+    }
+    else {
+        return $this
+            ->from('zutweatherproject@gmail.com', 'ipz')
+            ->subject('Domyślna wiadomość')
+            ->view('emails.custom')
+            ->with(['data' => $data]);
+    }
+}
 
-		return $this
-			->from('zutweatherproject@gmail.com', 'ipz')
-			->subject('Testowa wiadomość od ipz')
-			->view('emails.custom')
-			->with([
-				'data' => $data,
-			]);
-	}
 
 	public static function sendMail(string $to, int $userId, string $messageType)
 	{
