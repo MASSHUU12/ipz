@@ -83,7 +83,10 @@ export const Dashboard: React.FC = () => {
           {/* Weather card */}
           <Grid item xs={12} md={6}>
             <WeatherCard
-              city={city}
+              city={
+                `${airData?.station.city ?? city}` +
+                `, ${airData?.station.address}`
+              }
               dateStr={todayStr}
               weather={weather}
               loading={weatherLoading}
