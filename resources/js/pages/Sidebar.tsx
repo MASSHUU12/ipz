@@ -1,4 +1,4 @@
-import React from "react";
+import React,{useState,useEffect} from "react";
 import {
   Drawer,
   List,
@@ -16,38 +16,44 @@ import {
   Star,
   Logout,
   PersonAdd,
+  Login
 } from "@mui/icons-material";
 import { Link } from "@inertiajs/react";
 import Register from "./register";
 
-const isAuthenticated = !!localStorage.getItem('authToken');
-
-const menuItems = isAuthenticated ?
-[
-  { text: "Dashboard", icon: <Home />, path: "/dashboard" },
-  { text: "Profile", icon: <Person />, path: "/profile" },
-  { text: "Leaderboard", icon: <Leaderboard />, path: "/air-quality-ranking" },
-  { text: "Message", icon: <Message />, path: "/message" },
-  { text: "Settings", icon: <Settings />, path: "/settings" },
-  { text: "Favourite", icon: <Star />, path: "/favourite" },
-  {
-    text: "Signout",
-    icon: <Logout />,
-    action: () => {
-      localStorage.removeItem("authToken");
-      window.location.href = "/login";
-    },
-  },
-]:
-[{ text: "Dashboard", icon: <Home />, path: "/dashboard" },
-  { text: "Leaderboard", icon: <Leaderboard />, path: "/air-quality-ranking" },
-  { text: "Register", icon: <PersonAdd />, path: "/register" },
-]
 
 const Sidebar = () => {
-  // Aktualna ścieżka URL (np. "/profile")
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const currentPath = window.location.pathname;
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsAuthenticated(!!localStorage.getItem("authToken"));
+    }
+  }, []);;
+  const menuItems = isAuthenticated ?
+  [
+    { text: "Dashboard", icon: <Home />, path: "/dashboard" },
+    { text: "Profile", icon: <Person />, path: "/profile" },
+    { text: "Leaderboard", icon: <Leaderboard />, path: "/air-quality-ranking" },
+    { text: "Message", icon: <Message />, path: "/message" },
+    { text: "Settings", icon: <Settings />, path: "/settings" },
+    { text: "Favourite", icon: <Star />, path: "/favourite" },
+    {
+      text: "Signout",
+      icon: <Logout />,
+      action: () => {
+        localStorage.removeItem("authToken");
+        window.location.href = "/login";
+      },
+    },
+  ]:
+  [{ text: "Dashboard", icon: <Home />, path: "/dashboard" },
+    { text: "Leaderboard", icon: <Leaderboard />, path: "/air-quality-ranking" },
+    { text: "Log in", icon: <Login />, path: "/login" },
+    { text: "Register", icon: <PersonAdd />, path: "/register" },
+  ]
+  
   return (
     <Drawer
       variant="permanent"
