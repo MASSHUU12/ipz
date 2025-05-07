@@ -106,7 +106,7 @@ const Profile = () => {
                   )}
                 </Box>
                 <Box sx={{ flexGrow: 1 }} />
-                <Link href="/EditProfile">
+                <Link href="/edit-profile">
                   <Button variant="contained" sx={{ color: "white", borderColor: "#1976d2" }}>
                     Edit Profile
                   </Button>
