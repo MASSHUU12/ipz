@@ -51,6 +51,7 @@ jobs:
             --exclude='node_modules' \
             --exclude='.bun' \
             --exclude='tests' \
+            --exclude='.env' \
             --exclude='.env.example' \
             --exclude='.env.testing' \
             --exclude='phpunit.xml' \
