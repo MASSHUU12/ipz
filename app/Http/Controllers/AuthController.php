@@ -44,6 +44,7 @@ class AuthController extends Controller
     {
         $credentials = $request->only(['email', 'phone_number', 'password']);
 
+        /** @var \App\Models\User $user */
         $user = $credentials['email']
             ? User::where('email', $credentials['email'])->first()
             : User::where('phone_number', $credentials['phone_number'])->first();
@@ -56,14 +57,16 @@ class AuthController extends Controller
         }
 
         if (!$user || !password_verify($request->password, $user->password)) {
-            $failed_login_limit = 5;
-            $user->failed_login_attempts++;
+            if ($user) {
+                $failed_login_limit = 5;
+                $user->failed_login_attempts++;
 
-            if ($user->failed_login_attempts >= $failed_login_limit) {
-                $user->blocked_until = now()->addHours(4);
+                if ($user->failed_login_attempts >= $failed_login_limit) {
+                    $user->blocked_until = now()->addHours(4);
+                }
+
+                $user->save();
             }
-
-            $user->save();
 
             return response([
                 'message' => 'The provided credentials are incorrect.',
