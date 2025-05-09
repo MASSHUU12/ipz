@@ -1,129 +1,129 @@
 import React, { useEffect, useState } from "react";
 import {
   Box,
-  Card,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableSortLabel,
   Typography,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Paper,
+  Card,
 } from "@mui/material";
-import { instance } from "../../js/api/api";
+import { instance } from "@/api/api";
 import Sidebar from "./Sidebar";
-import pLimit from "p-limit";
-const normalizeParameter = (label: string): string => {
-  const mapping: Record<string, string> = {
-    "pył zawieszony pm10": "pm10",
-    "pył zawieszony pm2.5": "pm25",
-    "particulate matter pm10": "pm10",
-    "particulate matter pm2.5": "pm25",
-    pm10: "pm10",
-    "pm2.5": "pm25",
-    no2: "no2",
-    so2: "so2",
-    o3: "o3",
-    co: "co",
-  };
-  return mapping[label.toLowerCase()] || label.toLowerCase();
-};
 
-const parameterOptions = [
-  { label: "PM10 (Particulate Matter)", value: "pm10" },
-  { label: "PM2.5 (Particulate Matter)", value: "pm25" },
-  { label: "Nitrogen Dioxide (NO₂)", value: "no2" },
-  { label: "Sulfur Dioxide (SO₂)", value: "so2" },
-  { label: "Ozone (O₃)", value: "o3" },
-  { label: "Carbon Monoxide (CO)", value: "co" },
+interface LeaderboardEntry {
+  city: string;
+  air_quality_index: number | null;
+  pm10: number | null;
+  pm25: number | null;
+  no2: number | null;
+  so2: number | null;
+  o3: number | null;
+  co: number | null;
+}
+
+type Order = "asc" | "desc";
+
+const columns = [
+  { id: "rank", label: "Rank" },
+  { id: "city", label: "City" },
+  { id: "air_quality_index", label: "AQI rate" },
+  { id: "pm10", label: "PM10" },
+  { id: "pm25", label: "PM2.5" },
+  { id: "no2", label: "NO₂" },
+  { id: "so2", label: "SO₂" },
+  { id: "o3", label: "O₃" },
+  { id: "co", label: "CO" },
 ];
 
-interface Measurement {
-  parameter: string;
-  value: number;
-  unit: string;
-  measurementTime: string;
-}
-
-interface CityEntry {
-  city: string;
-  value: number;
-}
-
-const fetchValueForCity = async (
-  city: string,
-  lat: number,
-  lon: number,
-  parameter: string,
-): Promise<CityEntry | null> => {
-  try {
-    const res = await instance.get(`/air-quality?lat=${lat}&lon=${lon}`, {
-      timeout: 20000,
-    });
-    const json = typeof res.data === "string" ? JSON.parse(res.data) : res.data;
-    const measurements: Measurement[] = json?.data?.measurements ?? [];
-
-    const data = measurements.find(
-      (m: Measurement) => normalizeParameter(m.parameter) === parameter,
-    );
-
-    if (!data || isNaN(Number(data.value))) {
-      console.warn(`Brak danych ${parameter.toUpperCase()} dla ${city}`);
-      console.log(
-        `Miasto ${city} ma dostępne parametry:`,
-        measurements.map(m => m.parameter),
-      );
-
-      return null;
-    }
-
-    return { city, value: Number(data.value) };
-  } catch (err) {
-    console.error(`Błąd pobierania danych dla ${city}:`, err);
-
-    return null;
-  }
-};
-
-const AirQualityRanking = () => {
-  const [ranking, setRanking] = useState<CityEntry[]>([]);
+export default function AirQualityRanking(): JSX.Element {
+  const [data, setData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedParam, setSelectedParam] = useState<string>("pm10");
+  const [orderBy, setOrderBy] = useState<keyof LeaderboardEntry>("air_quality_index");
+  const [order, setOrder] = useState<Order>("desc");
 
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      const cities = Object.entries(cityCoordinates);
-      const limit = pLimit(1);
-
-      const limitedFetches = cities.map(([city, coords]) =>
-        limit(() =>
-          fetchValueForCity(city, coords.lat, coords.lon, selectedParam),
-        ),
-      );
-
-      const results = await Promise.all(limitedFetches);
-      const filtered = results.filter((r): r is CityEntry => r !== null);
-      const sorted = filtered.sort((a, b) => b.value - a.value).slice(0, 10);
-
-      setRanking(sorted);
-      setLoading(false);
+    const fetchData = async () => {
+      try {
+        const res = await instance.get("/leaderboard");
+        const raw = res.data?.data;
+        if (Array.isArray(raw)) {
+          setData(
+            raw.map((entry) => ({
+              city: entry.city ?? "Nieznane",
+              air_quality_index: Number(entry.air_quality_index) ?? null,
+              pm10: Number(entry.pm10) ?? null,
+              pm25: Number(entry.pm25) ?? null,
+              no2: Number(entry.no2) ?? null,
+              so2: Number(entry.so2) ?? null,
+              o3: Number(entry.o3) ?? null,
+              co: Number(entry.co) ?? null,
+            }))
+          );
+        } else {
+          setData([]);
+        }
+      } catch (err) {
+        console.error("Failed to load leaderboard:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    loadData();
-  }, [selectedParam]);
+    fetchData();
+    const interval = setInterval(fetchData, 300000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSort = (property: keyof LeaderboardEntry) => {
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
+    setOrderBy(property);
+  };
+
+
+  const sortedData = [...data].sort((a, b) => {
+    const valA = (a[orderBy] ?? -Infinity) as number;
+    const valB = (b[orderBy] ?? -Infinity) as number;
+    return order === "asc" ? valA - valB : valB - valA;
+  });
+
+  const getColorForValue = (param: keyof LeaderboardEntry, value: number | null): string => {
+    if (value === null) return "#fff";
+    switch (param) {
+      case "pm10":
+        return value <= 50 ? "#22c55e" : value <= 100 ? "#eab308" : "#ef4444";
+      case "pm25":
+        return value <= 25 ? "#22c55e" : value <= 50 ? "#eab308" : "#ef4444";
+      case "no2":
+        return value <= 200 ? "#22c55e" : value <= 400 ? "#eab308" : "#ef4444";
+      case "so2":
+        return value <= 20 ? "#22c55e" : value <= 50 ? "#eab308" : "#ef4444";
+      case "o3":
+        return value <= 100 ? "#22c55e" : value <= 180 ? "#eab308" : "#ef4444";
+      case "co":
+        return value <= 4 ? "#22c55e" : value <= 10 ? "#eab308" : "#ef4444";
+      case "air_quality_index":
+        return value <= 50 ? "#22c55e" : value <= 100 ? "#eab308" : "#ef4444";
+      default:
+        return "#fff";
+    }
+  };
+
+  const formatValue = (value: number | null, decimals = 1): string => {
+    return value !== null && value !== undefined ? value.toFixed(decimals) : "–";
+  };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        minHeight: "100vh",
-        backgroundColor: "#1e1e1e",
-        color: "#fff",
-      }}>
-      <Box sx={{ width: 240, flexShrink: 0 }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#1e1e1e", color: "#fff" }}>
+      <Box sx={{ width: 240 }}>
         <Sidebar />
       </Box>
-
       <Box sx={{ flexGrow: 1, p: 4 }}>
         <Card
           sx={{
@@ -132,68 +132,57 @@ const AirQualityRanking = () => {
             p: 4,
             boxShadow: "0 0 15px rgba(0,0,0,0.5)",
             borderRadius: "12px",
-          }}>
+          }}
+        >
           <Typography variant="h5" gutterBottom>
-            Top 10 Cities by Parameter: {selectedParam.toUpperCase()}
+            Air Quality Ranking
           </Typography>
-
-          <FormControl fullWidth sx={{ maxWidth: 300, my: 2 }}>
-            <InputLabel id="param-label" sx={{ color: "#ccc" }}>
-              Select parameter
-            </InputLabel>
-            <Select
-              labelId="param-label"
-              value={selectedParam}
-              onChange={e => setSelectedParam(e.target.value)}
-              sx={{ color: "#fff", backgroundColor: "#1e1e1e" }}>
-              {parameterOptions.map(option => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
 
           {loading ? (
             <CircularProgress color="inherit" />
-          ) : ranking.length === 0 ? (
-            <Typography>Brak danych dla wybranego parametru.</Typography>
           ) : (
-            <Box
-              sx={{ mt: 4, display: "flex", flexDirection: "column", gap: 2 }}>
-              {ranking.map((entry, index) => (
-                <Box
-                  key={entry.city}
-                  sx={{
-                    px: 3,
-                    py: 2,
-                    backgroundColor: "#1f1f1f",
-                    borderRadius: "10px",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    transition: "background-color 0.2s ease",
-                    "&:hover": {
-                      backgroundColor: "#2a2a2a",
-                    },
-                  }}>
-                  <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                    <strong>{index + 1}.</strong> {entry.city}
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{ fontWeight: "bold", color: "#00c8ff" }}>
-                    {entry.value.toFixed(1)} µg/m³
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
+            <TableContainer component={Paper} sx={{ backgroundColor: "#2a2a2a", borderRadius: 2 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    {columns.map((col) => (
+                      <TableCell
+                        key={col.id}
+                        sortDirection={orderBy === col.id ? order : false}
+                        sx={{ color: "#fff", fontWeight: "bold", backgroundColor: "#333" }}
+                      >
+                        <TableSortLabel
+                          active={orderBy === col.id}
+                          direction={orderBy === col.id ? order : "asc"}
+                          onClick={() => handleSort(col.id as keyof LeaderboardEntry)}
+                          sx={{ color: "#fff", "&.Mui-active": { color: "#00c8ff" } }}
+                        >
+                          {col.label}
+                        </TableSortLabel>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {sortedData.map((row, idx) => (
+                    <TableRow key={idx} hover sx={{ backgroundColor: "#1e1e1e", "&:hover": { backgroundColor: "#2e2e2e" }, transition: "background-color 0.2s ease" }}>
+                      <TableCell sx={{ color: "#fff" }}>{idx + 1}</TableCell>
+                      <TableCell sx={{ color: "#fff" }}>{row.city}</TableCell>
+                      <TableCell sx={{ color: getColorForValue("air_quality_index", row.air_quality_index), fontWeight: 600 }}>{formatValue(row.air_quality_index)}</TableCell>
+                      <TableCell sx={{ color: getColorForValue("pm10", row.pm10) }}>{formatValue(row.pm10, 0)}</TableCell>
+                      <TableCell sx={{ color: getColorForValue("pm25", row.pm25) }}>{formatValue(row.pm25, 0)}</TableCell>
+                      <TableCell sx={{ color: getColorForValue("no2", row.no2) }}>{formatValue(row.no2, 0)}</TableCell>
+                      <TableCell sx={{ color: getColorForValue("so2", row.so2) }}>{formatValue(row.so2, 0)}</TableCell>
+                      <TableCell sx={{ color: getColorForValue("o3", row.o3) }}>{formatValue(row.o3)}</TableCell>
+                      <TableCell sx={{ color: getColorForValue("co", row.co) }}>{formatValue(row.co)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </Card>
       </Box>
     </Box>
   );
-};
-
-export default AirQualityRanking;
+}
