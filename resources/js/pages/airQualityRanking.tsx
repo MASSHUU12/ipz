@@ -55,7 +55,7 @@ export default function AirQualityRanking(): JSX.Element {
         if (Array.isArray(raw)) {
           setData(
             raw.map((entry) => ({
-              city: entry.city ?? "Nieznane",
+              city: entry.city ?? "Unknown",
               air_quality_index: Number(entry.air_quality_index) ?? null,
               pm10: Number(entry.pm10) ?? null,
               pm25: Number(entry.pm25) ?? null,
