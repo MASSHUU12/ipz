@@ -191,7 +191,7 @@ const Register = () => {
           }}
           onClick={() => router.visit('/dashboard')}
         >
-          Configure without account
+          Continue without an account
         </Button>
 
 
