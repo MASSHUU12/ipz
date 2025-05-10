@@ -175,6 +175,23 @@ const Login = () => {
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
+        <Button
+          variant="outlined"
+          fullWidth
+          sx={{
+            mt: 2,
+            borderColor: '#00c8ff',
+            color: '#00c8ff',
+            fontWeight: 'bold',
+            '&:hover': {
+              backgroundColor: '#00c8ff22',
+            },
+          }}
+          onClick={() => router.visit('/dashboard')}
+        >
+          Configure without account
+        </Button>
+
 
         <Typography mt={2} color="#aaa" textAlign="center">
           Don't have an account?{' '}
