@@ -99,5 +99,9 @@ php artisan queue:work &
 Adding tasks to the queue can be forced using commands.
 For each task, there is a command that adds it to the queue, such as:
 
+- `synoptic:store`
+- `check:temp-warnings`
+- `send:warnings-emails`
 - `airpollution:store`
+- `airpollution:delete-old`
 - `airpollution:leaderboard`
