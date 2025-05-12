@@ -37,18 +37,7 @@ class StoreCurrentSynopticData implements ShouldQueue, ShouldBeUnique
         }
 
         foreach ($response as $item) {
-            SynopticHistoricalData::create([
-                'station_id' => $item['id_stacji'],
-                'station_name' => $item['stacja'],
-                'measurement_date' => $item['data_pomiaru'],
-                'measurement_hour' => $item['godzina_pomiaru'],
-                'temperature' => $item['temperatura'],
-                'wind_speed' => $item['predkosc_wiatru'],
-                'wind_direction' => $item['kierunek_wiatru'],
-                'relative_humidity' => $item['wilgotnosc_wzgledna'],
-                'rainfall_total' => $item['suma_opadu'],
-                'pressure' => $item['cisnienie']
-            ]);
+            SynopticHistoricalData::create(ImgwApiClient::synopFromRaw($item));
         }
     }
 }
