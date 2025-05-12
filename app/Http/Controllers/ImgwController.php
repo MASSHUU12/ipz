@@ -83,7 +83,7 @@ class ImgwController extends Controller
         // If no historical data, fall back to the API + cache
         $cacheKey = 'synop_' . md5("id:{$id}_station:{$station}_format:json");
 
-        $data = Cache::remember(
+        $raw = Cache::remember(
             $cacheKey,
             now()->addMinutes(self::CACHE_TTL),
             function () use ($id, $station) {
@@ -91,23 +91,14 @@ class ImgwController extends Controller
             }
         );
 
-        if (!$data) {
+        if (!$raw) {
             return response()->json(['error' => 'Unable to retrieve synoptic data'], 500);
         }
 
+        $data = ImgwApiClient::synopFromRaw($raw);
+
         try {
-            SynopticHistoricalData::create([
-                'station_id'        => $data['station_id'],
-                'station_name'      => $data['station_name'],
-                'measurement_date'  => $data['measurement_date'],
-                'measurement_hour'  => $data['measurement_hour'],
-                'temperature'       => $data['temperature']       ?? null,
-                'wind_speed'        => $data['wind_speed']        ?? null,
-                'wind_direction'    => $data['wind_direction']    ?? null,
-                'relative_humidity' => $data['relative_humidity'] ?? null,
-                'rainfall_total'    => $data['rainfall_total']    ?? null,
-                'pressure'          => $data['pressure']          ?? null,
-            ]);
+            SynopticHistoricalData::create($data);
         } catch (\Exception $e) {
             Log::warning('Could not persist synop data: ' . $e->getMessage());
         }

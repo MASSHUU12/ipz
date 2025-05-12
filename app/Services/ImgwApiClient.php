@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Http;
 
 /**
  * Docs: https://danepubliczne.imgw.pl/apiinfo
-*/
+ */
 class ImgwApiClient
 {
     protected $baseUrl = 'https://danepubliczne.imgw.pl/api/data';
@@ -47,6 +47,22 @@ class ImgwApiClient
         }
 
         return null;
+    }
+
+    public static function synopFromRaw(?array $raw): ?array
+    {
+        return $raw ? [
+            'station_id'        => $raw['id_stacji'],
+            'station_name'      => $raw['stacja'],
+            'measurement_date'  => $raw['data_pomiaru'],
+            'measurement_hour'  => $raw['godzina_pomiaru'],
+            'temperature'       => $raw['temperatura']         ?? null,
+            'wind_speed'        => $raw['predkosc_wiatru']     ?? null,
+            'wind_direction'    => $raw['kierunek_wiatru']     ?? null,
+            'relative_humidity' => $raw['wilgotnosc_wzgledna'] ?? null,
+            'rainfall_total'    => $raw['suma_opadu']          ?? null,
+            'pressure'          => $raw['cisnienie']           ?? null,
+        ] : null;
     }
 
     public function getHydroData($variant = 1): mixed
