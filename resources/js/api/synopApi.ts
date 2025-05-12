@@ -18,7 +18,7 @@ export const getSynop = async (
 ): Promise<SynopResponse | null> => {
   try {
     const response = await instance.get<SynopResponse>(
-      `/synop?station=${station}&format=json`,
+      `/synop?station=${station}`,
     );
     return response.data;
   } catch (error: unknown) {
