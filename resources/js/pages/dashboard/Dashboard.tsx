@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Box, Grid, Card, CardContent, Drawer } from "@mui/material";
 import { useMediaQuery } from "@mui/material";
 import Sidebar from "../Sidebar";
@@ -12,10 +12,14 @@ import { LatLng } from "leaflet";
 
 export const Dashboard: React.FC = () => {
   const [searchValue, setSearchValue] = React.useState("");
-  const [city, setCity] = React.useState("Szczecin");
+  const [city, setCity] = React.useState("Szczecin, ul. Piłsudskiego");
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const isMobile = useMediaQuery("(max-width:900px)");
-  const { data: airData, loading: airLoading } = useAirQuality(city);
+  const {
+    data: airData,
+    loading: airLoading,
+    refetch: refetchAirData,
+  } = useAirQuality(city);
   const { weather, loading: weatherLoading } = useWeatherConditions(
     airData?.station.city ?? city,
   );
@@ -45,6 +49,14 @@ export const Dashboard: React.FC = () => {
   const handleDrawerToggle = () => {
     setMobileOpen(open => !open);
   };
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      refetchAirData();
+      // refetchWeather();
+    }, 300_000); // 300_000 = 5 minutes
+    return () => clearInterval(id);
+  }, [refetchAirData]);
 
   return (
     <Box
@@ -83,7 +95,10 @@ export const Dashboard: React.FC = () => {
           {/* Weather card */}
           <Grid item xs={12} md={6}>
             <WeatherCard
-              city={city}
+              city={
+                `${airData?.station.city ?? city}` +
+                `, ${airData?.station.address}`
+              }
               dateStr={todayStr}
               weather={weather}
               loading={weatherLoading}

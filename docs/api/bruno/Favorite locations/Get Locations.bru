@@ -1,0 +1,15 @@
+meta {
+  name: Get Locations
+  type: http
+  seq: 2
+}
+
+get {
+  url: 0.0.0.0:8000/api/favorite/locations
+  body: none
+  auth: bearer
+}
+
+headers {
+  Accept: application/json
+}

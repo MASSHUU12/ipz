@@ -1,10 +1,10 @@
 openapi: 3.0.0
 info:
   title: IMGW API Proxy
-  version: 1.0.0
+  version: 1.1.0
   description: >
     This API proxies data from the IMGW public endpoints and exposes endpoints to retrieve:
-      - Synoptic data (/synop) with optional query parameters: id, station, and format.
+      - Synoptic data (/synop) with optional query parameters: id and station.
       - Hydrological data (/hydro) with an optional hydro_variant parameter.
       - Meteorological data (/meteo).
       - Meteorological warnings (/warnings/meteo).
@@ -38,14 +38,6 @@ paths:
           schema:
             type: string
           description: Station name (without diacritical characters).
-          required: false
-        - in: query
-          name: format
-          schema:
-            type: string
-            enum: [json, xml, csv, html]
-            default: json
-          description: Output format. Default is json.
           required: false
       responses:
         "200":

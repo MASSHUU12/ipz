@@ -1,11 +1,11 @@
 meta {
-  name: Patch User
+  name: Post Location
   type: http
   seq: 3
 }
 
-patch {
-  url: 0.0.0.0:8000/api/user
+post {
+  url: 0.0.0.0:8000/api/favorites
   body: formUrlEncoded
   auth: bearer
 }
@@ -19,6 +19,7 @@ auth:bearer {
 }
 
 body:form-urlencoded {
-  email: example@example.com
-  phone_number: +48 123456789
+  city: Jajomyje
+  lat: 52.85548473966234
+  lng: 14.393764954877698
 }

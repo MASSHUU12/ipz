@@ -22,5 +22,5 @@ indent_size = 2
 max_line_length = 80
 shell_variant = posix
 
-[*.yml]
+[*.{yml,js,ts,tsx}]
 indent_size = 2

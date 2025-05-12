@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ImgwController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserFavoriteLocationsController;
 use App\Http\Controllers\UserPreferenceController;
 use App\Http\Middleware\CheckUserBlocked;
 use App\Http\Middleware\EnsureUserIsVerified;
@@ -35,6 +36,9 @@ Route::group(
             Route::group(['middleware' => [EnsureUserIsVerified::class]], function () {
                 Route::get('/user/preferences', [UserPreferenceController::class, 'showCurrentUserPreferences']);
                 Route::patch('/user/preferences', [UserPreferenceController::class, 'updateCurrentUserPreferences']);
+
+                Route::apiResource('favorites', UserFavoriteLocationsController::class)
+                    ->parameters(['favorites' => 'favorite']);
             });
 
             Route::post('/logout', [AuthController::class, 'logout']);
@@ -43,6 +47,7 @@ Route::group(
             Route::get('/user', [UserController::class, 'showCurrentUser']);
             Route::patch('/user', [UserController::class, 'updateCurrentUser']);
             Route::delete('/user', [UserController::class, 'destroyCurrentUser']);
+            Route::patch('/user/password', [AuthController::class, 'updatePassword']);
         });
 
         Route::group(['middleware' => ['role:Super Admin']], function () {

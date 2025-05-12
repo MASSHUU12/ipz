@@ -2,12 +2,14 @@ openapi: 3.0.3
 info:
   title: Authentication API
   description: API for user registration, login, and logout
-  version: 1.1.0
-  contact:
-    name: API Support
+  version: 1.2.0
+
 servers:
-  - url: https://example.com
+  - url: http://0.0.0.0:8000/api
+    description: Local API server
+  - url: https://185.238.73.59/api
     description: Main API server
+
 paths:
   /api/register:
     post:
@@ -58,53 +60,7 @@ paths:
                     description: Authentication token for subsequent requests
                     example: "1|Xisr9laFEoIDeMY8Pc7TcdpoJNsoJg3h0nkRHRet14e31ce9"
         "422":
-          description: Unprocessable Entity
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error422"
-              examples:
-                emailInUse:
-                  summary: Email Already in Use
-                  value:
-                    message: "The email has already been taken."
-                    errors:
-                      email: ["The email has already been taken."]
-                invalidEmail:
-                  summary: Invalid Email
-                  value:
-                    message: "The email field must be a valid email address."
-                    errors:
-                      email: ["The email field must be a valid email address."]
-                phoneInUse:
-                  summary: Phone Number Already in Use
-                  value:
-                    message: "The phone number has already been taken."
-                    errors:
-                      email: ["The phone number has already been taken."]
-                invalidPhoneNumber:
-                  summary: Invalid Phone Number
-                  value:
-                    message: "The phone number field must be a valid number."
-                    errors:
-                      phone_number:
-                        ["The phone number field must be a valid number."]
-                passwordConfirmation:
-                  summary: Password Confirmation Mismatch
-                  value:
-                    message: "The password field confirmation does not match."
-                    errors:
-                      password:
-                        ["The password field confirmation does not match."]
-                passwordRequirements:
-                  summary: Password Requirements Not Met
-                  value:
-                    message: "The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character."
-                    errors:
-                      password:
-                        [
-                          "The password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.",
-                        ]
+          $ref: "#/components/responses/Error422"
         "500":
           description: Internal Server Error
           content:
@@ -115,7 +71,6 @@ paths:
                   message:
                     type: string
                     example: "There was an error during user registration. Please try again."
-
   /api/login:
     post:
       operationId: login
@@ -176,7 +131,6 @@ paths:
                   summary: Account Blocked
                   value:
                     message: "Your account is temporarily blocked. Please try again later."
-
   /api/logout:
     post:
       operationId: logout
@@ -198,12 +152,7 @@ paths:
                     type: string
                     example: "Tokens Revoked"
         "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error401"
-
+          $ref: "#/components/schemas/Error401"
   /api/token/validate:
     get:
       operationId: validateToken
@@ -239,6 +188,55 @@ paths:
                   message:
                     type: string
                     example: "Invalid token"
+  /api/user/password:
+    patch:
+      operationId: updatePassword
+      summary: Change Password
+      description: Update the authenticated user’s password. Requires current password and confirmation of new password.
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                current_password:
+                  type: string
+                  format: password
+                  description: The user’s existing password
+                password:
+                  type: string
+                  format: password
+                  description: The new password
+                  minLength: 8
+                  maxLength: 255
+                password_confirmation:
+                  type: string
+                  format: password
+                  description: Confirmation of the new password
+              required:
+                - current_password
+                - password
+                - password_confirmation
+      responses:
+        "200":
+          description: Password Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password updated successfully."
+        "401":
+          $ref: "#/components/schemas/Error401"
+        "422":
+          $ref: "#/components/schemas/Error422"
 
 components:
   securitySchemes:

@@ -1,24 +1,24 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AirQualityResponse, getAirQuality } from "@/api/airQualityApi";
 
 export const useAirQuality = (city: string) => {
   const [data, setData] = useState<AirQualityResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
 
-      const r = await getAirQuality(city);
-      setData(r);
+    const r = await getAirQuality(city);
+    setData(r);
 
-      console.log(`API Response dla ${city}:`, r);
+    console.log(`API Response for ${city}:`, r);
 
-      setLoading(false);
-    };
-
-    fetchData();
+    setLoading(false);
   }, [city]);
 
-  return { data, loading };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, refetch: fetchData };
 };

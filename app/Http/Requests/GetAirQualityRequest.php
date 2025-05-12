@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\GiosApi;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 
@@ -52,7 +53,7 @@ class GetAirQualityRequest extends FormRequest
             ->distinct()
             ->limit(50)
             ->get()
-            ->map(function($row) {
+            ->map(function ($row) {
                 return [
                     'label'     => $row->station_name,
                     'latitude'  => (float) $row->latitude,
@@ -62,7 +63,30 @@ class GetAirQualityRequest extends FormRequest
             ->all();
 
         if (empty($candidates)) {
-            throw new \RuntimeException("Nie znaleziono lokalizacji podobnej do \"{$this->input('addr')}\"");
+            /** @var GiosApi $gios */
+            $gios      = app(GiosApi::class);
+            $stations  = $gios->getAllStations() ?: [];
+
+            $matches = array_filter($stations, fn($s) => !empty($s['stationName']));
+
+            $distances = array_map(
+                fn($s) => levenshtein($query, mb_strtolower($s['stationName'])),
+                $matches
+            );
+
+            if (!empty($distances)) {
+                // Pick the station with the smallest distance
+                $bestIdx = array_keys($distances, min($distances))[0];
+                $best    = array_values($matches)[$bestIdx];
+
+                // GIOŚ stations use 'gegrLat' / 'gegrLon'
+                return [
+                    (float) $best['gegrLat'],
+                    (float) $best['gegrLon'],
+                ];
+            }
+
+            throw new \RuntimeException("No location similar to “{$this->input('addr')}”");
         }
 
         // Compute Levenshtein distances
@@ -75,6 +99,6 @@ class GetAirQualityRequest extends FormRequest
         $minIndex = array_keys($distances, min($distances))[0];
         $best     = $candidates[$minIndex];
 
-        return [ $best['latitude'], $best['longitude'] ];
+        return [$best['latitude'], $best['longitude']];
     }
 }

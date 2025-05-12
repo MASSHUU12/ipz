@@ -74,6 +74,11 @@ Frontend will be available at `http://localhost:8000`.
 
 9. **(Optional) Automatically run scheduled tasks:**
 
+> [!WARNING]
+> Omitting this step may result in some functionality to be unavailable.
+
+**When you have time**:
+
 The server is set up to perform certain actions every so often,
 but in order for them to execute,
 the scheduler and queue must run in the background:
@@ -85,3 +90,18 @@ php artisan queue:work &
 
 > After each change to the dependent code,
 > it must be restarted for the changes to take effect.
+
+**When you don't want to wait**:
+
+> [!NOTE]
+> For this to work, queue must be running.
+
+Adding tasks to the queue can be forced using commands.
+For each task, there is a command that adds it to the queue, such as:
+
+- `synoptic:store`
+- `check:temp-warnings`
+- `send:warnings-emails`
+- `airpollution:store`
+- `airpollution:delete-old`
+- `airpollution:leaderboard`
