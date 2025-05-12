@@ -38,7 +38,6 @@ class ImgwController extends Controller
     {
         $id      = $request->query('id');
         $station = $request->query('station');
-        $format  = $request->query('format', 'json');
 
         // If station contains a comma (e.g. user pasted an address), drop everything after it
         if (!$id && $station && false !== strpos($station, ',')) {
@@ -82,13 +81,13 @@ class ImgwController extends Controller
         }
 
         // If no historical data, fall back to the API + cache
-        $cacheKey = 'synop_' . md5("id:{$id}_station:{$station}_format:{$format}");
+        $cacheKey = 'synop_' . md5("id:{$id}_station:{$station}_format:json");
 
         $data = Cache::remember(
             $cacheKey,
             now()->addMinutes(self::CACHE_TTL),
-            function () use ($id, $station, $format) {
-                return $this->client->getSynopData($id, $station, $format);
+            function () use ($id, $station) {
+                return $this->client->getSynopData($id, $station, "json");
             }
         );
 
