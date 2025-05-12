@@ -1,6 +1,6 @@
-import React from "react";
 import { Card, CardContent, Typography, Box } from "@mui/material";
 import { SynopResponse } from "@/api/synopApi";
+import { useEffect, useState } from "react";
 
 interface Props {
   city: string;
@@ -9,12 +9,37 @@ interface Props {
   loading: boolean;
 }
 
-export const WeatherCard: React.FC<Props> = ({
+enum Unit {
+  Celsius,
+  Fahrenheit,
+}
+
+export function WeatherCard({
   city,
   dateStr,
   weather,
   loading,
-}) => {
+}: Props): JSX.Element {
+  const [temperature, setTemperature] = useState<number>(
+    weather?.temperature ?? 0,
+  );
+  const [unit, setUnit] = useState<Unit>(Unit.Celsius);
+
+  const toggleUnit = () => {
+    setUnit(unit === Unit.Celsius ? Unit.Fahrenheit : Unit.Celsius);
+  };
+
+  useEffect(() => {
+    switch (unit) {
+      case Unit.Celsius:
+        setTemperature(weather?.temperature ?? 0);
+        break;
+      case Unit.Fahrenheit:
+        setTemperature((weather?.temperature ?? 0) * 1.8 + 32);
+        break;
+    }
+  }, [weather?.temperature, unit]);
+
   return (
     <Card
       sx={{
@@ -30,7 +55,11 @@ export const WeatherCard: React.FC<Props> = ({
           <Typography>Loading...</Typography>
         ) : (
           <Box mt={2} textAlign="center">
-            <Typography variant="h4">🌤 {weather.temperature}°C</Typography>
+            <div onClick={toggleUnit}>
+              <Typography variant="h4">
+                🌤 {temperature}°{unit === Unit.Celsius ? "C" : "F"}
+              </Typography>
+            </div>
             <Typography>💧 {weather.relative_humidity}%</Typography>
             <Typography>💨 {weather.wind_speed} m/s</Typography>
             <Typography>🌡 {weather.pressure} hPa</Typography>
@@ -39,4 +68,4 @@ export const WeatherCard: React.FC<Props> = ({
       </CardContent>
     </Card>
   );
-};
+}
