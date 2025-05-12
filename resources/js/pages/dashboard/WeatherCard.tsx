@@ -55,11 +55,18 @@ export function WeatherCard({
           <Typography>Loading...</Typography>
         ) : (
           <Box mt={2} textAlign="center">
-            <div onClick={toggleUnit}>
+            <button
+              onClick={toggleUnit}
+              aria-label="Toggle temperature unit"
+              style={{
+                all: "unset",
+                cursor: "pointer",
+                display: "inline-block",
+              }}>
               <Typography variant="h4">
                 🌤 {temperature}°{unit === Unit.Celsius ? "C" : "F"}
               </Typography>
-            </div>
+            </button>
             <Typography>💧 {weather.relative_humidity}%</Typography>
             <Typography>💨 {weather.wind_speed} m/s</Typography>
             <Typography>🌡 {weather.pressure} hPa</Typography>
