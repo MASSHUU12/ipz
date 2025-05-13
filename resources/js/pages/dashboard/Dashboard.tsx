@@ -9,6 +9,7 @@ import { WeatherCard } from "./WeatherCard";
 import { AirPollutionChart } from "./AirPollutionChart";
 import { CityMap } from "./CityMap";
 import { LatLng } from "leaflet";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const Dashboard: React.FC = () => {
   const [searchValue, setSearchValue] = React.useState("");
@@ -114,15 +115,17 @@ export const Dashboard: React.FC = () => {
                 borderRadius: 2,
               }}>
               <CardContent>
-                <AirPollutionChart measurements={airData?.measurements} />
+                <ErrorBoundary>
+                  <AirPollutionChart measurements={airData?.measurements} />
+                </ErrorBoundary>
               </CardContent>
             </Card>
           </Grid>
           {/* Map */}
           <Grid item xs={12} md={6}>
-          <Card sx={{ height: 400, borderRadius: 2, boxShadow: 3 }}>
-            <CityMap coords={getCoords()} city={city} />
-          </Card>
+            <Card sx={{ height: 400, borderRadius: 2, boxShadow: 3 }}>
+              <CityMap coords={getCoords()} city={city} />
+            </Card>
           </Grid>
         </Grid>
       </Box>
