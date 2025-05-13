@@ -32,12 +32,9 @@ export interface AirQuality {
   };
 }
 
-export interface Measurement {
-  parameter: string;
-  code: string;
+export interface MeasurementRecord {
+  date: string;
   value: number;
-  unit: string;
-  measurementTime: string;
 }
 
 export interface AirQualityResponse {
@@ -46,7 +43,7 @@ export interface AirQualityResponse {
   request: Coords;
   station: Station;
   airQuality: AirQuality;
-  measurements: Measurement[];
+  measurements: Record<string, MeasurementRecord[]>;
   forecasts: unknown[];
 }
 
