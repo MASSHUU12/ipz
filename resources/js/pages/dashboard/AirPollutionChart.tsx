@@ -1,4 +1,4 @@
-import { MeasurementRecord } from "@/api/airQualityApi";
+import { MeasurementRecord, Measurements } from "@/api/airQualityApi";
 import { getAirQualityLevel, normalizeParameter } from "@/utils/airQuality";
 import React, { useMemo } from "react";
 import {
@@ -13,27 +13,59 @@ import {
 } from "recharts";
 
 interface Props {
-  measurements?: Record<string, MeasurementRecord[]>;
+  measurements: Measurements;
+}
+
+interface ChartEntry {
+  name: string;
+  value: number;
+  level: string;
+  color: string;
 }
 
 export const AirPollutionChart: React.FC<Props> = ({ measurements }) => {
-  const data = useMemo(() => {
-    if (!measurements) return [];
+  const data: ChartEntry[] = useMemo(() => {
+    if (!measurements || measurements.length === 0) {
+      return [];
+    }
 
-    return Object.entries(measurements).map(([pollutant, records]) => {
-      const latestRecord = records[0];
-      const normalizedParam = normalizeParameter(pollutant);
-      const { level, color } = getAirQualityLevel(
-        normalizedParam,
-        latestRecord.value,
-      );
-      return {
-        name: normalizedParam.toUpperCase(),
-        value: latestRecord.value,
-        level,
-        color,
-      };
-    });
+    const groups = measurements.reduce<Record<string, MeasurementRecord[]>>(
+      (acc, record) => {
+        const key = record.parameter;
+        if (!acc[key]) {
+          acc[key] = [];
+        }
+        acc[key].push(record);
+        return acc;
+      },
+      {},
+    );
+
+    return Object.entries(groups)
+      .map(([parameter, records]) => {
+        const latest = records
+          .slice()
+          .sort(
+            (a, b) =>
+              new Date(b.measurementTime).getTime() -
+              new Date(a.measurementTime).getTime(),
+          )[0];
+
+        if (latest.value === null || latest.value === undefined) {
+          return null;
+        }
+
+        const normalized = normalizeParameter(parameter);
+        const { level, color } = getAirQualityLevel(normalized, latest.value);
+
+        return {
+          name: normalized.toUpperCase(),
+          value: latest.value,
+          level,
+          color,
+        } as ChartEntry;
+      })
+      .filter((entry): entry is ChartEntry => entry !== null);
   }, [measurements]);
 
   return (
