@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Authentication API
   description: API for user registration, login, and logout
-  version: 1.2.0
+  version: 1.2.1
 
 servers:
   - url: http://0.0.0.0:8000/api
@@ -192,7 +192,10 @@ paths:
     patch:
       operationId: updatePassword
       summary: Change Password
-      description: Update the authenticated user’s password. Requires current password and confirmation of new password.
+      description: >
+        Update the authenticated user’s password. This operation also revokes all existing
+        authentication tokens for the user, requiring re-authentication. The request must include
+        the current password, new password, and new password confirmation.
       tags:
         - Authentication
       security:
