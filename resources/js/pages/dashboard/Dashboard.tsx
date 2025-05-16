@@ -4,7 +4,7 @@ import { useMediaQuery } from "@mui/material";
 import Sidebar from "../Sidebar";
 import { useAirQuality } from "../../data/useAirQuality";
 import { useWeatherConditions } from "../../data/useWeatherConditions";
-import { SearchAppBar } from "./SearchAppBar";
+import { SearchBar } from "./SearchBar";
 import { WeatherCard } from "./WeatherCard";
 import { AirPollutionChart } from "./AirPollutionChart";
 import { CityMap } from "./CityMap";
@@ -85,7 +85,7 @@ export const Dashboard: React.FC = () => {
       )}
 
       <Box sx={{ flexGrow: 1, p: 2 }}>
-        <SearchAppBar
+        <SearchBar
           searchValue={searchValue}
           onSearchChange={setSearchValue}
           onSearchSubmit={handleSearch}
