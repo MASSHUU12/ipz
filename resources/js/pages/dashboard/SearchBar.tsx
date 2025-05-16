@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   AppBar,
   Toolbar,
@@ -9,6 +9,7 @@ import {
   styled,
   Autocomplete,
   CircularProgress,
+  Popper,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -48,6 +49,13 @@ export const SearchBar: React.FC<Props> = ({
   const isMobile = useMediaQuery("(max-width:900px)");
   const { options, loading } = useAddressSuggestions(searchValue);
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = () => {
+    inputRef.current?.blur();
+    onSearchSubmit();
+  };
+
   return (
     <StyledAppBar position="static">
       <Toolbar sx={{ justifyContent: "space-between" }}>
@@ -68,21 +76,21 @@ export const SearchBar: React.FC<Props> = ({
           options={options}
           loading={loading}
           inputValue={searchValue}
-          onInputChange={(_, value, reason) => {
-            if (reason === "input") onSearchChange(value);
-          }}
-          onChange={(_, value) => {
-            if (typeof value === "string") {
-              onSearchChange(value);
-            }
-          }}
-          onKeyDown={e => e.key === "Enter" && onSearchSubmit()}
+          onInputChange={(_, v, reason) =>
+            reason === "input" && onSearchChange(v)
+          }
+          onChange={(_, v) => typeof v === "string" && onSearchChange(v)}
+          onKeyDown={e => e.key === "Enter" && handleSubmit()}
+          PopperComponent={props => (
+            <Popper {...props} style={{ zIndex: 1300 }} />
+          )}
           renderInput={params => (
             <StyledTextField
               {...params}
               placeholder="Search city"
               size="small"
               variant="outlined"
+              inputRef={inputRef}
               InputProps={{
                 ...params.InputProps,
                 endAdornment: (
@@ -94,9 +102,7 @@ export const SearchBar: React.FC<Props> = ({
                       />
                     ) : null}
                     <InputAdornment position="end">
-                      <IconButton
-                        onClick={onSearchSubmit}
-                        sx={{ color: "#fff" }}>
+                      <IconButton onClick={handleSubmit} sx={{ color: "#fff" }}>
                         <SearchIcon />
                       </IconButton>
                     </InputAdornment>
