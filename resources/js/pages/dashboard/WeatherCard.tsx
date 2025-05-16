@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography, Box } from "@mui/material";
+import { Card, CardContent, Typography, Box, styled } from "@mui/material";
 import { SynopResponse } from "@/api/synopApi";
 import { useEffect, useState } from "react";
 
@@ -13,6 +13,13 @@ enum Unit {
   Celsius,
   Fahrenheit,
 }
+
+const StyledCard = styled(Card)({
+  backgroundColor: "#222",
+  color: "#fff",
+  borderRadius: 2,
+  height: "100%",
+});
 
 export function WeatherCard({
   city,
@@ -41,38 +48,40 @@ export function WeatherCard({
   }, [weather?.temperature, unit]);
 
   return (
-    <Card
-      sx={{
-        backgroundColor: "#222",
-        color: "#fff",
-        borderRadius: 2,
-        height: "100%",
-      }}>
+    <StyledCard>
       <CardContent>
         <Typography variant="h6">{dateStr}</Typography>
         <Typography variant="subtitle1">{city}</Typography>
-        {loading || !weather ? (
+        {loading ? (
           <Typography>Loading...</Typography>
         ) : (
-          <Box mt={2} textAlign="center">
-            <button
-              onClick={toggleUnit}
-              aria-label="Toggle temperature unit"
-              style={{
-                all: "unset",
-                cursor: "pointer",
-                display: "inline-block",
-              }}>
-              <Typography variant="h4">
-                🌤 {temperature}°{unit === Unit.Celsius ? "C" : "F"}
+          <>
+            {!weather ? (
+              <Typography variant="subtitle1">
+                Synoptic data is unavailable for this location.
               </Typography>
-            </button>
-            <Typography>💧 {weather.relative_humidity}%</Typography>
-            <Typography>💨 {weather.wind_speed} m/s</Typography>
-            <Typography>🌡 {weather.pressure} hPa</Typography>
-          </Box>
+            ) : (
+              <Box mt={2} textAlign="center">
+                <button
+                  onClick={toggleUnit}
+                  aria-label="Toggle temperature unit"
+                  style={{
+                    all: "unset",
+                    cursor: "pointer",
+                    display: "inline-block",
+                  }}>
+                  <Typography variant="h4">
+                    🌤 {temperature}°{unit === Unit.Celsius ? "C" : "F"}
+                  </Typography>
+                </button>
+                <Typography>💧 {weather.relative_humidity}%</Typography>
+                <Typography>💨 {weather.wind_speed} m/s</Typography>
+                <Typography>🌡 {weather.pressure} hPa</Typography>
+              </Box>
+            )}
+          </>
         )}
       </CardContent>
-    </Card>
+    </StyledCard>
   );
 }
