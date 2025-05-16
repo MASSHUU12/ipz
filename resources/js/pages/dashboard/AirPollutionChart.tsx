@@ -1,5 +1,6 @@
 import { MeasurementRecord, Measurements } from "@/api/airQualityApi";
 import { getAirQualityLevel, normalizeParameter } from "@/utils/airQuality";
+import { Typography } from "@mui/material";
 import React, { useMemo } from "react";
 import {
   ResponsiveContainer,
@@ -86,9 +87,17 @@ export const AirPollutionChart: React.FC<Props> = ({ measurements }) => {
           dataKey="value"
           radius={[8, 8, 0, 0]}
           label={{ position: "top", fill: "#fff" }}>
-          {data.map((entry, i) => (
-            <Cell key={i} fill={entry.color} />
-          ))}
+          {data.length <= 0 ? (
+            <Typography variant="subtitle1">
+              Air pollution data is unavailable for this location.
+            </Typography>
+          ) : (
+            <>
+              {data.map((entry, i) => (
+                <Cell key={i} fill={entry.color} />
+              ))}
+            </>
+          )}
         </Bar>
       </BarChart>
     </ResponsiveContainer>
