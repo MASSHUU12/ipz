@@ -115,7 +115,7 @@ export const Dashboard: React.FC = () => {
                 borderRadius: 2,
               }}>
               <CardContent>
-                <ErrorBoundary>
+                <ErrorBoundary message="There is no data to display for an air pollution chart.">
                   <AirPollutionChart measurements={airData?.measurements} />
                 </ErrorBoundary>
               </CardContent>

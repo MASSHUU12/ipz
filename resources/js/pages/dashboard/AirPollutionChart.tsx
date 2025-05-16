@@ -13,7 +13,7 @@ import {
 } from "recharts";
 
 interface Props {
-  measurements: Measurements;
+  measurements: Measurements | undefined;
 }
 
 interface ChartEntry {
