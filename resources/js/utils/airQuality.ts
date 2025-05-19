@@ -1,15 +1,3 @@
-const mapping: Record<string, string> = {
-  "pył zawieszony pm10": "pm10",
-  "pył zawieszony pm2.5": "pm25",
-  "dwutlenek azotu": "no2",
-  "dwutlenek siarki": "so2",
-  ozon: "o3",
-  "tlenek węgla": "co",
-};
-
-export const normalizeParameter = (label: string): string =>
-  mapping[label.toLowerCase()] || label.toLowerCase();
-
 export const pollutantThresholds: Record<
   string,
   { good: number; moderate: number; unhealthy: number }
