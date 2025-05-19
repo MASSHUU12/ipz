@@ -1,5 +1,5 @@
 import { MeasurementRecord, Measurements } from "@/api/airQualityApi";
-import { getAirQualityLevel, normalizeParameter } from "@/utils/airQuality";
+import { getAirQualityLevel } from "@/utils/airQuality";
 import { Typography } from "@mui/material";
 import React, { useMemo } from "react";
 import {
@@ -32,7 +32,7 @@ export const AirPollutionChart: React.FC<Props> = ({ measurements }) => {
 
     const groups = measurements.reduce<Record<string, MeasurementRecord[]>>(
       (acc, record) => {
-        const key = record.parameter;
+        const key = record.code.toLowerCase();
         if (!acc[key]) {
           acc[key] = [];
         }
@@ -43,24 +43,19 @@ export const AirPollutionChart: React.FC<Props> = ({ measurements }) => {
     );
 
     return Object.entries(groups)
-      .map(([parameter, records]) => {
-        const latest = records
-          .slice()
-          .sort(
-            (a, b) =>
-              new Date(b.measurementTime).getTime() -
-              new Date(a.measurementTime).getTime(),
-          )[0];
+      .map(([code, records]) => {
+        const latest = records.reduce((a, b) =>
+          new Date(a.measurementTime) > new Date(b.measurementTime) ? a : b,
+        );
 
-        if (latest.value === null || latest.value === undefined) {
+        if (latest.value === null) {
           return null;
         }
 
-        const normalized = normalizeParameter(parameter);
-        const { level, color } = getAirQualityLevel(normalized, latest.value);
+        const { level, color } = getAirQualityLevel(code, latest.value);
 
         return {
-          name: normalized.toUpperCase(),
+          name: code.toUpperCase(),
           value: latest.value,
           level,
           color,
@@ -68,6 +63,14 @@ export const AirPollutionChart: React.FC<Props> = ({ measurements }) => {
       })
       .filter((entry): entry is ChartEntry => entry !== null);
   }, [measurements]);
+
+  if (!data.length) {
+    return (
+      <Typography variant="subtitle1">
+        Air pollution data is unavailable for this location.
+      </Typography>
+    );
+  }
 
   return (
     <ResponsiveContainer width="100%" height={250}>
@@ -87,17 +90,9 @@ export const AirPollutionChart: React.FC<Props> = ({ measurements }) => {
           dataKey="value"
           radius={[8, 8, 0, 0]}
           label={{ position: "top", fill: "#fff" }}>
-          {data.length <= 0 ? (
-            <Typography variant="subtitle1">
-              Air pollution data is unavailable for this location.
-            </Typography>
-          ) : (
-            <>
-              {data.map((entry, i) => (
-                <Cell key={i} fill={entry.color} />
-              ))}
-            </>
-          )}
+          {data.map((entry, i) => (
+            <Cell key={i} fill={entry.color} />
+          ))}
         </Bar>
       </BarChart>
     </ResponsiveContainer>
