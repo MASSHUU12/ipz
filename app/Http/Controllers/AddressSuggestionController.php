@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\JaroWinklerHelper;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -9,10 +11,10 @@ class AddressSuggestionController extends Controller
 {
     /**
      * GET /api/addresses/suggest?q=ciąg
-     * Zwraca top 10 miast (kolumna `city`) z tabeli air_pollution_leaderboard
-     * posortowane po odległości Levenshteina od q.
+     * Returns top 10 cities (column `city`) from table air_pollution_leaderboard
+     * sorted by Jaro-Winkler similarity to q (highest first).
      */
-    public function suggest(Request $request)
+    public function suggest(Request $request): JsonResponse
     {
         $q = trim((string) $request->query('q', ''));
         if ($q === '') {
@@ -27,15 +29,18 @@ class AddressSuggestionController extends Controller
             ->pluck('address')
             ->all();
 
-        $scored = array_map(function(string $addr) use ($q) {
+        $qLower = mb_strtolower($q);
+
+        // Score each candidate by Jaro-Winkler similarity
+        $scored = array_map(function (string $addr) use ($qLower) {
+            $addrLower = mb_strtolower($addr);
             return [
-                'address'  => $addr,
-                'distance' => levenshtein(mb_strtolower($q), mb_strtolower($addr)),
+                'address'    => $addr,
+                'similarity' => JaroWinklerHelper::jaroWinkler($qLower, $addrLower),
             ];
         }, $candidates);
 
-        usort($scored, fn($a, $b) => $a['distance'] <=> $b['distance']);
-
+        usort($scored, fn($a, $b) => $b['similarity'] <=> $a['similarity']);
 
         $suggestions = array_slice(
             array_column($scored, 'address'),
