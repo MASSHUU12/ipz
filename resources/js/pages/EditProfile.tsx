@@ -15,8 +15,8 @@ import { router, usePage } from "@inertiajs/react";
 import Sidebar from "./Sidebar";
 import { RequireAuth } from "./RequireAuth";
 import { instance } from "@/api/api";
-import { updateEmail } from "@/api/emailApi";
 import { isValidEmail } from "./regex";
+
 interface User {
   id: number;
   email: string | null;
@@ -30,9 +30,9 @@ interface PageProps {
   [key: string]: any;
 }
 
-
 const EditProfile = () => {
   const isMobile = useMediaQuery("(max-width:900px)");
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const { props } = usePage<PageProps>();
   const currentEmail = props.auth?.user?.email ?? "";
 
@@ -42,7 +42,6 @@ const EditProfile = () => {
   const [newEmail, setNewEmail] = useState("");
   const [confirmNewEmail, setConfirmNewEmail] = useState("");
 
-
   const [errors, setErrors] = useState<{
     currentPassword?: string;
     newPassword?: string;
@@ -50,7 +49,6 @@ const EditProfile = () => {
   }>({});
 
   const [emailErrors, setEmailErrors] = useState<{ newEmail?: string; confirmNewEmail?: string }>({});
-
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -63,65 +61,63 @@ const EditProfile = () => {
   });
 
   const handleEmailChange = async () => {
-  setEmailErrors({});
+    setEmailErrors({});
 
-  if (!newEmail) {
-    setEmailErrors({ newEmail: "New email is required." });
-    return;
-  }
+    if (!newEmail) {
+      setEmailErrors({ newEmail: "New email is required." });
+      return;
+    }
 
-  if (!confirmNewEmail) {
-    setEmailErrors({ confirmNewEmail: "Please confirm your new email." });
-    return;
-  }
+    if (!confirmNewEmail) {
+      setEmailErrors({ confirmNewEmail: "Please confirm your new email." });
+      return;
+    }
 
-  if (newEmail !== confirmNewEmail) {
-    setEmailErrors({
-      newEmail: "Emails do not match.",
-      confirmNewEmail: "Emails do not match.",
-    });
-    return;
-  }
+    if (newEmail !== confirmNewEmail) {
+      setEmailErrors({
+        newEmail: "Emails do not match.",
+        confirmNewEmail: "Emails do not match.",
+      });
+      return;
+    }
 
-  if (newEmail === currentEmail) {
-    setEmailErrors({ newEmail: "New email cannot be the same as the current one." });
-    return;
-  }
+    if (newEmail === currentEmail) {
+      setEmailErrors({ newEmail: "New email cannot be the same as the current one." });
+      return;
+    }
 
-  if (!isValidEmail(newEmail)) {
-    setEmailErrors({ newEmail: "Invalid email format." });
-    return;
-  }
+    if (!isValidEmail(newEmail)) {
+      setEmailErrors({ newEmail: "Invalid email format." });
+      return;
+    }
 
-  if (newEmail.length > 255) {
-    setEmailErrors({ newEmail: "Email must be less than 255 characters." });
-    return;
-  }
+    if (newEmail.length > 255) {
+      setEmailErrors({ newEmail: "Email must be less than 255 characters." });
+      return;
+    }
 
-  try {
-    await instance.patch(
-      "/user",
-      { email: newEmail },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
-        },
-      }
-    );
+    try {
+      await instance.patch(
+        "/user",
+        { email: newEmail },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
+          },
+        }
+      );
 
-    localStorage.removeItem("authToken");
-    router.visit("/login");
-
-  } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to update email.";
-    setSnackbar({
-      open: true,
-      message,
-      severity: "error",
-    });
-  }
-};
-
+      localStorage.removeItem("authToken");
+      router.visit("/login");
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Failed to update email.";
+      setSnackbar({
+        open: true,
+        message,
+        severity: "error",
+      });
+    }
+  };
 
   const handleSubmit = async () => {
     setErrors({});
@@ -203,7 +199,12 @@ const EditProfile = () => {
     <RequireAuth>
       <Box sx={{ display: "flex", backgroundColor: "#1e1e1e", minHeight: "100vh", color: "#fff" }}>
         {isMobile ? (
-          <Drawer variant="temporary" open={false} onClose={() => {}} ModalProps={{ keepMounted: true }}>
+          <Drawer
+            variant="temporary"
+            open={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            ModalProps={{ keepMounted: true }}
+          >
             <Sidebar />
           </Drawer>
         ) : (
@@ -219,19 +220,25 @@ const EditProfile = () => {
             display: "flex",
             justifyContent: "center",
             alignItems: "flex-start",
+            overflowX: "hidden",
           }}
         >
           <Box sx={{ width: "100%", maxWidth: "600px" }}>
-            <Typography variant="h4" gutterBottom>
-              Edit Profile
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+              {isMobile && (
+                <Button onClick={() => setDrawerOpen(true)} sx={{ minWidth: 0, p: 1 }}>
+                  <span style={{ fontSize: "1.5rem" }}>☰</span>
+                </Button>
+              )}
+              <Typography variant="h4">Edit Profile</Typography>
+            </Box>
 
             {/* --- Change Email Section --- */}
-            <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
+            <Typography variant="h5" gutterBottom>
               Change Email
             </Typography>
 
-            <Card sx={{ backgroundColor: "#222", borderRadius: 2, p: { xs: 2, sm: 4 }, width: "100%", mb: 4 }}>
+            <Card sx={{ backgroundColor: "#222", borderRadius: 2, p: { xs: 2, sm: 4 }, mb: 4 }}>
               <CardContent>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                   <TextField
@@ -264,7 +271,6 @@ const EditProfile = () => {
                       label: { color: "#bbb" },
                     }}
                   />
-
                   <Box
                     sx={{
                       display: "flex",
@@ -274,16 +280,18 @@ const EditProfile = () => {
                     }}
                   >
                     <Button
-                    onClick={handleEmailChange}
-                    variant="contained"
-                    sx={{ backgroundColor: "#22c55e",flex: 1, textTransform: "none", alignSelf: "flex-start" }}
-                  >
-                    Save Changes
-                  </Button>
+                      onClick={handleEmailChange}
+                      variant="contained"
+                      fullWidth
+                      sx={{ backgroundColor: "#22c55e", textTransform: "none" }}
+                    >
+                      Save Changes
+                    </Button>
                     <Button
                       onClick={handleCancel}
                       variant="outlined"
-                      sx={{ color: "#ccc", borderColor: "#555", flex: 1, textTransform: "none" }}
+                      fullWidth
+                      sx={{ color: "#ccc", borderColor: "#555", textTransform: "none" }}
                     >
                       Cancel
                     </Button>
@@ -297,7 +305,7 @@ const EditProfile = () => {
               Change Password
             </Typography>
 
-            <Card sx={{ backgroundColor: "#222", borderRadius: 2, p: { xs: 2, sm: 4 }, width: "100%" }}>
+            <Card sx={{ backgroundColor: "#222", borderRadius: 2, p: { xs: 2, sm: 4 } }}>
               <CardContent>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                   <TextField
@@ -315,7 +323,6 @@ const EditProfile = () => {
                       label: { color: "#bbb" },
                     }}
                   />
-
                   <TextField
                     label="New password"
                     fullWidth
@@ -331,7 +338,6 @@ const EditProfile = () => {
                       label: { color: "#bbb" },
                     }}
                   />
-
                   <TextField
                     label="Repeat new password"
                     fullWidth
@@ -347,7 +353,6 @@ const EditProfile = () => {
                       label: { color: "#bbb" },
                     }}
                   />
-
                   <Box
                     sx={{
                       display: "flex",
@@ -359,14 +364,16 @@ const EditProfile = () => {
                     <Button
                       onClick={handleSubmit}
                       variant="contained"
-                      sx={{ backgroundColor: "#22c55e", flex: 1, textTransform: "none" }}
+                      fullWidth
+                      sx={{ backgroundColor: "#22c55e", textTransform: "none" }}
                     >
                       Save Changes
                     </Button>
                     <Button
                       onClick={handleCancel}
                       variant="outlined"
-                      sx={{ color: "#ccc", borderColor: "#555", flex: 1, textTransform: "none" }}
+                      fullWidth
+                      sx={{ color: "#ccc", borderColor: "#555", textTransform: "none" }}
                     >
                       Cancel
                     </Button>
