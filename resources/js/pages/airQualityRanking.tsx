@@ -43,7 +43,6 @@ export default function AirQualityRanking(): JSX.Element {
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
-  // Pobieranie danych tylko przy zmianie strony
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -53,10 +52,9 @@ export default function AirQualityRanking(): JSX.Element {
         const withAqiRank = [...entries]
           .sort((a, b) => (b.air_quality_index ?? -Infinity) - (a.air_quality_index ?? -Infinity))
           .map((entry, index) => ({
-            ...entry,
-            aqiRank: index + 1,
-          }));
-
+          ...entry,
+          aqiRank: (currentPage - 1) * itemsPerPage + index + 1,
+        }));
         setRawData(withAqiRank);
         setTotalItems(total);
       } catch (err) {
@@ -69,7 +67,6 @@ export default function AirQualityRanking(): JSX.Element {
     fetchData();
   }, [currentPage]);
 
-  // Sortowanie lokalne przy zmianie kolumny
   useEffect(() => {
     const sorted = [...rawData].sort((a, b) => {
       const valA = typeof a[orderBy] === "number" ? a[orderBy] as number : -Infinity;
