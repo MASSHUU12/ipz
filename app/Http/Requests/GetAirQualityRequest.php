@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\JaroWinklerHelper;
 use App\Services\GiosApi;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
@@ -62,6 +63,7 @@ class GetAirQualityRequest extends FormRequest
             })
             ->all();
 
+        // If no DB match, fallback to GIOS API
         if (empty($candidates)) {
             /** @var GiosApi $gios */
             $gios      = app(GiosApi::class);
@@ -69,17 +71,17 @@ class GetAirQualityRequest extends FormRequest
 
             $matches = array_filter($stations, fn($s) => !empty($s['stationName']));
 
-            $distances = array_map(
-                fn($s) => levenshtein($query, mb_strtolower($s['stationName'])),
+            // Compute Jaro-Winkler similarity
+            $scores = array_map(
+                fn($s) => JaroWinklerHelper::jaroWinkler($query, mb_strtolower($s['stationName'])),
                 $matches
             );
 
-            if (!empty($distances)) {
-                // Pick the station with the smallest distance
-                $bestIdx = array_keys($distances, min($distances))[0];
+            if (!empty($scores)) {
+                // Pick station with highest similarity
+                $bestIdx = array_keys($scores, max($scores))[0];
                 $best    = array_values($matches)[$bestIdx];
 
-                // GIOŚ stations use 'gegrLat' / 'gegrLon'
                 return [
                     (float) $best['gegrLat'],
                     (float) $best['gegrLon'],
@@ -89,15 +91,14 @@ class GetAirQualityRequest extends FormRequest
             throw new \RuntimeException("No location similar to “{$this->input('addr')}”");
         }
 
-        // Compute Levenshtein distances
-        $distances = array_map(
-            fn($item) => levenshtein($query, mb_strtolower($item['label'])),
+        // Compute Jaro-Winkler similarity for DB candidates
+        $scores = array_map(
+            fn($item) => JaroWinklerHelper::jaroWinkler($query, mb_strtolower($item['label'])),
             $candidates
         );
 
-        // Pick best match
-        $minIndex = array_keys($distances, min($distances))[0];
-        $best     = $candidates[$minIndex];
+        $bestIdx = array_keys($scores, max($scores))[0];
+        $best    = $candidates[$bestIdx];
 
         return [$best['latitude'], $best['longitude']];
     }

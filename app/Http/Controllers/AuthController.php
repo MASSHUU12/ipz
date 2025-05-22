@@ -119,7 +119,7 @@ class AuthController extends Controller
         /** @var \App\Models\User $user */
         $user = $request->user();
 
-        // Hash & save the new password
+        $user->tokens()->delete();
         $user->password = password_hash($request->input('new_password'), PASSWORD_DEFAULT);
         $user->save();
 

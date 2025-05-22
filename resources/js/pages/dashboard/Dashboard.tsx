@@ -4,12 +4,13 @@ import { useMediaQuery } from "@mui/material";
 import Sidebar from "../Sidebar";
 import { useAirQuality } from "../../data/useAirQuality";
 import { useWeatherConditions } from "../../data/useWeatherConditions";
-import { SearchAppBar } from "./SearchAppBar";
+import { SearchBar } from "./SearchBar";
 import { WeatherCard } from "./WeatherCard";
 import { AirPollutionChart } from "./AirPollutionChart";
 import { CityMap } from "./CityMap";
 import { LatLng } from "leaflet";
 import { getCurrentUser } from "@/api/userApi";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const Dashboard: React.FC = () => {
   const [searchValue, setSearchValue] = React.useState("");
@@ -117,7 +118,7 @@ export const Dashboard: React.FC = () => {
           Please verify your email to unlock all features.
         </Box>
       )}
-        <SearchAppBar
+        <SearchBar
           searchValue={searchValue}
           onSearchChange={setSearchValue}
           onSearchSubmit={handleSearch}
@@ -147,15 +148,17 @@ export const Dashboard: React.FC = () => {
                 borderRadius: 2,
               }}>
               <CardContent>
-                <AirPollutionChart measurements={airData?.measurements} />
+                <ErrorBoundary message="There is no data to display for an air pollution chart.">
+                  <AirPollutionChart measurements={airData?.measurements} />
+                </ErrorBoundary>
               </CardContent>
             </Card>
           </Grid>
           {/* Map */}
           <Grid item xs={12} md={6}>
-          <Card sx={{ height: 400, borderRadius: 2, boxShadow: 3 }}>
-            <CityMap coords={getCoords()} city={city} />
-          </Card>
+            <Card sx={{ height: 400, borderRadius: 2, boxShadow: 3 }}>
+              <CityMap coords={getCoords()} city={city} />
+            </Card>
           </Grid>
         </Grid>
       </Box>

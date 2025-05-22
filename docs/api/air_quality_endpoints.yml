@@ -4,9 +4,11 @@ info:
   description: |
     API for retrieving air quality data for locations in Poland by leveraging
     the GIOŚ (Chief Inspectorate of Environmental Protection) data service.
-  version: 1.0.1
+  version: 1.1.0
 servers:
-  - url: https://example.com
+  - url: http://0.0.0.0:8000/api
+    description: Local API server
+  - url: https://185.238.73.59/api
     description: Main API server
 tags:
   - name: Air Quality
@@ -78,7 +80,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse500"
-      # Custom validation rule: require either (lat and lon) OR addr
       x-validator:
         anyOf:
           - required: [lat, lon]
@@ -131,18 +132,18 @@ paths:
 
 components:
   schemas:
-    AirQualityResponse:       # unchanged...
+    AirQualityResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
         timestamp:
           type: string
           format: date-time
-          example: "2025-03-25 11:28:11"
+          example: "2025-03-25T11:28:11Z"
         request:
           type: object
+          required:
+            - latitude
+            - longitude
           properties:
             latitude:
               type: number
@@ -152,11 +153,135 @@ components:
               type: number
               format: float
               example: 21.0122
-        data:
+        station:
+          $ref: "#/components/schemas/Station"
+        airQuality:
+          $ref: "#/components/schemas/AirQuality"
+        measurements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Measurement"
+        forecasts:
+          type: object
+          description: Forecast data keyed by pollutant code
+          additionalProperties:
+            type: array
+            items:
+              $ref: "#/components/schemas/ForecastEntry"
+      required:
+        - timestamp
+        - request
+        - station
+        - airQuality
+        - measurements
+        - forecasts
+
+    Station:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 123
+        name:
+          type: string
+          example: "Warszawa-Centrum"
+        gegrLat:
+          type: number
+          format: float
+          example: 52.2297
+        gegrLon:
+          type: number
+          format: float
+          example: 21.0122
+        communeId:
+          type: string
+          example: "146501"
+        communeName:
+          type: string
+          example: "Warszawa"
+        addressStreet:
+          type: string
+          example: "ul. Marszałkowska"
+      required:
+        - id
+        - name
+        - gegrLat
+        - gegrLon
+
+    AirQuality:
+      type: object
+      properties:
+        index:
+          type: string
+          example: "Good"
+        pollutants:
           type: object
           properties:
-          # ... existing station, airQuality, measurements, forecasts ...
-    ErrorResponse404:         # unchanged...
+            pm10:
+              $ref: "#/components/schemas/PollutantLevel"
+            pm25:
+              $ref: "#/components/schemas/PollutantLevel"
+            no2:
+              $ref: "#/components/schemas/PollutantLevel"
+            so2:
+              $ref: "#/components/schemas/PollutantLevel"
+            o3:
+              $ref: "#/components/schemas/PollutantLevel"
+            co:
+              $ref: "#/components/schemas/PollutantLevel"
+      required:
+        - index
+        - pollutants
+
+    PollutantLevel:
+      type: object
+      properties:
+        value:
+          type: number
+          nullable: true
+          example: 12.3
+
+    Measurement:
+      type: object
+      properties:
+        parameter:
+          type: string
+          example: "PM10"
+        code:
+          type: string
+          example: "PM10"
+        value:
+          type: number
+          example: 35.4
+        unit:
+          type: string
+          example: "µg/m³"
+        measurementTime:
+          type: string
+          format: date-time
+          example: "2025-03-25T10:00:00Z"
+      required:
+        - parameter
+        - code
+        - value
+        - unit
+        - measurementTime
+
+    ForecastEntry:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+          example: "2025-03-26T00:00:00Z"
+        indexLevel:
+          type: string
+          example: "Moderate"
+      required:
+        - date
+        - indexLevel
+
+    ErrorResponse404:
       type: object
       properties:
         success:
@@ -165,7 +290,8 @@ components:
         message:
           type: string
           example: "No measuring stations found"
-    ErrorResponse422:         # renamed from 400 to 422
+
+    ErrorResponse422:
       type: object
       properties:
         success:
@@ -183,7 +309,8 @@ components:
           example:
             lat:
               - "The lat field is required when addr is not present."
-    ErrorResponse500:         # unchanged...
+
+    ErrorResponse500:
       type: object
       properties:
         success:
@@ -195,6 +322,7 @@ components:
         error:
           type: string
           example: "Error message details"
+
     ErrorResponse401:
       type: object
       properties:

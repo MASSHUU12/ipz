@@ -1,5 +1,6 @@
-import { Measurement } from "@/api/airQualityApi";
-import { getAirQualityLevel, normalizeParameter } from "@/utils/airQuality";
+import { MeasurementRecord, Measurements } from "@/api/airQualityApi";
+import { getAirQualityLevel } from "@/utils/airQuality";
+import { Typography } from "@mui/material";
 import React, { useMemo } from "react";
 import {
   ResponsiveContainer,
@@ -13,24 +14,63 @@ import {
 } from "recharts";
 
 interface Props {
-  measurements?: Measurement[];
+  measurements: Measurements | undefined;
+}
+
+interface ChartEntry {
+  name: string;
+  value: number;
+  level: string;
+  color: string;
 }
 
 export const AirPollutionChart: React.FC<Props> = ({ measurements }) => {
-  const data = useMemo(() => {
-    if (!measurements) return [];
+  const data: ChartEntry[] = useMemo(() => {
+    if (!measurements || measurements.length === 0) {
+      return [];
+    }
 
-    return measurements.map((m: Measurement) => {
-      const param = normalizeParameter(m.parameter);
-      const { level, color } = getAirQualityLevel(param, m.value);
-      return {
-        name: param.toUpperCase(),
-        value: +m.value,
-        level,
-        color,
-      };
-    });
+    const groups = measurements.reduce<Record<string, MeasurementRecord[]>>(
+      (acc, record) => {
+        const key = record.code.toLowerCase();
+        if (!acc[key]) {
+          acc[key] = [];
+        }
+        acc[key].push(record);
+        return acc;
+      },
+      {},
+    );
+
+    return Object.entries(groups)
+      .map(([code, records]) => {
+        const latest = records.reduce((a, b) =>
+          new Date(a.measurementTime) > new Date(b.measurementTime) ? a : b,
+        );
+
+        if (latest.value === null) {
+          return null;
+        }
+
+        const { level, color } = getAirQualityLevel(code, latest.value);
+
+        return {
+          name: code.toUpperCase(),
+          value: latest.value,
+          level,
+          color,
+        } as ChartEntry;
+      })
+      .filter((entry): entry is ChartEntry => entry !== null);
   }, [measurements]);
+
+  if (!data.length) {
+    return (
+      <Typography variant="subtitle1">
+        Air pollution data is unavailable for this location.
+      </Typography>
+    );
+  }
 
   return (
     <ResponsiveContainer width="100%" height={250}>

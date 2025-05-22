@@ -20,7 +20,7 @@ class AirQualityService
     {
         [$cLat, $cLon] = [round($lat, 3), round($lon, 3)];
 
-        $station = $this->getNearestStation($lat, $lon, $cLat, $cLon);
+        $station    = $this->getNearestStation($lat, $lon, $cLat, $cLon);
         $historical = $this->getRecentHistorical($station->id);
 
         if ($historical) {
@@ -58,7 +58,8 @@ class AirQualityService
             ->latest('created_at')
             ->first();
 
-        if ($historical && $historical->created_at->gt(
+        if (
+            $historical && $historical->created_at->gt(
                 now()->subMinutes(self::AIR_QUALITY_CACHE_TTL)
             )
         ) {
@@ -66,6 +67,14 @@ class AirQualityService
         }
 
         return null;
+    }
+
+    protected function normalizeParamCode(string $paramCode): string
+    {
+        return match ($paramCode) {
+            'PM2.5' => 'PM25',
+            default => $paramCode
+        };
     }
 
     protected function fetchFreshData(StationData $st): array
@@ -98,12 +107,13 @@ class AirQualityService
                     fn() => $this->giosApi->getSensorData($sensorId)
                 );
 
-                if (! empty($sensorData['values'])) {
+                if (!empty($sensorData['values'])) {
                     foreach ($sensorData['values'] as $v) {
                         if ($v['value'] !== null) {
+                            $normCode = $this->normalizeParamCode($sensor['param']['paramCode']);
                             $measurements[] = [
                                 'parameter'       => $sensor['param']['paramName'],
-                                'code'            => $sensor['param']['paramCode'],
+                                'code'            => $normCode,
                                 'value'           => $v['value'],
                                 'unit'            => 'µg/m³',
                                 'measurementTime' => $v['date'],
@@ -143,7 +153,7 @@ class AirQualityService
             'calculationTime' => $aqi['stCalcDate']       ?? null,
             'sourceDataTime'  => $aqi['stSourceDataDate'] ?? null,
         ];
-        foreach (['pm10','pm25','o3','no2','so2','co'] as $p) {
+        foreach (['pm10', 'pm25', 'o3', 'no2', 'so2', 'co'] as $p) {
             $idxKey = "{$p}IndexLevel";
             $dtKey  = "{$p}CalcDate";
             if (isset($aqi[$idxKey])) {
@@ -156,7 +166,7 @@ class AirQualityService
 
         return [
             'indexInfo'   => $indexInfo,
-            'measurements'=> $measurements,
+            'measurements' => $measurements,
             'forecasts'   => $forecasts,
         ];
     }
@@ -166,12 +176,11 @@ class AirQualityService
         StationData $st,
         float $cLat,
         float $cLon
-    ): array
-    {
+    ): array {
         try {
             $getVal = fn(string $code) => optional(
                 collect($fresh['measurements'])
-                    ->firstWhere('code', $code)
+                    ->firstWhere('code', $this->normalizeParamCode($code))
             )['value'] ?? null;
 
             AirPollutionHistoricalData::updateOrCreate(
@@ -179,10 +188,12 @@ class AirQualityService
                     'station_id'        => $st->id,
                     'latitude'          => $cLat,
                     'longitude'         => $cLon,
+                ],
+                [
                     'station_name'      => $st->name,
                     'air_quality_index' => $fresh['indexInfo']['index'] ?? null,
                     'pm10'              => $getVal('PM10'),
-                    'pm25'              => $getVal('PM2.5'),
+                    'pm25'              => $getVal('PM25'),
                     'no2'               => $getVal('NO2'),
                     'so2'               => $getVal('SO2'),
                     'o3'                => $getVal('O3'),
@@ -227,13 +238,35 @@ class AirQualityService
         ];
     }
 
-    protected function formatFresh(array $data, StationData $st, $lat, $lon): array
-    {
+    protected function formatFresh(
+        array $data,
+        StationData $st,
+        float $lat,
+        float $lon
+    ): array {
+        // helper to get the first measurement value by code
+        $getVal = fn(string $code): mixed => optional(
+            collect($data['measurements'])
+                ->firstWhere('code', $code)
+        )['value'] ?? null;
+
+        $pollutants = [];
+        foreach (['PM10', 'PM25', 'NO2', 'SO2', 'O3', 'CO'] as $code) {
+            $key = strtolower($code);
+            $pollutants[$key] = ['value' => $getVal($code)];
+        }
+
         return [
             'timestamp'    => now()->toDateTimeString(),
-            'request'      => compact('lat','lon'),
+            'request'      => [
+                'latitude'  => $lat,
+                'longitude' => $lon,
+            ],
             'station'      => $st->toArray(),
-            'airQuality'   => $data['indexInfo'],
+            'airQuality'   => [
+                'index'      => $data['indexInfo']['index'] ?? null,
+                'pollutants' => $pollutants,
+            ],
             'measurements' => $data['measurements'],
             'forecasts'    => $data['forecasts'],
         ];
