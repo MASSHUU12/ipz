@@ -9,6 +9,7 @@ import { WeatherCard } from "./WeatherCard";
 import { AirPollutionChart } from "./AirPollutionChart";
 import { CityMap } from "./CityMap";
 import { LatLng } from "leaflet";
+import { getCurrentUser } from "@/api/userApi";
 
 export const Dashboard: React.FC = () => {
   const [searchValue, setSearchValue] = React.useState("");
@@ -57,6 +58,24 @@ export const Dashboard: React.FC = () => {
     }, 300_000); // 300_000 = 5 minutes
     return () => clearInterval(id);
   }, [refetchAirData]);
+  const [emailVerified, setEmailVerified] = React.useState(true);
+
+  useEffect(() => {
+  const token = localStorage.getItem("authToken");
+  if (token) {
+    getCurrentUser({ token })
+      .then(res => {
+        if (res?.user) {
+          setEmailVerified(res.user.email_verified_at !== null);
+        }
+      })
+      .catch(err => {
+        console.error("Fetch user error", err);
+        setEmailVerified(true);
+      });
+  }
+}, []);
+
 
   return (
     <Box
@@ -84,6 +103,20 @@ export const Dashboard: React.FC = () => {
       )}
 
       <Box sx={{ flexGrow: 1, p: 2 }}>
+        {!emailVerified && (
+        <Box
+          sx={{
+            backgroundColor: "#ff9800",
+            color: "#000",
+            borderRadius: 1,
+            p: 2,
+            mb: 2,
+            fontWeight: "bold",
+            textAlign: "center",
+          }}>
+          Please verify your email to unlock all features.
+        </Box>
+      )}
         <SearchAppBar
           searchValue={searchValue}
           onSearchChange={setSearchValue}
