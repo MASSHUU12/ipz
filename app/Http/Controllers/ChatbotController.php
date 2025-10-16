@@ -8,6 +8,18 @@ use DateTimeZone;
 use Exception;
 use Illuminate\Http\JsonResponse;
 
+if (!function_exists("mb_strrev")) {
+    function mb_strrev(string $str): string
+    {
+        $len = mb_strlen($str);
+        $out = "";
+        while ($len-- > 0) {
+            $out .= mb_substr($str, $len, 1);
+        }
+        return $out;
+    }
+}
+
 class ChatbotController extends Controller
 {
     private const BOT_NAME = "Marian";
@@ -160,6 +172,32 @@ class ChatbotController extends Controller
             "Happy to explain — please tell me exactly what you want to know.",
         ],
 
+        // Rickroll
+        "/\b(rickroll|never gonna give you up)\b/i" => [
+            "Never gonna give you up… 🎵",
+            "You've been rickrolled! ♪ Never gonna let you down…",
+        ],
+
+        // Rock Paper Scissors: "I choose rock" or "play rock" or just "rps rock"
+        "/\b(?:i choose|play|rps)?\s*(rock|paper|scissors)\b/i" => [
+            "callback" => [self::class, "rpsCallback"],
+        ],
+
+        // ASCII art / small animal (cat)
+        "/\b(show me a cat|ascii cat|make me an ascii cat)\b/i" => [
+            "callback" => [self::class, "asciiCatCallback"],
+        ],
+
+        // Palindrome checker: "is 'racecar' a palindrome?" or is racecar a palindrome
+        "/\bis\s+['\"]?(.+?)['\"]?\s+a\s+palindrome\??$/i" => [
+            "callback" => [self::class, "palindromeCallback"],
+        ],
+
+        // Secret movie-quote completions
+        "/\b(i'll be back|may the force be with you|you talking to me|here's looking at you)\b/i" => [
+            "callback" => [self::class, "movieQuoteCallback"],
+        ],
+
         // Fallback for questions containing a question mark
         "/\?\s*$/i" => [
             "That's a good question — can you give me a bit more detail?",
@@ -184,6 +222,7 @@ class ChatbotController extends Controller
                         }
                     } catch (Exception $e) {
                         $answer = "Sorry, I couldn't process that request right now.";
+                        //$answer = $e->getMessage();
                     }
                 } else {
                     $responses = is_array($entry) ? $entry : [$entry];
@@ -230,5 +269,91 @@ class ChatbotController extends Controller
 
         $dt = new DateTime("now", $zone);
         return "Today's date is " . $dt->format("Y-m-d") . " (" . $tz . ").";
+    }
+
+    protected static function rpsCallback(array $matches, MessageChatbotRequest $request): string
+    {
+        $userMove = strtolower($matches[1] ?? "");
+
+        $valid = ["rock", "paper", "scissors"];
+        if (!in_array($userMove, $valid, true)) {
+            return "I didn't catch your move. Say 'rock', 'paper' or 'scissors'.";
+        }
+
+        $botMove = $valid[array_rand($valid)];
+
+        $result = "draw";
+        if ($userMove === $botMove) {
+            $result = "draw";
+        } elseif (
+            ($userMove === "rock" && $botMove === "scissors") ||
+            ($userMove === "paper" && $botMove === "rock") ||
+            ($userMove === "scissors" && $botMove === "paper")
+        ) {
+            $result = "user";
+        } else {
+            $result = "bot";
+        }
+
+        $emoji = [
+            "rock" => "🪨",
+            "paper" => "📄",
+            "scissors" => "✂️",
+        ];
+
+        $outcomeText = match ($result) {
+            "user" => "You win! 🎉",
+            "bot" => "I win! 🤖",
+            "draw" => "It's a draw. 🤝",
+        };
+
+        return "You played {$userMove} {$emoji[$userMove]} — I played {$botMove} {$emoji[$botMove]}. {$outcomeText}";
+    }
+
+    protected static function asciiCatCallback(array $matches, MessageChatbotRequest $request): string
+    {
+        $cat =
+            <<<EOF
+            Here you go! 😺\n
+            EOF
+            .
+            " /\\_/\\\n" .
+            "( o.o )\n" .
+            " > ^ <";
+        return $cat;
+    }
+
+    protected static function palindromeCallback(array $matches, MessageChatbotRequest $request): string
+    {
+        $raw = $matches[1] ?? "";
+        $normalized = mb_strtolower(preg_replace("/[^\\p{L}\\p{N}]+/u", "", $raw));
+        if ($normalized === "") {
+            return "I couldn't find any letters or numbers in that phrase to check.";
+        }
+
+        $reversed = mb_strrev($normalized);
+        $isPalindrome = $normalized === $reversed;
+
+        return "'" . $raw . "' " . ($isPalindrome ? "is" : "is not") . " a palindrome " . ($isPalindrome ? "✅" : "❌");
+    }
+
+    protected static function movieQuoteCallback(array $matches, MessageChatbotRequest $request): string
+    {
+        $trigger = mb_strtolower($matches[1] ?? "");
+
+        $map = [
+            "i'll be back" => "Hasta la vista, baby. 😎",
+            "may the force be with you" => "And also with you. ✨",
+            "you talking to me" => "Well, are you? 😏",
+            "here's looking at you" => "Kid. — Casablanca reference. 🍸",
+        ];
+
+        foreach ($map as $k => $v) {
+            if (mb_stripos($trigger, $k) !== false) {
+                return $v;
+            }
+        }
+
+        return "That sounded familiar… but I don't have the line ready. Try another classic!";
     }
 }

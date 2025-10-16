@@ -29,7 +29,7 @@ Route::get("/products", [ImgwController::class, "products"]);
 Route::get("/warnings/meteo", [ImgwController::class, "warningsMeteo"]);
 Route::get("/warnings/hydro", [ImgwController::class, "warningsHydro"]);
 
-Route::post("/chatbot/message", [ChatbotController::class, "message"]);
+Route::post("/chatbot/message", [ChatbotController::class, "message"])->middleware("throttle:chatbot");
 
 Route::group(["middleware" => ["auth:sanctum", CheckUserBlocked::class]], function () {
     Route::group(["middleware" => ["role:User|Super Admin"]], function () {
