@@ -5,7 +5,11 @@ meta {
 }
 
 get {
-  url: 0.0.0.0:8000/api/admintest
+  url: {{full_api_address}}/admintest
   body: none
   auth: bearer
+}
+
+auth:bearer {
+  token: {{auth_token}}
 }

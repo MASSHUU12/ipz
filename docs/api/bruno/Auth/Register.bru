@@ -5,13 +5,9 @@ meta {
 }
 
 post {
-  url: 0.0.0.0:8000/api/register
+  url: {{full_api_address}}/register
   body: formUrlEncoded
   auth: none
-}
-
-headers {
-  Accept: application/json
 }
 
 body:form-urlencoded {

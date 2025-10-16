@@ -5,15 +5,11 @@ meta {
 }
 
 get {
-  url: 0.0.0.0:8000/api/favorites/:favorite
+  url: {{full_favorites_path}}/:favorite
   body: none
-  auth: bearer
+  auth: inherit
 }
 
 params:path {
   favorite: 1
-}
-
-headers {
-  Accept: application/json
 }

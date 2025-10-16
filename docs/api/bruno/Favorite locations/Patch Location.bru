@@ -5,21 +5,13 @@ meta {
 }
 
 patch {
-  url: 0.0.0.0:8000/api/favorites/:favorite
+  url: {{full_favorites_path}}/:favorite
   body: formUrlEncoded
-  auth: bearer
+  auth: inherit
 }
 
 params:path {
   favorite: 1
-}
-
-headers {
-  Accept: application/json
-}
-
-auth:bearer {
-  token: 
 }
 
 body:form-urlencoded {
