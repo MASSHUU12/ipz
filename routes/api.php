@@ -13,6 +13,7 @@ use App\Http\Middleware\EnsureUserIsVerified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AddressSuggestionController;
+use Illuminate\Support\Facades\Storage;
 
 Route::get("/addresses/suggest", [AddressSuggestionController::class, "suggest"])->name("addresses.suggest");
 
@@ -30,6 +31,35 @@ Route::get("/warnings/meteo", [ImgwController::class, "warningsMeteo"]);
 Route::get("/warnings/hydro", [ImgwController::class, "warningsHydro"]);
 
 Route::post("/chatbot/message", [ChatbotController::class, "message"])->middleware("throttle:chatbot");
+
+Route::get("/_debug/chatbot-patterns", function () {
+    $disk = Storage::disk("local");
+
+    $exists = false;
+    $content = null;
+    $path = null;
+    $mtime = null;
+    $err = null;
+
+    try {
+        $exists = $disk->exists("chatbot_patterns.json");
+        if ($exists) {
+            $path = method_exists($disk, "path") ? $disk->path("chatbot_patterns.json") : null;
+            $content = $disk->get("chatbot_patterns.json");
+            $mtime = $disk->lastModified("chatbot_patterns.json");
+        }
+    } catch (Exception $e) {
+        $err = $e->getMessage();
+    }
+
+    return response()->json([
+        "exists" => $exists,
+        "path" => $path,
+        "lastModified" => $mtime,
+        "content" => $content,
+        "error" => $err,
+    ]);
+});
 
 Route::group(["middleware" => ["auth:sanctum", CheckUserBlocked::class]], function () {
     Route::group(["middleware" => ["role:User|Super Admin"]], function () {
