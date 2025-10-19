@@ -5,15 +5,11 @@ meta {
 }
 
 get {
-  url: 0.0.0.0:8000/api/hydro?hydro_variant=1
+  url: {{full_api_address}}/hydro?hydro_variant=1
   body: none
-  auth: none
+  auth: inherit
 }
 
 params:query {
   hydro_variant: 1
-}
-
-headers {
-  Accept: application/json
 }

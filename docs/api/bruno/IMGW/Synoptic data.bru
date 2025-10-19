@@ -5,16 +5,12 @@ meta {
 }
 
 get {
-  url: 0.0.0.0:8000/api/synop?station=Szczecin
+  url: {{full_api_address}}/synop?station=Szczecin
   body: none
-  auth: none
+  auth: inherit
 }
 
 params:query {
   station: Szczecin
   ~id: 0
-}
-
-headers {
-  Accept: application/json
 }

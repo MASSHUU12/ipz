@@ -5,11 +5,7 @@ meta {
 }
 
 delete {
-  url: 0.0.0.0:8000/api/user
+  url: {{full_user_path}}
   body: none
-  auth: bearer
-}
-
-headers {
-  Accept: application/json
+  auth: inherit
 }

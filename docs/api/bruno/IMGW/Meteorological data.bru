@@ -5,11 +5,7 @@ meta {
 }
 
 get {
-  url: 0.0.0.0:8000/api/meteo
+  url: {{full_api_address}}/meteo
   body: none
-  auth: none
-}
-
-headers {
-  Accept: application/json
+  auth: inherit
 }

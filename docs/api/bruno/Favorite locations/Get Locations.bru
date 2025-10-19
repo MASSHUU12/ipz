@@ -5,11 +5,7 @@ meta {
 }
 
 get {
-  url: 0.0.0.0:8000/api/favorite/locations
+  url: {{full_favorites_path}}/locations
   body: none
-  auth: bearer
-}
-
-headers {
-  Accept: application/json
+  auth: inherit
 }

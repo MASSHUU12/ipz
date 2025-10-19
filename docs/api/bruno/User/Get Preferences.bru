@@ -5,15 +5,7 @@ meta {
 }
 
 get {
-  url: 0.0.0.0:8000/api/user/preferences
+  url: {{full_user_path}}/preferences
   body: none
-  auth: bearer
-}
-
-headers {
-  Accept: application/json
-}
-
-auth:bearer {
-  token: 
+  auth: inherit
 }

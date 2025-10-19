@@ -5,15 +5,7 @@ meta {
 }
 
 post {
-  url: 0.0.0.0:8000/api/logout
+  url: {{full_api_address}}/logout
   body: none
-  auth: bearer
-}
-
-headers {
-  Accept: application/json
-}
-
-auth:bearer {
-  token: 
+  auth: inherit
 }

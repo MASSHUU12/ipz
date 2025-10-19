@@ -39,7 +39,7 @@ services:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest

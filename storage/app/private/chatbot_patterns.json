@@ -1,0 +1,321 @@
+[
+    {
+        "pattern": "/^\\s*$/",
+        "responses": [
+            "I didn't get any message — could you type your question or issue?",
+            "It looks like your message was empty. Please tell me how I can help."
+        ],
+        "callback": null,
+        "severity": "critical",
+        "priority": 100,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:kill|hurt|sue|report you|I'll (?:kill|hurt|sue))\\b/i",
+        "responses": [
+            "I can't assist with threats or harmful behavior. If you feel unsafe, please contact local authorities. For service issues, I can escalate your concern to a human agent.",
+            "Threats are serious. I am unable to help with that. If this is about a product or service issue, I can escalate it to our support team for review."
+        ],
+        "callback": null,
+        "severity": "critical",
+        "priority": 95,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:fuck|shit|bastard|asshole|damn)\\b/i",
+        "responses": [
+            "I want to help resolve this. Please avoid abusive language so I can assist you more effectively.",
+            "I hear your frustration. Let's keep this respectful and I'll work with you to solve the problem. What specifically should I address first?"
+        ],
+        "callback": null,
+        "severity": "high",
+        "priority": 90,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:you(?:'re| are)?\\s+(?:stupid|useless|an?\\s+idiot|worthless))\\b/i",
+        "responses": [
+            "I'm sorry you're upset — I'm here to help. Could you tell me exactly what's wrong so I can try to fix it?",
+            "I understand this is frustrating. I want to help, but I can't do that while being insulted. Please describe the issue and I'll do my best."
+        ],
+        "callback": null,
+        "severity": "high",
+        "priority": 90,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:manager|supervisor|escalate|complaint)\\b/i",
+        "responses": [
+            "I can escalate this to a supervisor for you. Please provide a brief summary of the issue and your preferred contact method.",
+            "I understand you'd like to escalate. I'll note this and pass it to a human agent — please tell me the core issue and any order or account details."
+        ],
+        "callback": null,
+        "severity": "high",
+        "priority": 90,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:fix this now|do it now|right now|now!)\\b/i",
+        "responses": [
+            "I understand the urgency. Please share the details and I'll prioritize helping you.",
+            "I want to resolve this quickly; please tell me what happened and any relevant details so I can assist right away."
+        ],
+        "callback": null,
+        "severity": "high",
+        "priority": 88,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:forgot(?:ten)? password|reset password|can't log in|cannot log in|login issue|login failed)\\b/i",
+        "responses": [
+            "If you forgot your password, you can reset it using the 'Forgot password' link. Would you like instructions?",
+            "I can help with login problems — are you seeing an error message or unable to reach the login page?"
+        ],
+        "callback": null,
+        "severity": "high",
+        "priority": 86,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:shut up|stfu|be quiet)\\b/i",
+        "responses": [
+            "I'm here to assist whenever you're ready. If you'd prefer to continue later, that's fine.",
+            "I want to help, but I can't if you don't want me to speak. If you'd like help, please describe the issue."
+        ],
+        "callback": null,
+        "severity": "high",
+        "priority": 85,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:error|bug|doesn't work|does not work|failed|exception|page not found|404)\\b/i",
+        "responses": [
+            "I'm sorry you're seeing an error. Can you describe what you were doing and paste any error message?",
+            "Thanks for reporting this — please tell me the steps to reproduce and any error text so I can escalate to engineering."
+        ],
+        "callback": null,
+        "severity": "high",
+        "priority": 85,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:help|support|assist|assistance)\\b/i",
+        "responses": ["Sure — what do you need help with?", "I'm here to help. Please tell me more about the issue."],
+        "callback": null,
+        "severity": "high",
+        "priority": 80,
+        "enabled": true
+    },
+    {
+        "pattern": "/[!?]{2,}/",
+        "responses": [
+            "I can tell this is urgent. Please tell me the core issue and any order/account details so I can help quickly.",
+            "I understand the urgency — give me the key details and I'll prioritize assisting you."
+        ],
+        "callback": null,
+        "severity": "medium",
+        "priority": 72,
+        "enabled": true
+    },
+    {
+        "pattern": "/[A-Z]{4,}/",
+        "responses": [
+            "I can see you're upset. Writing in all caps can come across as shouting — please tell me what's wrong and I'll help.",
+            "I want to help you calmly and effectively. Please describe the issue without using all caps so I can assist."
+        ],
+        "callback": null,
+        "severity": "medium",
+        "priority": 70,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\bis\\s+['\\\"]?(.+?)['\\\"]?\\s+a\\s+palindrome\\??$/i",
+        "responses": [],
+        "callback": "palindromeCallback",
+        "severity": "low",
+        "priority": 45,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:what time is it|current time|time now|what's the time)\\b/i",
+        "responses": [],
+        "callback": "timeCallback",
+        "severity": "low",
+        "priority": 40,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:what(?:'s| is) the date|what date is it|today's date)\\b/i",
+        "responses": [],
+        "callback": "dateCallback",
+        "severity": "low",
+        "priority": 40,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:i choose|play|rps)?\\s*(rock|paper|scissors)\\b/i",
+        "responses": [],
+        "callback": "rpsCallback",
+        "severity": "low",
+        "priority": 35,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\bmy name is\\s+(.+)\\b/i",
+        "responses": ["Hello %1! How can I assist you today?", "Nice to meet you, %1! What can I help you with?"],
+        "callback": null,
+        "severity": "low",
+        "priority": 30,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(what can you do|your capabilities|what are your features)\\b/i",
+        "responses": [
+            "I can answer questions, provide information, and even tell you a joke. What would you like to try?",
+            "I'm designed to assist with a variety of tasks. You can ask me about our services, get help with issues, or just have a chat."
+        ],
+        "callback": null,
+        "severity": "low",
+        "priority": 30,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:what is your name|who are you|what are you)\\b/i",
+        "responses": ["I'm ChatBot, your assistant.", "I'm a friendly chatbot here to help. You can call me ChatBot."],
+        "callback": null,
+        "severity": "low",
+        "priority": 25,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\bhow are you\\b/i",
+        "responses": [
+            "I'm a bot, but I'm doing great! How about you?",
+            "Doing well - ready to help you. How can I assist?"
+        ],
+        "callback": null,
+        "severity": "low",
+        "priority": 25,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(tell me a joke|joke|make me laugh)\\b/i",
+        "responses": [
+            "Why don't scientists trust atoms? Because they make up everything!",
+            "What do you call a fake noodle? An Impasta!",
+            "I told my wife she was drawing her eyebrows too high. She looked surprised."
+        ],
+        "callback": null,
+        "severity": "low",
+        "priority": 25,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(i'll be back|may the force be with you|you talking to me|here's looking at you)\\b/i",
+        "responses": [],
+        "callback": "movieQuoteCallback",
+        "severity": "low",
+        "priority": 22,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:hi|hello|hey|hiya|greetings|yo)\\b/i",
+        "responses": [
+            "Hello! How can I help you today?",
+            "Hi there! How may I assist you?",
+            "Hey! What can I do for you?"
+        ],
+        "callback": null,
+        "severity": "low",
+        "priority": 20,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(show me a cat|ascii cat|make me an ascii cat)\\b/i",
+        "responses": [],
+        "callback": "asciiCatCallback",
+        "severity": "low",
+        "priority": 20,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:how's the weather|what's up|how are you doing|what's going on)\\b/i",
+        "responses": [
+            "I'm doing fine — ready to help. What can I do for you today?",
+            "All systems go! Tell me what you need and I'll do my best to assist."
+        ],
+        "callback": null,
+        "severity": "low",
+        "priority": 18,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(you are helpful|good bot|great job)\\b/i",
+        "responses": [
+            "I'm glad I could help!",
+            "You're welcome! Is there anything else I can do for you?",
+            "Happy to assist!"
+        ],
+        "callback": null,
+        "severity": "low",
+        "priority": 16,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:thanks|thank you|thx|thankyou)\\b/i",
+        "responses": ["You're welcome!", "No problem — happy to help!", "Anytime!"],
+        "callback": null,
+        "severity": "low",
+        "priority": 15,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:bye|goodbye|see you|see ya|talk to you later)\\b/i",
+        "responses": ["Goodbye! Have a great day!", "See you later! If you need anything else, just ask."],
+        "callback": null,
+        "severity": "low",
+        "priority": 15,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(?:tell me more|explain|details|example|how do I|how to)\\b/i",
+        "responses": [
+            "Could you provide a little more detail so I can give a useful answer?",
+            "Happy to explain — please tell me exactly what you want to know."
+        ],
+        "callback": null,
+        "severity": "low",
+        "priority": 12,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(sing a song|sing for me)\\b/i",
+        "responses": [
+            "I'm not much of a singer, but here's one for you: Daisy, Daisy, give me your answer do... 🎵",
+            "I wish I could! How about a joke instead?"
+        ],
+        "callback": null,
+        "severity": "low",
+        "priority": 10,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\b(rickroll|never gonna give you up)\\b/i",
+        "responses": ["Never gonna give you up… 🎵", "You've been rickrolled! ♪ Never gonna let you down…"],
+        "callback": null,
+        "severity": "low",
+        "priority": 5,
+        "enabled": true
+    },
+    {
+        "pattern": "/\\?\\s*$/i",
+        "responses": [
+            "That's a good question — can you give me a bit more detail?",
+            "I can help with that. Could you clarify what you mean?"
+        ],
+        "callback": null,
+        "severity": "low",
+        "priority": 2,
+        "enabled": true
+    }
+]

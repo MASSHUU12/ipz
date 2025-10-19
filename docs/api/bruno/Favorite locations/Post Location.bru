@@ -5,17 +5,9 @@ meta {
 }
 
 post {
-  url: 0.0.0.0:8000/api/favorites
+  url: {{full_favorites_path}}
   body: formUrlEncoded
-  auth: bearer
-}
-
-headers {
-  Accept: application/json
-}
-
-auth:bearer {
-  token: 
+  auth: inherit
 }
 
 body:form-urlencoded {

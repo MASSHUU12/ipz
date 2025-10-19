@@ -5,15 +5,7 @@ meta {
 }
 
 get {
-  url: 0.0.0.0:8000/api/token/validate
+  url: {{full_api_address}}/token/validate
   body: none
-  auth: bearer
-}
-
-headers {
-  Accept: application/json
-}
-
-auth:bearer {
-  token: 
+  auth: inherit
 }

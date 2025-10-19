@@ -1,0 +1,186 @@
+openapi: 3.0.3
+info:
+  title: Marian Chatbot API
+  version: "1.0.0"
+  description: |
+    API for interacting with the Marian chatbot.
+servers:
+  - url: http://0.0.0.0:8000/api
+    description: Local API server
+  - url: https://185.238.73.59/api
+    description: Main API server
+
+paths:
+  /chatbot/message:
+    post:
+      summary: Send a message to the Marian chatbot
+      description: |
+        Sends a user message to the chatbot and returns a response. The request is validated
+        by MessageChatbotRequest. The controller will also accept the alternative "tz" field
+        which will be normalized into "timezone" before validation.
+      operationId: postChatbotMessage
+      tags:
+        - chatbot
+      security: []
+      responses:
+        "200":
+          description: Successful response with the original question and the chatbot's answer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatbotResponse"
+              examples:
+                example-1:
+                  summary: Time request example
+                  value:
+                    question: "what time is it?"
+                    answer: "The current time is 14:48:58 (UTC)."
+                example-2:
+                  summary: Rock-paper-scissors example
+                  value:
+                    question: "play rock"
+                    answer: "You played rock 🪨 — I played scissors ✂️. You win! 🎉"
+        "422":
+          description: Validation failed (Laravel typical validation response)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              examples:
+                missing-content:
+                  summary: Missing required content
+                  value:
+                    message: "The given data was invalid."
+                    errors:
+                      content:
+                        - "The content field is required."
+        "429":
+          description: Too Many Requests (throttle:chatbot middleware)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                rate-limited:
+                  summary: Rate limit exceeded
+                  value:
+                    message: "Too Many Attempts."
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                server-error:
+                  summary: Generic server error
+                  value:
+                    message: "Sorry, I couldn't process that request right now."
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageChatbotRequest"
+            examples:
+              json-basic:
+                summary: Basic JSON example
+                value:
+                  content: "what time is it in Tokyo?"
+                  timezone: "Asia/Tokyo"
+              json-using-tz:
+                summary: Using the alternative key 'tz' (will be normalized to timezone)
+                value:
+                  content: "what time is it?"
+                  tz: "Europe/London"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/MessageChatbotRequest"
+            examples:
+              form-basic:
+                summary: Basic form example
+                value:
+                  content: "play rock"
+                  session_id: "abc123"
+        description: |
+          The payload must contain 'content' (string, required, 1..255 chars).
+          'timezone' is optional and should be a valid timezone string; the controller
+          will also accept 'tz' (will be normalized to 'timezone'). 'session_id' is optional.
+
+components:
+  schemas:
+    MessageChatbotRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          description: "The user's message to the chatbot."
+          minLength: 1
+          maxLength: 255
+          example: "what time is it?"
+        timezone:
+          type: string
+          description: |
+            Optional timezone identifier (e.g. "UTC", "Europe/London", "America/New_York").
+            The controller will attempt to construct a DateTimeZone from this value; if invalid,
+            UTC will be used as a fallback.
+          example: "America/Los_Angeles"
+        tz:
+          type: string
+          description: "Alternate key that will be normalized to 'timezone' by the request preprocessor."
+          example: "Europe/Paris"
+        session_id:
+          type: string
+          nullable: true
+          description: "Optional session id (nullable). Currently not required; reserved for future session support."
+          example: "session-123"
+      required:
+        - content
+      additionalProperties: false
+
+    ChatbotResponse:
+      type: object
+      properties:
+        question:
+          type: string
+          description: "The original question sent by the client."
+          example: "what time is it?"
+        answer:
+          type: string
+          description: "The chatbot's textual answer."
+          example: "The current time is 14:48:58 (UTC)."
+      required:
+        - question
+        - answer
+      additionalProperties: false
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The given data was invalid."
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: "Field-specific error messages keyed by field name."
+      required:
+        - message
+        - errors
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: "Human-readable error message."
+      required:
+        - message
+
+tags:
+  - name: chatbot
+    description: "Operations related to the Marian chatbot"
