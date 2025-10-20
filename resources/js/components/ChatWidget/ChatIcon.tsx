@@ -1,0 +1,70 @@
+interface ChatIconProps {
+  className?: string;
+}
+
+export const ChatIcon = ({ className }: ChatIconProps) => (
+  <svg
+    className={className}
+    viewBox="0 0 128 128"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <defs>
+      <linearGradient
+        id="chat-icon__primary"
+        x1="28"
+        y1="22"
+        x2="110"
+        y2="92"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop stopColor="#7DD3FC" />
+        <stop offset="0.5" stopColor="#3B82F6" />
+        <stop offset="1" stopColor="#2563EB" />
+      </linearGradient>
+      <linearGradient
+        id="chat-icon__secondary"
+        x1="20"
+        y1="76"
+        x2="68"
+        y2="112"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop stopColor="#FBBF24" />
+        <stop offset="1" stopColor="#F97316" />
+      </linearGradient>
+      <filter
+        id="chat-icon__glow"
+        x="4"
+        y="10"
+        width="120"
+        height="120"
+        filterUnits="userSpaceOnUse"
+        colorInterpolationFilters="sRGB"
+      >
+        <feDropShadow dx="0" dy="6" stdDeviation="6" floodColor="rgba(59,130,246,0.35)" />
+      </filter>
+    </defs>
+    <g filter="url(#chat-icon__glow)">
+      <path
+        d="M40 18h42c18 0 32 12.7 32 30.6v10.4C114 77.7 98 92 78.8 92H66l-16.7 13.1c-3 2.4-7.3 0.2-7.3-3.6V92h-2.7C27.9 92 14 78.2 14 59.9V48.6C14 30.6 26.4 18 40 18Z"
+        fill="url(#chat-icon__primary)"
+      />
+      <path
+        d="M34 72h24c12 0 22 8.5 22 19v3.6c0 10.4-10 18.9-22 18.9h-9.6l-11.6 8.6c-3 2.2-7.1 0.1-7.1-3.4v-5.2C21.5 112 14 103.7 14 94.6V91c0-11 10-19 20-19Z"
+        fill="url(#chat-icon__secondary)"
+      />
+    </g>
+    <text
+      x="62"
+      y="63"
+      fontFamily="'Inter', 'Segoe UI', Tahoma, sans-serif"
+      fontSize="26"
+      fontWeight="700"
+      textAnchor="middle"
+      fill="#0F172A"
+    >
+      Ai
+    </text>
+  </svg>
+);
