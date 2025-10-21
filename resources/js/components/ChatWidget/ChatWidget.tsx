@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { sendChatWidgetMessage } from "../../api/chatWidgetApi";
 import { ChatIcon } from "./ChatIcon";
 import "./ChatWidget.css";
 
@@ -77,20 +78,12 @@ export const ChatWidget = () => {
     setIsSending(true);
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ message: trimmed }),
-      });
+      const data = await sendChatWidgetMessage({ message: trimmed });
 
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
+      if (!data) {
+        throw new Error("Nie udało się połączyć z serwerem.");
       }
 
-      const data: { response?: string } = await response.json();
       const assistantText = data.response ?? "Brak odpowiedzi od serwera.";
 
       const assistantMessage: ChatMessage = {
@@ -130,13 +123,13 @@ export const ChatWidget = () => {
         aria-label="Otwórz czat"
         onClick={toggleWidget}
       >
-        <ChatIcon />
+        <ChatIcon className="chat-widget__icon" />
       </button>
 
       <div className={`chat-widget__panel ${isOpen ? "is-open" : ""}`}>
         <header className="chat-widget__header">
           <div className="chat-widget__title">
-            <ChatIcon />
+            <ChatIcon className="chat-widget__title-icon" />
             <span>Wsparcie AI</span>
           </div>
           <button
