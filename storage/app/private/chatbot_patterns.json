@@ -129,38 +129,6 @@
         "enabled": true
     },
     {
-        "pattern": "/\\bis\\s+['\\\"]?(.+?)['\\\"]?\\s+a\\s+palindrome\\??$/i",
-        "responses": [],
-        "callback": "palindromeCallback",
-        "severity": "low",
-        "priority": 45,
-        "enabled": true
-    },
-    {
-        "pattern": "/\\b(?:what time is it|current time|time now|what's the time)\\b/i",
-        "responses": [],
-        "callback": "timeCallback",
-        "severity": "low",
-        "priority": 40,
-        "enabled": true
-    },
-    {
-        "pattern": "/\\b(?:what(?:'s| is) the date|what date is it|today's date)\\b/i",
-        "responses": [],
-        "callback": "dateCallback",
-        "severity": "low",
-        "priority": 40,
-        "enabled": true
-    },
-    {
-        "pattern": "/\\b(?:i choose|play|rps)?\\s*(rock|paper|scissors)\\b/i",
-        "responses": [],
-        "callback": "rpsCallback",
-        "severity": "low",
-        "priority": 35,
-        "enabled": true
-    },
-    {
         "pattern": "/\\bmy name is\\s+(.+)\\b/i",
         "responses": ["Hello %1! How can I assist you today?", "Nice to meet you, %1! What can I help you with?"],
         "callback": null,
@@ -211,14 +179,6 @@
         "enabled": true
     },
     {
-        "pattern": "/\\b(i'll be back|may the force be with you|you talking to me|here's looking at you)\\b/i",
-        "responses": [],
-        "callback": "movieQuoteCallback",
-        "severity": "low",
-        "priority": 22,
-        "enabled": true
-    },
-    {
         "pattern": "/\\b(?:hi|hello|hey|hiya|greetings|yo)\\b/i",
         "responses": [
             "Hello! How can I help you today?",
@@ -226,14 +186,6 @@
             "Hey! What can I do for you?"
         ],
         "callback": null,
-        "severity": "low",
-        "priority": 20,
-        "enabled": true
-    },
-    {
-        "pattern": "/\\b(show me a cat|ascii cat|make me an ascii cat)\\b/i",
-        "responses": [],
-        "callback": "asciiCatCallback",
         "severity": "low",
         "priority": 20,
         "enabled": true
