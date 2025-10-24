@@ -2,47 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Chatbot\ModuleLoader;
 use App\Http\Requests\MessageChatbotRequest;
-use DateTime;
-use DateTimeZone;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
-
-if (!function_exists("mb_strrev")) {
-    function mb_strrev(string $str): string
-    {
-        $len = mb_strlen($str);
-        $out = "";
-        while ($len-- > 0) {
-            $out .= mb_substr($str, $len, 1);
-        }
-        return $out;
-    }
-}
 
 class ChatbotController extends Controller
 {
     private const BOT_NAME = "Marian";
     private const PATTERNS_FILE = "chatbot_patterns.json";
 
-    /**
-     * Patterns are loaded from the JSON file at runtime in an array-of-entries schema:
-     * [
-     *   {
-     *     "pattern": "/.../i",
-     *     "responses": ["..."],
-     *     "callback": "methodName",
-     *     "severity": "high",
-     *     "priority": 10,
-     *     "enabled": true
-     *   },
-     *   ...
-     * ]
-     */
     private static $PATTERNS = null;
     private static $PATTERNS_MTIME = 0;
 
+    /**
+     * Load patterns from the patterns file AND from modules.
+     * Modules live in app/Chatbot/Modules and implement App\Chatbot\ModuleInterface.
+     */
     private static function ensurePatternsLoaded(): void
     {
         try {
@@ -52,55 +29,52 @@ class ChatbotController extends Controller
             return;
         }
 
-        $exists = false;
+        $fileExists = false;
         try {
-            $exists = $disk->exists(self::PATTERNS_FILE);
+            $fileExists = $disk->exists(self::PATTERNS_FILE);
         } catch (Exception $e) {
-            $exists = false;
+            $fileExists = false;
         }
 
-        if (!$exists) {
-            self::$PATTERNS ??= [];
-            self::$PATTERNS_MTIME = 0;
+        $fileMtime = 0;
+        $fileData = [];
+        if ($fileExists) {
+            try {
+                $fileMtime = (int) $disk->lastModified(self::PATTERNS_FILE);
+            } catch (Exception $e) {
+                $fileMtime = 0;
+            }
+
+            try {
+                $json = $disk->get(self::PATTERNS_FILE);
+                $decoded = @json_decode($json, true);
+                if (is_array($decoded)) {
+                    $fileData = $decoded;
+                }
+            } catch (Exception $e) {
+                $fileData = [];
+            }
+        }
+
+        $modules = ModuleLoader::loadModules();
+        $modulePatterns = $modules["patterns"] ?? [];
+        $modulesMtime = $modules["mtime"] ?? 0;
+
+        $globalMtime = max($fileMtime, $modulesMtime);
+
+        if (self::$PATTERNS !== null && $globalMtime <= self::$PATTERNS_MTIME) {
             return;
         }
 
-        $mtime = 0;
-        try {
-            $mtime = (int) $disk->lastModified(self::PATTERNS_FILE);
-        } catch (Exception $e) {
-            $mtime = 0;
-        }
-
-        if (self::$PATTERNS !== null && $mtime <= self::$PATTERNS_MTIME) {
-            return;
-        }
-
-        // Read file
-        $json = "";
-        try {
-            $json = $disk->get(self::PATTERNS_FILE);
-        } catch (Exception $e) {
-            self::$PATTERNS = [];
-            self::$PATTERNS_MTIME = $mtime;
-            return;
-        }
-
-        $data = @json_decode($json, true);
-        if (!is_array($data)) {
-            self::$PATTERNS = [];
-            self::$PATTERNS_MTIME = $mtime;
-            return;
-        }
+        $raw = array_merge($fileData, $modulePatterns);
 
         $normalized = [];
-        foreach ($data as $e) {
+        foreach ($raw as $e) {
             if (!is_array($e) || empty($e["pattern"])) {
                 continue;
             }
 
             $pattern = $e["pattern"];
-
             $responses = $e["responses"] ?? ($e["response"] ?? []);
             if (is_string($responses)) {
                 $responses = [$responses];
@@ -109,10 +83,24 @@ class ChatbotController extends Controller
             }
 
             $callback = $e["callback"] ?? null;
-            if (is_string($callback) && method_exists(self::class, $callback)) {
-                $callback = [self::class, $callback];
+
+            if (is_string($callback)) {
+                if (strpos($callback, "::") !== false) {
+                    [$class, $method] = explode("::", $callback, 2);
+                    if (class_exists($class) && method_exists($class, $method)) {
+                        $callback = [$class, $method];
+                    } else {
+                        $callback = null;
+                    }
+                } elseif (method_exists(self::class, $callback)) {
+                    $callback = [self::class, $callback];
+                } else {
+                    $callback = null;
+                }
             } elseif (is_array($callback) && is_callable($callback)) {
-                // Keep as-is if already callable-like
+                // Ok
+            } elseif ($callback instanceof \Closure) {
+                // Ok
             } else {
                 $callback = null;
             }
@@ -150,7 +138,7 @@ class ChatbotController extends Controller
         });
 
         self::$PATTERNS = $normalized;
-        self::$PATTERNS_MTIME = $mtime;
+        self::$PATTERNS_MTIME = $globalMtime;
     }
 
     public function message(MessageChatbotRequest $request): JsonResponse
@@ -197,120 +185,5 @@ class ChatbotController extends Controller
             "question" => $question,
             "answer" => $answer,
         ]);
-    }
-
-    protected static function timeCallback(array $matches, $request): string
-    {
-        $tz = $request->input("timezone") ?? (config("app.timezone") ?? "UTC");
-
-        try {
-            $zone = new DateTimeZone($tz);
-        } catch (Exception $e) {
-            $zone = new DateTimeZone("UTC");
-            $tz = "UTC";
-        }
-
-        $dt = new DateTime("now", $zone);
-        return "The current time is " . $dt->format("H:i:s") . " (" . $tz . ").";
-    }
-
-    protected static function dateCallback(array $matches, $request): string
-    {
-        $tz = $request->input("timezone") ?? (config("app.timezone") ?? "UTC");
-        try {
-            $zone = new DateTimeZone($tz);
-        } catch (Exception $e) {
-            $zone = new DateTimeZone("UTC");
-            $tz = "UTC";
-        }
-
-        $dt = new DateTime("now", $zone);
-        return "Today's date is " . $dt->format("Y-m-d") . " (" . $tz . ").";
-    }
-
-    protected static function rpsCallback(array $matches, MessageChatbotRequest $request): string
-    {
-        $userMove = strtolower($matches[1] ?? "");
-
-        $valid = ["rock", "paper", "scissors"];
-        if (!in_array($userMove, $valid, true)) {
-            return "I didn't catch your move. Say 'rock', 'paper' or 'scissors'.";
-        }
-
-        $botMove = $valid[array_rand($valid)];
-
-        $result = "draw";
-        if ($userMove === $botMove) {
-            $result = "draw";
-        } elseif (
-            ($userMove === "rock" && $botMove === "scissors") ||
-            ($userMove === "paper" && $botMove === "rock") ||
-            ($userMove === "scissors" && $botMove === "paper")
-        ) {
-            $result = "user";
-        } else {
-            $result = "bot";
-        }
-
-        $emoji = [
-            "rock" => "🪨",
-            "paper" => "📄",
-            "scissors" => "✂️",
-        ];
-
-        $outcomeText = match ($result) {
-            "user" => "You win! 🎉",
-            "bot" => "I win! 🤖",
-            "draw" => "It's a draw. 🤝",
-        };
-
-        return "You played {$userMove} {$emoji[$userMove]} — I played {$botMove} {$emoji[$botMove]}. {$outcomeText}";
-    }
-
-    protected static function asciiCatCallback(array $matches, MessageChatbotRequest $request): string
-    {
-        $cat =
-            <<<EOF
-            Here you go! 😺\n
-            EOF
-            .
-            " /\\_/\\\n" .
-            "( o.o )\n" .
-            " > ^ <";
-        return $cat;
-    }
-
-    protected static function palindromeCallback(array $matches, MessageChatbotRequest $request): string
-    {
-        $raw = $matches[1] ?? "";
-        $normalized = mb_strtolower(preg_replace("/[^\\p{L}\\p{N}]+/u", "", $raw));
-        if ($normalized === "") {
-            return "I couldn't find any letters or numbers in that phrase to check.";
-        }
-
-        $reversed = mb_strrev($normalized);
-        $isPalindrome = $normalized === $reversed;
-
-        return "'" . $raw . "' " . ($isPalindrome ? "is" : "is not") . " a palindrome " . ($isPalindrome ? "✅" : "❌");
-    }
-
-    protected static function movieQuoteCallback(array $matches, MessageChatbotRequest $request): string
-    {
-        $trigger = mb_strtolower($matches[1] ?? "");
-
-        $map = [
-            "i'll be back" => "Hasta la vista, baby. 😎",
-            "may the force be with you" => "And also with you. ✨",
-            "you talking to me" => "Well, are you? 😏",
-            "here's looking at you" => "Kid. — Casablanca reference. 🍸",
-        ];
-
-        foreach ($map as $k => $v) {
-            if (mb_stripos($trigger, $k) !== false) {
-                return $v;
-            }
-        }
-
-        return "That sounded familiar… but I don't have the line ready. Try another classic!";
     }
 }
