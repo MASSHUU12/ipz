@@ -2,188 +2,102 @@
 
 namespace App\Http\Controllers;
 
-use App\Chatbot\ModuleLoader;
 use App\Http\Requests\MessageChatbotRequest;
+use App\Models\Pattern;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 class ChatbotController extends Controller
 {
     private const BOT_NAME = "Marian";
-    private const PATTERNS_FILE = "chatbot_patterns.json";
-
-    private static $PATTERNS = null;
-    private static $PATTERNS_MTIME = 0;
 
     /**
-     * Load patterns from the patterns file AND from modules.
-     * Modules live in app/Chatbot/Modules and implement App\Chatbot\ModuleInterface.
+     * Get chatbot patterns from the database, with caching.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
      */
-    private static function ensurePatternsLoaded(): void
+    private function getPatterns()
     {
-        try {
-            $disk = Storage::disk("local");
-        } catch (Exception $e) {
-            self::$PATTERNS ??= [];
-            return;
-        }
+        return Cache::remember('chatbot_patterns', 3600, function () {
+            $severityOrder = "CASE
+                WHEN severity = 'critical' THEN 100
+                WHEN severity = 'high' THEN 75
+                WHEN severity = 'medium' THEN 50
+                WHEN severity = 'low' THEN 25
+                ELSE 0
+            END";
 
-        $fileExists = false;
-        try {
-            $fileExists = $disk->exists(self::PATTERNS_FILE);
-        } catch (Exception $e) {
-            $fileExists = false;
-        }
-
-        $fileMtime = 0;
-        $fileData = [];
-        if ($fileExists) {
-            try {
-                $fileMtime = (int) $disk->lastModified(self::PATTERNS_FILE);
-            } catch (Exception $e) {
-                $fileMtime = 0;
-            }
-
-            try {
-                $json = $disk->get(self::PATTERNS_FILE);
-                $decoded = @json_decode($json, true);
-                if (is_array($decoded)) {
-                    $fileData = $decoded;
-                }
-            } catch (Exception $e) {
-                $fileData = [];
-            }
-        }
-
-        $modules = ModuleLoader::loadModules();
-        $modulePatterns = $modules["patterns"] ?? [];
-        $modulesMtime = $modules["mtime"] ?? 0;
-
-        $globalMtime = max($fileMtime, $modulesMtime);
-
-        if (self::$PATTERNS !== null && $globalMtime <= self::$PATTERNS_MTIME) {
-            return;
-        }
-
-        $raw = array_merge($fileData, $modulePatterns);
-
-        $normalized = [];
-        foreach ($raw as $e) {
-            if (!is_array($e) || empty($e["pattern"])) {
-                continue;
-            }
-
-            $pattern = $e["pattern"];
-            $responses = $e["responses"] ?? ($e["response"] ?? []);
-            if (is_string($responses)) {
-                $responses = [$responses];
-            } elseif (!is_array($responses)) {
-                $responses = [];
-            }
-
-            $callback = $e["callback"] ?? null;
-
-            if (is_string($callback)) {
-                if (strpos($callback, "::") !== false) {
-                    [$class, $method] = explode("::", $callback, 2);
-                    if (class_exists($class) && method_exists($class, $method)) {
-                        $callback = [$class, $method];
-                    } else {
-                        $callback = null;
-                    }
-                } elseif (method_exists(self::class, $callback)) {
-                    $callback = [self::class, $callback];
-                } else {
-                    $callback = null;
-                }
-            } elseif (is_array($callback) && is_callable($callback)) {
-                // Ok
-            } elseif ($callback instanceof \Closure) {
-                // Ok
-            } else {
-                $callback = null;
-            }
-
-            $severity = $e["severity"] ?? "low";
-            $priority = isset($e["priority"]) ? (int) $e["priority"] : 0;
-            $enabled = isset($e["enabled"]) ? (bool) $e["enabled"] : true;
-
-            if (!$enabled) {
-                continue;
-            }
-            if (empty($responses) && $callback === null) {
-                continue;
-            }
-
-            $normalized[] = [
-                "pattern" => $pattern,
-                "responses" => $responses,
-                "callback" => $callback,
-                "severity" => $severity,
-                "priority" => $priority,
-                "enabled" => $enabled,
-            ];
-        }
-
-        // Sort: severity weight (desc) then priority (desc)
-        $severityWeight = ["critical" => 100, "high" => 75, "medium" => 50, "low" => 25];
-        usort($normalized, function ($a, $b) use ($severityWeight) {
-            $sa = $severityWeight[strtolower($a["severity"])] ?? 0;
-            $sb = $severityWeight[strtolower($b["severity"])] ?? 0;
-            if ($sa !== $sb) {
-                return $sb <=> $sa; // Higher severity first
-            }
-            return $b["priority"] <=> $a["priority"]; // Higher priority first
+            return Pattern::where('enabled', true)
+                ->orderByRaw($severityOrder . ' DESC')
+                ->orderBy('priority', 'desc')
+                ->get();
         });
+    }
 
-        self::$PATTERNS = $normalized;
-        self::$PATTERNS_MTIME = $globalMtime;
+    /**
+     * Resolve a callback string from the database into a valid PHP callable.
+     *
+     * @param string|null $callbackString
+     * @return callable|null
+     */
+    private function resolveCallback(?string $callbackString): ?callable
+    {
+        if (empty($callbackString)) {
+            return null;
+        }
+
+        if (strpos($callbackString, '::') !== false) {
+            [$class, $method] = explode('::', $callbackString, 2);
+            if (class_exists($class) && method_exists($class, $method)) {
+                return [$class, $method];
+            }
+        }
+
+        return null;
     }
 
     public function message(MessageChatbotRequest $request): JsonResponse
     {
-        self::ensurePatternsLoaded();
-
-        $question = $request["content"];
+        $patterns = $this->getPatterns();
+        $question = $request->input('content');
         $answer = "I'm sorry, my ability to respond is limited. Please ask your questions correctly.";
 
-        foreach (self::$PATTERNS as $entry) {
-            if (empty($entry["enabled"])) {
-                continue;
-            }
+        foreach ($patterns as $pattern) {
+            if (@preg_match($pattern->pattern, $question, $matches)) {
+                $callback = $this->resolveCallback($pattern->callback);
 
-            $pattern = $entry["pattern"];
-            if (@preg_match($pattern, $question, $matches)) {
-                if (isset($entry["callback"]) && is_callable($entry["callback"])) {
+                if ($callback) {
                     try {
-                        $result = call_user_func($entry["callback"], $matches, $request);
-                        if (is_string($result) && $result !== "") {
-                            $answer = str_replace("ChatBot", self::BOT_NAME, $result);
+                        $result = call_user_func($callback, $matches, $request);
+                        if (is_string($result) && $result !== '') {
+                            $answer = str_replace('ChatBot', self::BOT_NAME, $result);
+                            $pattern->increment('hit_count');
+                            $pattern->forceFill(['last_used_at' => now()])->save();
                         }
                     } catch (Exception $e) {
+                        report($e);
                         $answer = "Sorry, I couldn't process that request right now.";
                     }
-                } else {
-                    $responses = $entry["responses"] ?? [];
-                    if (!is_array($responses)) {
-                        $responses = [$responses];
+                } elseif (!empty($pattern->responses)) {
+                    $response = $pattern->responses[array_rand($pattern->responses)];
+                    if (strpos($response, '%1') !== false && isset($matches[1])) {
+                        $response = str_replace('%1', $matches[1], $response);
                     }
-                    if (!empty($responses)) {
-                        $response = $responses[array_rand($responses)];
-                        if (strpos($response, "%1") !== false && isset($matches[1])) {
-                            $response = str_replace("%1", $matches[1], $response);
-                        }
-                        $answer = str_replace("ChatBot", self::BOT_NAME, $response);
-                    }
+                    $answer = str_replace('ChatBot', self::BOT_NAME, $response);
+                    $pattern->increment('hit_count');
+                    $pattern->forceFill(['last_used_at' => now()])->save();
                 }
-                break;
+
+                if ($pattern->stop_processing) {
+                    break;
+                }
             }
         }
 
         return response()->json([
-            "question" => $question,
-            "answer" => $answer,
+            'question' => $question,
+            'answer' => $answer,
         ]);
     }
 }

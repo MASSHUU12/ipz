@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Pattern;
 use App\Models\User;
+use App\Observers\PatternObserver;
 use App\Observers\UserObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -26,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         User::observe(UserObserver::class);
+        Pattern::observe(PatternObserver::class);
 
         // Implicitly grant "Super Admin" role all permissions
         // This works in the app by using gate-related functions like auth()->user->can() and @can()
