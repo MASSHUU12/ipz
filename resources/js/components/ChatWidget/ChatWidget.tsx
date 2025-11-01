@@ -5,6 +5,7 @@ import { ChatIcon } from "./ChatIcon";
 import "./ChatWidget.css";
 
 type MessageRole = "user" | "assistant";
+type MessageFeedback = "up" | "down";
 
 interface ChatMessage {
   id: string;
@@ -23,13 +24,13 @@ export const ChatWidget = () => {
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [ratings, setRatings] = useState<Record<string, MessageFeedback>>({});
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const initialFocusRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
-
     return () => {
       setMounted(false);
     };
@@ -78,13 +79,7 @@ export const ChatWidget = () => {
     setIsSending(true);
 
     try {
-      const data = await sendChatWidgetMessage({ message: trimmed });
-
-      if (!data) {
-        throw new Error("Nie udało się połączyć z serwerem.");
-      }
-
-      const assistantText = data.response ?? "Brak odpowiedzi od serwera.";
+      const { answer: assistantText } = await sendChatWidgetMessage({ content: trimmed });
 
       const assistantMessage: ChatMessage = {
         id: buildId(),
@@ -109,6 +104,20 @@ export const ChatWidget = () => {
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleRateMessage = (messageId: string, feedback: MessageFeedback) => {
+    setRatings(prev => {
+      if (prev[messageId]) {
+        return prev;
+      }
+
+      const next = { ...prev, [messageId]: feedback };
+
+      // TODO: Tutaj wyślij ocenę do backendu (endpoint 👍/👎) gdy będzie dostępny.
+
+      return next;
+    });
   };
 
   if (!mounted || typeof document === "undefined") {
@@ -155,7 +164,35 @@ export const ChatWidget = () => {
                 key={message.id}
                 className={`chat-widget__message chat-widget__message--${message.role}`}
               >
-                <span>{message.content}</span>
+                <span className={`chat-widget__bubble chat-widget__bubble--${message.role}`}>
+                  {message.content}
+                </span>
+                {message.role === "assistant" && (
+                  <div className="chat-widget__feedback" aria-label="Oceń odpowiedź">
+                    <button
+                      type="button"
+                      className={`chat-widget__feedback-button${
+                        ratings[message.id] === "up" ? " is-selected" : ""
+                      }`}
+                      disabled={Boolean(ratings[message.id])}
+                      onClick={() => handleRateMessage(message.id, "up")}
+                      aria-label="Oceń pozytywnie"
+                    >
+                      👍
+                    </button>
+                    <button
+                      type="button"
+                      className={`chat-widget__feedback-button${
+                        ratings[message.id] === "down" ? " is-selected" : ""
+                      }`}
+                      disabled={Boolean(ratings[message.id])}
+                      onClick={() => handleRateMessage(message.id, "down")}
+                      aria-label="Oceń negatywnie"
+                    >
+                      👎
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
             <div ref={messagesEndRef} />
