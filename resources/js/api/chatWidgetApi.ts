@@ -1,21 +1,24 @@
 import { instance } from "./api";
 
-export interface ChatWidgetPayload {
-    message: string;
+export interface ChatWidgetRequestPayload {
+  content: string;
+  timezone?: string;
+  sessionId?: string;
 }
 
-export interface ChatWidgetResponse {
-    response?: string;
+export interface ChatWidgetResponsePayload {
+  question: string;
+  answer: string;
 }
 
 export const sendChatWidgetMessage = async (
-    payload: ChatWidgetPayload
-): Promise<ChatWidgetResponse | null> => {
-    try {
-        const res = await instance.post<ChatWidgetResponse>("/chat", payload);
-        return res.data;
-    } catch (error: unknown) {
-        console.error(error);
-        return null;
-    }
+  payload: ChatWidgetRequestPayload,
+): Promise<ChatWidgetResponsePayload> => {
+  const { data } = await instance.post<ChatWidgetResponsePayload>("/chatbot/message", {
+    content: payload.content,
+    timezone: payload.timezone,
+    session_id: payload.sessionId,
+  });
+
+  return data;
 };
