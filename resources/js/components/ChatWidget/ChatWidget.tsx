@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { isAxiosError } from "axios";
 import { sendChatWidgetMessage } from "../../api/chatWidgetApi";
 import { ChatIcon } from "./ChatIcon";
 import "./ChatWidget.css";
@@ -28,6 +29,14 @@ export const ChatWidget = () => {
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const initialFocusRef = useRef<HTMLTextAreaElement | null>(null);
+  const resolvedTimezone = useMemo(() => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch (err) {
+      console.warn("Nie udało się określić strefy czasowej użytkownika.", err);
+      return undefined;
+    }
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -79,7 +88,10 @@ export const ChatWidget = () => {
     setIsSending(true);
 
     try {
-      const { answer: assistantText } = await sendChatWidgetMessage({ content: trimmed });
+      const { answer: assistantText } = await sendChatWidgetMessage({
+        content: trimmed,
+        timezone: resolvedTimezone,
+      });
 
       const assistantMessage: ChatMessage = {
         id: buildId(),
@@ -89,8 +101,14 @@ export const ChatWidget = () => {
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      const fallbackMessage =
-        error instanceof Error ? error.message : "Wystąpił nieoczekiwany błąd.";
+      let fallbackMessage = "Wystąpił nieoczekiwany błąd.";
+      if (isAxiosError(error)) {
+        const validationMessage =
+          (error.response?.data as { message?: string })?.message ?? error.message;
+        fallbackMessage = validationMessage || fallbackMessage;
+      } else if (error instanceof Error) {
+        fallbackMessage = error.message || fallbackMessage;
+      }
 
       setErrorMessage(fallbackMessage);
       setMessages(prev => [
