@@ -3,6 +3,7 @@
 use App\Http\Controllers\AirQualityController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\ChatbotSuggestionsController;
 use App\Http\Controllers\ImgwController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\UserController;
@@ -30,6 +31,7 @@ Route::get("/products", [ImgwController::class, "products"]);
 Route::get("/warnings/meteo", [ImgwController::class, "warningsMeteo"]);
 Route::get("/warnings/hydro", [ImgwController::class, "warningsHydro"]);
 
+Route::get("/chatbot/suggest", [ChatbotSuggestionsController::class, "suggest"]);
 Route::post("/chatbot/message", [ChatbotController::class, "message"])->middleware("throttle:chatbot");
 
 Route::get("/_debug/chatbot-patterns", function () {
