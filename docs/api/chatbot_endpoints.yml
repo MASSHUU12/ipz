@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Marian Chatbot API
-  version: "1.0.0"
+  version: "1.1.0"
   description: |
     API for interacting with the Marian chatbot.
 servers:
@@ -108,6 +108,85 @@ paths:
           'timezone' is optional and should be a valid timezone string; the controller
           will also accept 'tz' (will be normalized to 'timezone'). 'session_id' is optional.
 
+  /chatbot/suggest:
+    get:
+      summary: Get chatbot suggestions
+      description: |
+        Returns a list of suggestion objects for the chatbot.
+        Accepts an optional 'limit' query parameter to restrict the
+        number of suggestions returned.
+      operationId: getChatbotSuggestions
+      tags:
+        - chatbot
+      security: []
+      parameters:
+        - name: limit
+          in: query
+          description: "Optional maximum number of suggestions to return (integer between 1 and 100)."
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: A JSON array of suggestion objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Suggestion"
+              examples:
+                example-list:
+                  summary: Example suggestion list
+                  value:
+                    - suggestion: "what time is it"
+                      description: null
+                    - suggestion: "how are you"
+                      description: null
+                    - suggestion: null
+                      description: null
+                    - suggestion: "kill"
+                      description: null
+                    - suggestion: "shit"
+                      description: null
+                    - suggestion: "you're stupid"
+                      description: null
+                    - suggestion: "escalate"
+                      description: null
+                    - suggestion: "fix this now"
+                      description: null
+                    - suggestion: "cannot log in"
+                      description: null
+                    - suggestion: "stfu"
+                      description: null
+        "422":
+          description: Validation failed for query parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              examples:
+                invalid-limit:
+                  summary: Invalid limit value
+                  value:
+                    message: "The given data was invalid."
+                    errors:
+                      limit:
+                        - "The limit must be between 1 and 100."
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                server-error:
+                  summary: Generic server error
+                  value:
+                    message: "Sorry, I couldn't process that request right now."
+
 components:
   schemas:
     MessageChatbotRequest:
@@ -180,6 +259,21 @@ components:
           description: "Human-readable error message."
       required:
         - message
+
+    Suggestion:
+      type: object
+      properties:
+        suggestion:
+          type: string
+          nullable: true
+          description: "Suggested query or phrase (may be null)."
+          example: "what time is it"
+        description:
+          type: string
+          nullable: true
+          description: "Optional human-readable description for the suggestion (may be null)."
+          example: null
+      additionalProperties: false
 
 tags:
   - name: chatbot

@@ -1,0 +1,20 @@
+meta {
+  name: Get suggestions
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{full_api_address}}/chatbot/suggest?limit=10
+  body: none
+  auth: inherit
+}
+
+params:query {
+  limit: 10
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
