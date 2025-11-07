@@ -9,6 +9,7 @@ use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserFavoriteLocationsController;
 use App\Http\Controllers\UserPreferenceController;
+use App\Http\Middleware\AuthenticateOptional;
 use App\Http\Middleware\CheckUserBlocked;
 use App\Http\Middleware\EnsureUserIsVerified;
 use Illuminate\Http\Request;
@@ -30,8 +31,10 @@ Route::get("/products", [ImgwController::class, "products"]);
 Route::get("/warnings/meteo", [ImgwController::class, "warningsMeteo"]);
 Route::get("/warnings/hydro", [ImgwController::class, "warningsHydro"]);
 
-Route::get("/chatbot/suggest", [ChatbotSuggestionsController::class, "suggest"]);
-Route::post("/chatbot/message", [ChatbotController::class, "message"])->middleware("throttle:chatbot");
+Route::group(["middleware" => [AuthenticateOptional::class, CheckUserBlocked::class]], function () {
+    Route::get("/chatbot/suggest", [ChatbotSuggestionsController::class, "suggest"]);
+    Route::post("/chatbot/message", [ChatbotController::class, "message"])->middleware("throttle:chatbot");
+});
 
 Route::group(["middleware" => ["auth:sanctum", CheckUserBlocked::class]], function () {
     Route::group(["middleware" => ["role:User|Super Admin"]], function () {
