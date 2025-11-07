@@ -122,15 +122,11 @@ class Pattern extends Model
             return $query->where('access_level', self::ACCESS_PUBLIC);
         }
 
-        if ($user->can('Super Admin')) {
+        if ($user->hasRole('Super Admin')) {
             return $query;
         }
 
-        if ($user->can('User')) {
-            return $query->whereIn('access_level', [self::ACCESS_AUTHENTICATED]);
-        }
-
-        return $query->where('access_level', self::ACCESS_PUBLIC);
+        return $query->whereIn('access_level', [self::ACCESS_PUBLIC, self::ACCESS_AUTHENTICATED]);
     }
 
     /**
