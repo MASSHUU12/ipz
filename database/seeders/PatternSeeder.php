@@ -58,6 +58,12 @@ class PatternSeeder extends Seeder
 
         $this->command->info('Total patterns to process: ' . count($allPatterns));
 
+        $allowedAccessLevels = [
+            'public',
+            'authenticated',
+            'super_admin',
+        ];
+
         $createdCount = 0;
         foreach ($allPatterns as $p) {
             if (!is_array($p) || empty($p['pattern'])) {
@@ -76,6 +82,30 @@ class PatternSeeder extends Seeder
                 $responses = [$responses];
             }
 
+            $providedAccess = null;
+            if (isset($p['access_level'])) {
+                $providedAccess = $p['access_level'];
+            } elseif (isset($p['access'])) {
+                $providedAccess = $p['access'];
+            }
+
+            $accessLevel = 'public';
+            if (is_string($providedAccess) && $providedAccess !== '') {
+                $normalized = strtolower(trim($providedAccess));
+                if (in_array($normalized, $allowedAccessLevels, true)) {
+                    $accessLevel = $normalized;
+                } else {
+                    $patternPreview = is_string($p['pattern']) ? $p['pattern'] : '';
+                    $this->command->warn(sprintf(
+                        "Pattern '%s' provided invalid access level '%s' — defaulting to '%s'. Allowed: %s",
+                        $patternPreview,
+                        $providedAccess,
+                        $accessLevel,
+                        implode(', ', $allowedAccessLevels)
+                    ));
+                }
+            }
+
             Pattern::create([
                 'pattern' => $p['pattern'],
                 'responses' => $responses,
@@ -85,6 +115,7 @@ class PatternSeeder extends Seeder
                 'enabled' => (bool) ($p['enabled'] ?? true),
                 'description' => $p['description'] ?? null,
                 'group' => $p['group'] ?? null,
+                'access_level' => $accessLevel
             ]);
             $createdCount++;
         }

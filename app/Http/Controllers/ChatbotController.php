@@ -15,11 +15,22 @@ class ChatbotController extends Controller
     /**
      * Get chatbot patterns from the database, with caching.
      *
+     * Patterns returned are scoped to the given user using the Pattern::accessibleTo scope.
+     *
+     * @param \App\Models\User|null $user
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    private function getPatterns()
+    private function getPatterns(?\App\Models\User $user = null)
     {
-        return Cache::remember('chatbot_patterns', 3600, function () {
+        if ($user === null) {
+            $cacheKey = 'chatbot_patterns:public';
+        } elseif ($user->can('Super Admin')) {
+            $cacheKey = 'chatbot_patterns:super';
+        } else {
+            $cacheKey = 'chatbot_patterns:authenticated';
+        }
+
+        return Cache::remember($cacheKey, 3600, function () use ($user) {
             $severityOrder = "CASE
                 WHEN severity = 'critical' THEN 100
                 WHEN severity = 'high' THEN 75
@@ -28,7 +39,8 @@ class ChatbotController extends Controller
                 ELSE 0
             END";
 
-            return Pattern::where('enabled', true)
+            return Pattern::accessibleTo($user)
+                ->where('enabled', true)
                 ->orderByRaw($severityOrder . ' DESC')
                 ->orderBy('priority', 'desc')
                 ->get();
@@ -59,7 +71,7 @@ class ChatbotController extends Controller
 
     public function message(MessageChatbotRequest $request): JsonResponse
     {
-        $patterns = $this->getPatterns();
+        $patterns = $this->getPatterns($request->user());
         $question = $request->input('content');
         $answer = "I'm sorry, my ability to respond is limited. Please ask your questions correctly.";
 

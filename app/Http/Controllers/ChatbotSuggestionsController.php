@@ -13,8 +13,8 @@ class ChatbotSuggestionsController extends Controller
         $validated = $request->validated();
         $limit = $validated['limit'] ?? 10;
 
-        // TODO: Exclude patterns with permissions, after implementing them
-        $patterns = Pattern::where('enabled', true)->get();
+        $patterns = Pattern::accessibleTo($request->user())
+            ->where('enabled', true)->get();
         $suggestions = $patterns->sortByDesc('hit_count')->take($limit);
 
         $formattedSuggestions = $suggestions->map(function ($pattern) {

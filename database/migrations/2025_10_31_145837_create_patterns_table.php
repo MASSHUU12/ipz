@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('group')->nullable()->index();
             $table->string('pattern');
             $table->json('responses');
+            $table->enum('access_level', ['public', 'authenticated', 'super_admin'])
+                  ->default('public')
+                  ->index();
             $table->string('callback')->nullable();
             $table->string('severity')->default('low');
             $table->integer('priority')->default(0);
