@@ -29,7 +29,7 @@ class ChatbotController extends Controller
         } elseif ($user->can("Super Admin")) {
             $cacheKey = "chatbot_patterns:super";
         } else {
-            $cacheKey = "chatbot_patterns:authenticated";
+            $cacheKey = "chatbot_patterns:user:" . $user->id;
         }
 
         return Cache::remember($cacheKey, 3600, function () use ($user) {
