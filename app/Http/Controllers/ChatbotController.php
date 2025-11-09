@@ -7,6 +7,8 @@ use App\Models\Pattern;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
+use DateTime;
+use DateTimeZone;
 
 class ChatbotController extends Controller
 {
@@ -23,11 +25,11 @@ class ChatbotController extends Controller
     private function getPatterns(?\App\Models\User $user = null)
     {
         if ($user === null) {
-            $cacheKey = 'chatbot_patterns:public';
-        } elseif ($user->can('Super Admin')) {
-            $cacheKey = 'chatbot_patterns:super';
+            $cacheKey = "chatbot_patterns:public";
+        } elseif ($user->can("Super Admin")) {
+            $cacheKey = "chatbot_patterns:super";
         } else {
-            $cacheKey = 'chatbot_patterns:authenticated';
+            $cacheKey = "chatbot_patterns:user:" . $user->id;
         }
 
         return Cache::remember($cacheKey, 3600, function () use ($user) {
@@ -40,9 +42,9 @@ class ChatbotController extends Controller
             END";
 
             return Pattern::accessibleTo($user)
-                ->where('enabled', true)
-                ->orderByRaw($severityOrder . ' DESC')
-                ->orderBy('priority', 'desc')
+                ->where("enabled", true)
+                ->orderByRaw($severityOrder . " DESC")
+                ->orderBy("priority", "desc")
                 ->get();
         });
     }
@@ -59,8 +61,8 @@ class ChatbotController extends Controller
             return null;
         }
 
-        if (strpos($callbackString, '::') !== false) {
-            [$class, $method] = explode('::', $callbackString, 2);
+        if (strpos($callbackString, "::") !== false) {
+            [$class, $method] = explode("::", $callbackString, 2);
             if (class_exists($class) && method_exists($class, $method)) {
                 return [$class, $method];
             }
@@ -69,23 +71,89 @@ class ChatbotController extends Controller
         return null;
     }
 
+    /**
+     * Replace placeholders in a response string with dynamic data, with fallback support.
+     *
+     * @param string $response
+     * @param array $data
+     * @return string
+     */
+    private function hydrateResponse(string $response, array $data): string
+    {
+        $pattern = '/\{([a-zA-Z0-9_.]+)(?:\s*\?\?\s*(?:`([^`]*)`|\'([^\']*)\'|"([^"]*)"))?\}/';
+
+        return preg_replace_callback(
+            $pattern,
+            function ($matches) use ($data) {
+                $value = $this->getValue($data, $matches[1]);
+
+                if ($value !== null) {
+                    return is_scalar($value) ? (string) $value : $matches[0];
+                }
+
+                if (isset($matches[2]) && $matches[2] !== "") {
+                    return $matches[2];
+                }
+                if (isset($matches[3]) && $matches[3] !== "") {
+                    return $matches[3];
+                }
+                if (isset($matches[4]) && $matches[4] !== "") {
+                    return $matches[4];
+                }
+
+                return $matches[0];
+            },
+            $response,
+        );
+    }
+
+    /**
+     * Safely get a value from a nested array or object using dot notation.
+     *
+     * @param array $data
+     * @param string $key
+     * @return mixed
+     */
+    private function getValue(array $data, string $key)
+    {
+        foreach (explode(".", $key) as $segment) {
+            if (is_array($data) && array_key_exists($segment, $data)) {
+                $data = $data[$segment];
+            } elseif (is_object($data) && isset($data->{$segment})) {
+                $data = $data->{$segment};
+            } else {
+                return null;
+            }
+        }
+        return $data;
+    }
+
     public function message(MessageChatbotRequest $request): JsonResponse
     {
         $patterns = $this->getPatterns($request->user());
-        $question = $request->input('content');
+        $question = $request->input("content");
         $answer = "I'm sorry, my ability to respond is limited. Please ask your questions correctly.";
+
+        $tz = new DateTimeZone($request->input("timezone") ?? (config("app.timezone") ?? "UTC"));
+        $now = new DateTime("now", $tz);
+        $data = [
+            "user" => $request->user(),
+            "bot" => ["name" => self::BOT_NAME],
+            "user_timezone" => $tz->getName(),
+            "user_date" => $now->format("Y-m-d"),
+            "user_time" => $now->format("H:i:s"),
+        ];
 
         foreach ($patterns as $pattern) {
             if (@preg_match($pattern->pattern, $question, $matches)) {
+                $response = null;
                 $callback = $this->resolveCallback($pattern->callback);
 
                 if ($callback) {
                     try {
                         $result = call_user_func($callback, $matches, $request);
-                        if (is_string($result) && $result !== '') {
-                            $answer = str_replace('ChatBot', self::BOT_NAME, $result);
-                            $pattern->increment('hit_count');
-                            $pattern->forceFill(['last_used_at' => now()])->save();
+                        if (is_string($result) && $result !== "") {
+                            $response = $result;
                         }
                     } catch (Exception $e) {
                         report($e);
@@ -93,12 +161,15 @@ class ChatbotController extends Controller
                     }
                 } elseif (!empty($pattern->responses)) {
                     $response = $pattern->responses[array_rand($pattern->responses)];
-                    if (strpos($response, '%1') !== false && isset($matches[1])) {
-                        $response = str_replace('%1', $matches[1], $response);
+                }
+
+                if ($response !== null) {
+                    if (strpos($response, "%1") !== false && isset($matches[1])) {
+                        $response = str_replace("%1", $matches[1], $response);
                     }
-                    $answer = str_replace('ChatBot', self::BOT_NAME, $response);
-                    $pattern->increment('hit_count');
-                    $pattern->forceFill(['last_used_at' => now()])->save();
+                    $answer = $this->hydrateResponse($response, $data);
+                    $pattern->increment("hit_count");
+                    $pattern->forceFill(["last_used_at" => now()])->save();
                 }
 
                 if ($pattern->stop_processing) {
@@ -108,8 +179,8 @@ class ChatbotController extends Controller
         }
 
         return response()->json([
-            'question' => $question,
-            'answer' => $answer,
+            "question" => $question,
+            "answer" => $answer,
         ]);
     }
 }

@@ -149,7 +149,10 @@
     },
     {
         "pattern": "/\\b(?:what is your name|who are you|what are you)\\b/i",
-        "responses": ["I'm ChatBot, your assistant.", "I'm a friendly chatbot here to help. You can call me ChatBot."],
+        "responses": [
+            "I'm {bot.name}, your assistant.",
+            "I'm a friendly chatbot here to help. You can call me {bot.name}."
+        ],
         "callback": null,
         "severity": "low",
         "priority": 25,
