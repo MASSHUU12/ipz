@@ -34,6 +34,7 @@ class Pattern extends Model
         'enabled',
         'stop_processing',
         'access_level',
+        'payload',
     ];
 
     /**
@@ -51,6 +52,7 @@ class Pattern extends Model
      */
     protected $casts = [
         'responses' => 'array',
+        'payload' => 'array',
         'enabled' => 'boolean',
         'priority' => 'integer',
         'hit_count' => 'integer',

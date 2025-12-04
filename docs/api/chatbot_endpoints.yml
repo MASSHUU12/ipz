@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Marian Chatbot API
-  version: "1.1.0"
+  version: "1.2.0"
   description: |
     API for interacting with the Marian chatbot.
 servers:
@@ -40,6 +40,15 @@ paths:
                   value:
                     question: "play rock"
                     answer: "You played rock 🪨 — I played scissors ✂️. You win! 🎉"
+                example-3:
+                  summary: Response with navigation payload
+                  value:
+                    question: "where is the leaderboard?"
+                    answer: "Sure! You can find the Leaderboard page here."
+                    payload:
+                      type: "navigation_link"
+                      url: "http://0.0.0.0:8000/leaderboard"
+                      text: "Go to Leaderboard"
         "422":
           description: Validation failed (Laravel typical validation response)
           content:
@@ -229,6 +238,17 @@ components:
           type: string
           description: "The chatbot's textual answer."
           example: "The current time is 14:48:58 (UTC)."
+        payload:
+          type: object
+          nullable: true
+          description: |
+            Optional structured data payload to enable richer frontend interactions.
+            For example, it can contain a navigation link, a button, or other UI hints.
+            The structure of the object is dynamic and depends on the context of the answer.
+          example:
+            type: "navigation_link"
+            url: "http://0.0.0.0:8000/leaderboard"
+            text: "Go to Leaderboard"
       required:
         - question
         - answer

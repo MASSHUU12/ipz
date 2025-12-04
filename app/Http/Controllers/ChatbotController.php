@@ -143,6 +143,7 @@ class ChatbotController extends Controller
             "user_date" => $now->format("Y-m-d"),
             "user_time" => $now->format("H:i:s"),
         ];
+        $payload = null;
 
         foreach ($patterns as $pattern) {
             if (@preg_match($pattern->pattern, $question, $matches)) {
@@ -154,6 +155,9 @@ class ChatbotController extends Controller
                         $result = call_user_func($callback, $matches, $request);
                         if (is_string($result) && $result !== "") {
                             $response = $result;
+                        } elseif (is_array($result)) {
+                            $response = $result['answer'] ?? null;
+                            $payload = $result['payload'] ?? null;
                         }
                     } catch (Exception $e) {
                         report($e);
@@ -161,6 +165,7 @@ class ChatbotController extends Controller
                     }
                 } elseif (!empty($pattern->responses)) {
                     $response = $pattern->responses[array_rand($pattern->responses)];
+                    $payload = $pattern->payload ?? null;
                 }
 
                 if ($response !== null) {
@@ -181,6 +186,7 @@ class ChatbotController extends Controller
         return response()->json([
             "question" => $question,
             "answer" => $answer,
+            "payload" => $payload,
         ]);
     }
 }
