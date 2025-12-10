@@ -84,6 +84,70 @@ Examples:
 }
 ```
 
+## Payloads
+
+Callbacks can return an optional `payload` key in addition to the plain `answer` string.
+Payloads are structured instructions for the client to render richer UI or to provide action metadata.
+The plain `answer` should always be provided as a safe textual fallback when a client cannot
+or will not render the payload.
+
+General rules:
+- The callback return shape should be an array (or JSON) like:
+  - `{ 'answer': 'Text shown to the user', 'payload': { ... } }`
+- The client MUST validate any URLs in payloads (e.g., whitelist domains or mark as external).
+- Keep payloads small and predictable - prefer a small set of well-documented `type` values.
+- If the client cannot handle the payload, it should display the `answer` only.
+
+Common payload types used by modules:
+
+1. `image_url`
+- Purpose: ask the client to display an image alongside the answer.
+- Shape:
+  - type: "image_url"
+  - url: string (required)
+  - alt: string (optional, for accessibility)
+- Example:
+```json
+{
+  "type": "image_url",
+  "url": "https://images.example/cute-cat.jpg",
+  "alt": "A cute cat"
+}
+```
+
+2. `navigation_link`
+- Purpose: ask the client to render a button or link that navigates to a page (internal or external).
+- Shape:
+  - type: "navigation_link"
+  - url: string (required)
+  - text: string (optional) — label for the link/button
+- Example:
+```json
+{
+  "type": "navigation_link",
+  "url": "https://example.com/profile",
+  "text": "Go to your profile"
+}
+```
+
+3. buttons / quick_replies
+- Purpose: present a list of short follow-up actions.
+- Shape (suggested):
+  - type: "quick_replies"
+  - items: `[ { "title": "Yes", "payload": "/yes" }, { "title": "No", "payload": "/no" } ]`
+- Example:
+```json
+{
+  "type": "quick_replies",
+  "items": [
+    { "title": "Show me another fact", "payload": "/fact" },
+    { "title": "No thanks", "payload": "/cancel" }
+  ]
+}
+```
+
+---
+
 ---
 
 ## Callbacks
