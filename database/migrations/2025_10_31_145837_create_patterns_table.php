@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->text('description')->nullable();
             $table->string('group')->nullable()->index();
-            $table->string('pattern');
+            $table->json('pattern');
             $table->json('responses');
             $table->json('payload')->nullable();
             $table->enum('access_level', ['public', 'authenticated', 'super_admin'])

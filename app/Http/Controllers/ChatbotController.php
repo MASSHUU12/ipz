@@ -13,6 +13,7 @@ use DateTimeZone;
 class ChatbotController extends Controller
 {
     private const BOT_NAME = "Marian";
+    private const DEFAULT_FALLBACK_LOCALE = 'en';
 
     /**
      * Get chatbot patterns from the database, with caching.
@@ -20,10 +21,11 @@ class ChatbotController extends Controller
      * Patterns returned are scoped to the given user using the Pattern::accessibleTo scope.
      *
      * @param \App\Models\User|null $user
+     * @param string $locale
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    private function getPatterns(?\App\Models\User $user = null)
-    {
+     private function getPatterns(?\App\Models\User $user = null, string $locale = self::DEFAULT_FALLBACK_LOCALE)
+     {
         if ($user === null) {
             $cacheKey = "chatbot_patterns:public";
         } elseif ($user->can("Super Admin")) {
@@ -31,6 +33,8 @@ class ChatbotController extends Controller
         } else {
             $cacheKey = "chatbot_patterns:user:" . $user->id;
         }
+
+        $cacheKey .= ":locale:" . $locale;
 
         return Cache::remember($cacheKey, 3600, function () use ($user) {
             $severityOrder = "CASE
@@ -128,11 +132,102 @@ class ChatbotController extends Controller
         return $data;
     }
 
+    private function determineLocale(MessageChatbotRequest $request): string
+    {
+        $locale = $request->input('locale')
+            ?? $request->input('language')
+            ?? ($request->user()?->locale ?? null)
+            ?? app()->getLocale()
+            ?? self::DEFAULT_FALLBACK_LOCALE;
+
+        $locale = strtolower(str_replace('_', '-', $locale));
+        if (strpos($locale, '-') !== false) {
+            $locale = explode('-', $locale)[0];
+        }
+
+        return $locale ?: self::DEFAULT_FALLBACK_LOCALE;
+    }
+
+    private function getLocalizedValue($value, string $locale, ?string $fallback = null)
+    {
+        $fallback = $fallback ?? self::DEFAULT_FALLBACK_LOCALE;
+
+        if (is_string($value) || is_null($value)) {
+            return $value;
+        }
+
+        if (!is_array($value)) {
+            return $value;
+        }
+
+        if (array_keys($value) !== range(0, count($value) - 1)) {
+            if (array_key_exists($locale, $value)) {
+                return $value[$locale];
+            }
+            if (array_key_exists($fallback, $value)) {
+                return $value[$fallback];
+            }
+            return reset($value);
+        }
+
+        return $value;
+    }
+
+    private function getPatternForLocale($patternField, string $locale): ?string
+    {
+        $resolved = $this->getLocalizedValue($patternField, $locale, self::DEFAULT_FALLBACK_LOCALE);
+
+        if (is_array($resolved)) {
+            foreach ($resolved as $v) {
+                if (is_string($v) && trim($v) !== '') {
+                    return $v;
+                }
+            }
+            return null;
+        }
+
+        return is_string($resolved) ? $resolved : null;
+    }
+
+    private function getResponsesForLocale($responsesField, string $locale): array
+    {
+        $resolved = $this->getLocalizedValue($responsesField, $locale, self::DEFAULT_FALLBACK_LOCALE);
+
+        if (is_string($resolved)) {
+            return [$resolved];
+        }
+
+        if (is_array($resolved)) {
+            if (array_keys($resolved) !== range(0, count($resolved) - 1)) {
+                $out = [];
+                foreach ($resolved as $v) {
+                    if (is_array($v)) {
+                        foreach ($v as $s) {
+                            if (is_string($s)) {
+                                $out[] = $s;
+                            }
+                        }
+                    } elseif (is_string($v)) {
+                        $out[] = $v;
+                    }
+                }
+                return $out;
+            }
+
+            return array_values(array_filter($resolved, fn($v) => is_string($v)));
+        }
+
+        return [];
+    }
+
     public function message(MessageChatbotRequest $request): JsonResponse
     {
-        $patterns = $this->getPatterns($request->user());
+        $locale = $this->determineLocale($request);
+        $patterns = $this->getPatterns($request->user(), $locale);
+
         $question = $request->input("content");
         $answer = "I'm sorry, my ability to respond is limited. Please ask your questions correctly.";
+        $payload = null;
 
         $tz = new DateTimeZone($request->input("timezone") ?? (config("app.timezone") ?? "UTC"));
         $now = new DateTime("now", $tz);
@@ -143,10 +238,16 @@ class ChatbotController extends Controller
             "user_date" => $now->format("Y-m-d"),
             "user_time" => $now->format("H:i:s"),
         ];
-        $payload = null;
 
         foreach ($patterns as $pattern) {
-            if (@preg_match($pattern->pattern, $question, $matches)) {
+            $patternRegex = $this->getPatternForLocale($pattern->pattern, $locale);
+
+            if (empty($patternRegex)) {
+                continue;
+            }
+
+            $matchResult = preg_match($patternRegex, $question, $matches);
+            if ($matchResult === 1) {
                 $response = null;
                 $callback = $this->resolveCallback($pattern->callback);
 
@@ -163,9 +264,12 @@ class ChatbotController extends Controller
                         report($e);
                         $answer = "Sorry, I couldn't process that request right now.";
                     }
-                } elseif (!empty($pattern->responses)) {
-                    $response = $pattern->responses[array_rand($pattern->responses)];
-                    $payload = $pattern->payload ?? null;
+                } else {
+                    $responses = $this->getResponsesForLocale($pattern->responses, $locale);
+                    if (!empty($responses)) {
+                        $response = $responses[array_rand($responses)];
+                        $payload = $this->getLocalizedValue($pattern->payload ?? null, $locale);
+                    }
                 }
 
                 if ($response !== null) {

@@ -80,6 +80,38 @@ class PatternSeeder extends Seeder
             $responses = $p['responses'] ?? ($p['response'] ?? []);
             if (is_string($responses)) {
                 $responses = [$responses];
+            } elseif (!is_array($responses)) {
+                $responses = [];
+            } else {
+                if (array_keys($responses) === range(0, count($responses) - 1)) {
+                    $responses = array_values(array_filter($responses, fn($v) => is_string($v)));
+                } else {
+                    foreach ($responses as $localeKey => $val) {
+                        if (is_string($val)) {
+                        } elseif (is_array($val)) {
+                            $responses[$localeKey] = array_values(array_filter($val, fn($v) => is_string($v)));
+                        } else {
+                            unset($responses[$localeKey]);
+                        }
+                    }
+                }
+            }
+
+            $patternField = $p['pattern'];
+
+            $payload = $p['payload'] ?? null;
+            if ($payload !== null && !is_array($payload)) {
+                if (is_string($payload)) {
+                    $decoded = json_decode($payload, true);
+                    if (is_array($decoded)) {
+                        $payload = $decoded;
+                    } else {
+                        $this->command->warn('Ignoring non-array payload for pattern: ' . (is_string($patternField) ? $patternField : 'array/...'));
+                        $payload = null;
+                    }
+                } else {
+                    $payload = null;
+                }
             }
 
             $providedAccess = null;
@@ -95,19 +127,19 @@ class PatternSeeder extends Seeder
                 if (in_array($normalized, $allowedAccessLevels, true)) {
                     $accessLevel = $normalized;
                 } else {
-                    $patternPreview = is_string($p['pattern']) ? $p['pattern'] : '';
+                    $patternPreview = is_string($patternField) ? $patternField : (is_array($patternField) ? json_encode(array_slice($patternField, 0, 1)) : '');
                     $this->command->warn(sprintf(
                         "Pattern '%s' provided invalid access level '%s' — defaulting to '%s'. Allowed: %s",
                         $patternPreview,
                         $providedAccess,
                         $accessLevel,
                         implode(', ', $allowedAccessLevels)
-                    ));
+                        ));
                 }
             }
 
-            Pattern::create([
-                'pattern' => $p['pattern'],
+            $createData = [
+                'pattern' => $patternField,
                 'responses' => $responses,
                 'callback' => $callback,
                 'severity' => $p['severity'] ?? 'low',
@@ -115,8 +147,12 @@ class PatternSeeder extends Seeder
                 'enabled' => (bool) ($p['enabled'] ?? true),
                 'description' => $p['description'] ?? null,
                 'group' => $p['group'] ?? null,
-                'access_level' => $accessLevel
-            ]);
+                'access_level' => $accessLevel,
+                'payload' => $payload,
+                'stop_processing' => isset($p['stop_processing']) ? (bool) $p['stop_processing'] : (bool) ($p['stop'] ?? true),
+            ];
+
+            Pattern::create($createData);
             $createdCount++;
         }
 
