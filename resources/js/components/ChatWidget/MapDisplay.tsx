@@ -9,8 +9,27 @@ interface MapDisplayProps {
 export const MapDisplay: React.FC<MapDisplayProps> = ({ payload }) => {
   const { lat, lng, label, zoom = 13 } = payload;
   
-  // OpenStreetMap static image URL
-  const mapUrl = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=${zoom}/${lat}/${lng}`;
+  // Validate coordinates
+  const isValidLat = typeof lat === "number" && lat >= -90 && lat <= 90;
+  const isValidLng = typeof lng === "number" && lng >= -180 && lng <= 180;
+  
+  if (!isValidLat || !isValidLng) {
+    return (
+      <div className="map-display">
+        <div className="map-display__info">
+          <strong>Invalid coordinates</strong>
+        </div>
+      </div>
+    );
+  }
+  
+  // Encode coordinates for URL safety
+  const encodedLat = encodeURIComponent(lat.toFixed(6));
+  const encodedLng = encodeURIComponent(lng.toFixed(6));
+  const encodedZoom = encodeURIComponent(zoom);
+  
+  // OpenStreetMap URL
+  const mapUrl = `https://www.openstreetmap.org/?mlat=${encodedLat}&mlon=${encodedLng}#map=${encodedZoom}/${encodedLat}/${encodedLng}`;
   
   return (
     <div className="map-display">

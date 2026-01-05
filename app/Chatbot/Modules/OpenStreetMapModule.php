@@ -11,14 +11,22 @@ class OpenStreetMapModule implements ModuleInterface
 {
     private const USER_AGENT = 'IPZ Air Pollution App/1.0';
     private const CITY_TABLE = 'air_pollution_leaderboard';
+    private const POLISH_CHARS = 'a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ';
+    private const EXCLUDED_WORDS = [
+        'me', 'it', 'this', 'that', 'time', 'date', 'weather', 'help',
+        'you', 'your', 'my', 'our', 'their', 'all', 'some', 'any',
+        'now', 'today', 'tomorrow', 'yesterday',
+    ];
     
     public static function getPatterns(): array
     {
+        $polishChars = self::POLISH_CHARS;
+        
         return [
             [
                 "description" => "Show map for coordinates (latitude, longitude)",
                 "group" => "Map",
-                "pattern" => "/\\b(?:show|display|map|directions?|locate|find)\\b.*?\\b(-?\\d+\\.\\d+)\\s*,\\s*(-?\\d+\\.\\d+)\\b/i",
+                "pattern" => "/\\b(?:show|display|map|directions?|locate|find)\\b[^\\d]*?\\b(-?\\d+\\.\\d+)\\s*,\\s*(-?\\d+\\.\\d+)\\b/i",
                 "responses" => null,
                 "callback" => "coordinatesCallback",
                 "severity" => "medium",
@@ -30,7 +38,7 @@ class OpenStreetMapModule implements ModuleInterface
             [
                 "description" => "Show map for address or city name",
                 "group" => "Map",
-                "pattern" => "/\\b(?:show|display|directions?|locate|find)\\s+(?:map\\s+)?(?:of|to|for)\\s+([a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ][a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\\s-]{2,}?)(?:\\s+on\\s+(?:the\\s+)?map|\\.?$)/i",
+                "pattern" => "/\\b(?:show|display|directions?|locate|find)\\s+(?:map\\s+)?(?:of|to|for)\\s+([{$polishChars}][{$polishChars}\\s-]{2,}?)(?:\\s+on\\s+(?:the\\s+)?map|\\.?$)/i",
                 "responses" => null,
                 "callback" => "addressCallback",
                 "severity" => "medium",
@@ -107,15 +115,7 @@ class OpenStreetMapModule implements ModuleInterface
         }
         
         // Filter out common words that shouldn't be treated as addresses
-        // This is a basic filter; the pattern now requires at least 3 characters
-        // and requires explicit prepositions (of/to/for) to reduce false positives
-        $excludedWords = [
-            'me', 'it', 'this', 'that', 'time', 'date', 'weather', 'help',
-            'you', 'your', 'my', 'our', 'their', 'all', 'some', 'any',
-            'now', 'today', 'tomorrow', 'yesterday',
-        ];
-        
-        if (in_array(strtolower($address), $excludedWords)) {
+        if (in_array(strtolower($address), self::EXCLUDED_WORDS)) {
             return [
                 'answer' => "I couldn't find a location for '{$address}'. Please provide a valid city name or address.",
                 'payload' => null,
