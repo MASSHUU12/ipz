@@ -23,9 +23,13 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ payload }) => {
     );
   }
   
+  // Format coordinates with consistent precision
+  const displayLat = lat.toFixed(4);
+  const displayLng = lng.toFixed(4);
+  
   // Encode coordinates for URL safety
-  const encodedLat = encodeURIComponent(lat.toFixed(6));
-  const encodedLng = encodeURIComponent(lng.toFixed(6));
+  const encodedLat = encodeURIComponent(lat);
+  const encodedLng = encodeURIComponent(lng);
   const encodedZoom = encodeURIComponent(zoom);
   
   // OpenStreetMap URL
@@ -36,7 +40,7 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ payload }) => {
       <div className="map-display__info">
         <strong>{label || "Location"}</strong>
         <span className="map-display__coords">
-          {lat.toFixed(4)}, {lng.toFixed(4)}
+          {displayLat}, {displayLng}
         </span>
       </div>
       <div className="map-display__preview">

@@ -123,9 +123,11 @@ class OpenStreetMapModule implements ModuleInterface
         }
 
         // First, try to find in the database (Polish cities)
+        // Escape special LIKE characters to prevent SQL injection
+        $escapedAddress = str_replace(['%', '_'], ['\\%', '\\_'], strtolower($address));
         $dbCity = DB::table(self::CITY_TABLE)
             ->select('city', 'lat', 'lng')
-            ->whereRaw('LOWER(city) LIKE ?', ['%' . strtolower($address) . '%'])
+            ->whereRaw('LOWER(city) LIKE ?', ['%' . $escapedAddress . '%'])
             ->first();
 
         if ($dbCity && isset($dbCity->lat, $dbCity->lng)) {
