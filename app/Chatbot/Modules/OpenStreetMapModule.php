@@ -9,13 +9,16 @@ use Illuminate\Support\Facades\Http;
 
 class OpenStreetMapModule implements ModuleInterface
 {
+    private const USER_AGENT = 'IPZ Air Pollution App/1.0';
+    private const CITY_TABLE = 'air_pollution_leaderboard';
+    
     public static function getPatterns(): array
     {
         return [
             [
                 "description" => "Show map for coordinates (latitude, longitude)",
                 "group" => "Map",
-                "pattern" => "/(?:show|display|map|directions?|locate|find).*?(-?\\d+\\.\\d+)\\s*,\\s*(-?\\d+\\.\\d+)/i",
+                "pattern" => "/\\b(?:show|display|map|directions?|locate|find)\\b.*?\\b(-?\\d+\\.\\d+)\\s*,\\s*(-?\\d+\\.\\d+)\\b/i",
                 "responses" => null,
                 "callback" => "coordinatesCallback",
                 "severity" => "medium",
@@ -27,7 +30,7 @@ class OpenStreetMapModule implements ModuleInterface
             [
                 "description" => "Show map for address or city name",
                 "group" => "Map",
-                "pattern" => "/(?:show|display|directions?|locate|find)\\s+(?:map\\s+)?(?:of\\s+|to\\s+|for\\s+)([a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ][a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\\s-]{2,}?)(?:\\s+on\\s+(?:the\\s+)?map|\\.?$)/i",
+                "pattern" => "/\\b(?:show|display|directions?|locate|find)\\s+(?:map\\s+)?(?:of|to|for)\\s+([a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ][a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\\s-]{2,}?)(?:\\s+on\\s+(?:the\\s+)?map|\\.?$)/i",
                 "responses" => null,
                 "callback" => "addressCallback",
                 "severity" => "medium",
@@ -120,7 +123,7 @@ class OpenStreetMapModule implements ModuleInterface
         }
 
         // First, try to find in the database (Polish cities)
-        $dbCity = DB::table('air_pollution_leaderboard')
+        $dbCity = DB::table(self::CITY_TABLE)
             ->select('city', 'lat', 'lng')
             ->whereRaw('LOWER(city) LIKE ?', ['%' . strtolower($address) . '%'])
             ->first();
@@ -171,7 +174,7 @@ class OpenStreetMapModule implements ModuleInterface
         try {
             $response = Http::timeout(5)
                 ->withHeaders([
-                    'User-Agent' => 'IPZ Air Pollution App/1.0',
+                    'User-Agent' => self::USER_AGENT,
                 ])
                 ->get('https://nominatim.openstreetmap.org/search', [
                     'q' => $address,
@@ -208,7 +211,7 @@ class OpenStreetMapModule implements ModuleInterface
         try {
             $response = Http::timeout(5)
                 ->withHeaders([
-                    'User-Agent' => 'IPZ Air Pollution App/1.0',
+                    'User-Agent' => self::USER_AGENT,
                 ])
                 ->get('https://nominatim.openstreetmap.org/reverse', [
                     'lat' => $lat,
