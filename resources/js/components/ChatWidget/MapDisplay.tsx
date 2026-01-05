@@ -12,11 +12,6 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ payload }) => {
   // OpenStreetMap static image URL
   const mapUrl = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=${zoom}/${lat}/${lng}`;
   
-  // Create a static map-like preview using OpenStreetMap tile
-  const tileZoom = zoom;
-  const tileX = Math.floor((lng + 180) / 360 * Math.pow(2, tileZoom));
-  const tileY = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, tileZoom));
-  
   return (
     <div className="map-display">
       <div className="map-display__info">
@@ -33,12 +28,10 @@ export const MapDisplay: React.FC<MapDisplayProps> = ({ payload }) => {
           className="map-display__link"
         >
           <div className="map-display__thumbnail">
-            <img 
-              src={`https://tile.openstreetmap.org/${tileZoom}/${tileX}/${tileY}.png`}
-              alt={`Map of ${label || 'location'}`}
-              className="map-display__tile"
-            />
-            <div className="map-display__marker">📍</div>
+            <div className="map-display__static-placeholder">
+              <div className="map-display__marker">📍</div>
+              <div className="map-display__location-text">{label || "Location"}</div>
+            </div>
           </div>
           <span className="map-display__link-text">
             View on OpenStreetMap ↗

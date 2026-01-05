@@ -27,7 +27,7 @@ class OpenStreetMapModule implements ModuleInterface
             [
                 "description" => "Show map for address or city name",
                 "group" => "Map",
-                "pattern" => "/(?:show|display|map|directions?|locate|find)\\s+(?:map\\s+)?(?:of\\s+|to\\s+|for\\s+)?([a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\\s-]+?)(?:\\s+on\\s+map|\\.?$)/i",
+                "pattern" => "/(?:show|display|directions?|locate|find)\\s+(?:map\\s+)?(?:of\\s+|to\\s+|for\\s+)([a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ][a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\\s-]{2,}?)(?:\\s+on\\s+(?:the\\s+)?map|\\.?$)/i",
                 "responses" => null,
                 "callback" => "addressCallback",
                 "severity" => "medium",
@@ -95,8 +95,23 @@ class OpenStreetMapModule implements ModuleInterface
     {
         $address = trim($matches[1]);
         
+        // Minimum length check for valid location names
+        if (strlen($address) < 3) {
+            return [
+                'answer' => "Please provide a longer location name for better results.",
+                'payload' => null,
+            ];
+        }
+        
         // Filter out common words that shouldn't be treated as addresses
-        $excludedWords = ['me', 'it', 'this', 'that', 'time', 'date', 'weather', 'help'];
+        // This is a basic filter; the pattern now requires at least 3 characters
+        // and requires explicit prepositions (of/to/for) to reduce false positives
+        $excludedWords = [
+            'me', 'it', 'this', 'that', 'time', 'date', 'weather', 'help',
+            'you', 'your', 'my', 'our', 'their', 'all', 'some', 'any',
+            'now', 'today', 'tomorrow', 'yesterday',
+        ];
+        
         if (in_array(strtolower($address), $excludedWords)) {
             return [
                 'answer' => "I couldn't find a location for '{$address}'. Please provide a valid city name or address.",
