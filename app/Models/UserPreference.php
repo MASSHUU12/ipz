@@ -24,7 +24,8 @@ class UserPreference extends Model
         'hydrological_warnings',
         'air_quality_warnings',
         'temperature_warning',
-        'temperature_check_value'
+        'temperature_check_value',
+        'locale'
     ];
 
     protected $casts = [
