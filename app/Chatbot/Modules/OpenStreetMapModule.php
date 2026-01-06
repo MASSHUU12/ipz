@@ -17,11 +17,11 @@ class OpenStreetMapModule implements ModuleInterface
         'you', 'your', 'my', 'our', 'their', 'all', 'some', 'any',
         'now', 'today', 'tomorrow', 'yesterday',
     ];
-    
+
     public static function getPatterns(): array
     {
         $polishChars = self::POLISH_CHARS;
-        
+
         return [
             [
                 "description" => "Show map for coordinates (latitude, longitude)",
@@ -79,7 +79,7 @@ class OpenStreetMapModule implements ModuleInterface
         // Try to get location name from reverse geocoding
         $locationName = self::reverseGeocode($lat, $lng);
 
-        $answer = $locationName 
+        $answer = $locationName
             ? "Here's the map for {$locationName} (coordinates: {$lat}, {$lng})."
             : "Here's the map for coordinates {$lat}, {$lng}.";
 
@@ -105,7 +105,7 @@ class OpenStreetMapModule implements ModuleInterface
     public static function addressCallback(array $matches, MessageChatbotRequest $request): array
     {
         $address = trim($matches[1]);
-        
+
         // Minimum length check for valid location names
         if (strlen($address) < 3) {
             return [
@@ -113,7 +113,7 @@ class OpenStreetMapModule implements ModuleInterface
                 'payload' => null,
             ];
         }
-        
+
         // Filter out common words that shouldn't be treated as addresses
         if (in_array(strtolower($address), self::EXCLUDED_WORDS)) {
             return [
@@ -122,30 +122,9 @@ class OpenStreetMapModule implements ModuleInterface
             ];
         }
 
-        // First, try to find in the database (Polish cities)
-        // Escape special LIKE characters to prevent SQL injection
-        $escapedAddress = str_replace(['%', '_'], ['\\%', '\\_'], strtolower($address));
-        $dbCity = DB::table(self::CITY_TABLE)
-            ->select('city', 'lat', 'lng')
-            ->whereRaw('LOWER(city) LIKE ?', ['%' . $escapedAddress . '%'])
-            ->first();
-
-        if ($dbCity && isset($dbCity->lat, $dbCity->lng)) {
-            return [
-                'answer' => "Here's the map for {$dbCity->city} (coordinates: {$dbCity->lat}, {$dbCity->lng}).",
-                'payload' => [
-                    'type' => 'map',
-                    'lat' => (float) $dbCity->lat,
-                    'lng' => (float) $dbCity->lng,
-                    'label' => $dbCity->city,
-                    'zoom' => 13,
-                ],
-            ];
-        }
-
         // If not found in database, try Nominatim geocoding
         $geocodeResult = self::geocodeAddress($address);
-        
+
         if ($geocodeResult) {
             return [
                 'answer' => "Here's the map for {$geocodeResult['display_name']} (coordinates: {$geocodeResult['lat']}, {$geocodeResult['lng']}).",
