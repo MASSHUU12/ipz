@@ -1,9 +1,10 @@
 import { FocusEvent, FormEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { isAxiosError } from "axios";
-import { sendChatWidgetMessage } from "../../api/chatWidgetApi";
+import { sendChatWidgetMessage, MapPayload } from "../../api/chatWidgetApi";
 import { ChatIcon } from "./ChatIcon";
 import { SuggestionBubble } from "./SuggestionBubble";
+import { MapDisplay } from "./MapDisplay";
 import "./ChatWidget.css";
 
 type MessageRole = "user" | "assistant";
@@ -19,6 +20,7 @@ interface ChatMessage {
   id: string;
   role: MessageRole;
   content: string;
+  payload?: MapPayload | null;
 }
 
 const hiddenClass = "chat-widget--hidden";
@@ -155,7 +157,7 @@ export const ChatWidget = () => {
     setIsSending(true);
 
     try {
-      const { answer: assistantText } = await sendChatWidgetMessage({
+      const { answer: assistantText, payload } = await sendChatWidgetMessage({
         content: trimmed,
         timezone: resolvedTimezone,
       });
@@ -181,6 +183,7 @@ export const ChatWidget = () => {
         id: buildId(),
         role: "assistant",
         content: assistantText,
+        payload: payload ?? null,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -358,6 +361,9 @@ export const ChatWidget = () => {
                   <span className={`chat-widget__bubble chat-widget__bubble--${message.role}`}>
                     {message.content}
                   </span>
+                  {message.payload && message.payload.type === "map" && (
+                    <MapDisplay payload={message.payload} />
+                  )}
                   {isCountdownActive && (
                     <div
                       className="chat-widget__rating-progress"
