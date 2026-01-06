@@ -613,3 +613,7 @@ public/build
 /blob-report/
 /playwright/.cache/
 resources/js/pages/VerifyEmailThankYou.jsx
+
+# SQLite database
+database/*.sqlite
+database/*.sqlite-*
