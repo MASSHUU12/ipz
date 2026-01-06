@@ -136,7 +136,7 @@ class ChatbotController extends Controller
     {
         $locale = $request->input('locale')
             ?? $request->input('language')
-            ?? ($request->user()?->locale ?? null)
+            ?? ($request->user()?->preference?->locale ?? null)
             ?? app()->getLocale()
             ?? self::DEFAULT_FALLBACK_LOCALE;
 
