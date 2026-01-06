@@ -29,21 +29,9 @@ class LocalizedPatternsSeeder extends Seeder
                     'en' => '/\\b(?:change language to|set language to|switch to|language)\\s+(polish|english|pl|en)\\b/i',
                     'pl' => '/\\b(?:zmień język na|ustaw język na|przełącz na|język)\\s+(polski|angielski|pl|en)\\b/iu',
                 ],
-                'responses' => [
-                    'en' => [
-                        'Language changed to %1. How can I help you?',
-                        'Switched to %1. What can I do for you?'
-                    ],
-                    'pl' => [
-                        'Język zmieniony na %1. Jak mogę Ci pomóc?',
-                        'Przełączono na %1. Co mogę dla Ciebie zrobić?'
-                    ]
-                ],
-                'payload' => [
-                    'en' => ['action' => 'language_changed', 'locale' => 'en'],
-                    'pl' => ['action' => 'language_changed', 'locale' => 'pl']
-                ],
-                'callback' => null,
+                'responses' => [],
+                'payload' => null,
+                'callback' => [\App\Chatbot\Modules\LanguageModule::class, 'changeLanguageCallback'],
                 'severity' => 'high',
                 'priority' => 95,
                 'enabled' => true,
@@ -135,7 +123,7 @@ class LocalizedPatternsSeeder extends Seeder
                 'group' => 'technical',
                 'pattern' => [
                     'en' => '/\\b(?:error|bug|doesn\'t work|does not work|failed|exception|page not found|404)\\b/i',
-                    'pl' => '/\\b(?:błąd|blad|bug|nie działa|nie dziala|nie dzia|nie zadziałało|nie zadzialalo|failure|wyjątek|wyjatek|strona nie znaleziona|404)\\b/iu',
+                    'pl' => '/\\b(?:błąd|blad|bug|nie działa|nie dziala|nie zadziałało|nie zadzialalo|failure|wyjątek|wyjatek|strona nie znaleziona|404)\\b/iu',
                 ],
                 'responses' => [
                     'en' => [
