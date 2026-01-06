@@ -13,7 +13,7 @@ class LanguageModule implements ModuleInterface
             [
                 "pattern" => [
                     "en" => "/\\b(?:change language to|set language to|switch to|language)\\s+(polish|english|pl|en)\\b/i",
-                    "pl" => "/\\b(?:zmień język na|ustaw język na|przełącz na|język)\\s+(polski|angielski|pl|en)\\b/i",
+                    "pl" => "/\\b(?:zmień język na|ustaw język na|przełącz na|język)\\s+(polski|angielski|pl|en)\\b/iu",
                 ],
                 "responses" => [],
                 "callback" => "changeLanguageCallback",

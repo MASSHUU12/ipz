@@ -56,7 +56,7 @@ class ChatbotMultiLanguageTest extends TestCase
         Pattern::create([
             'pattern' => [
                 'en' => '/\\b(?:hello|hi)\\b/i',
-                'pl' => '/\\b(?:cześć|czesc|hej)\\b/i',
+                'pl' => '/\\b(?:cześć|czesc|hej)\\b/iu',
             ],
             'responses' => [
                 'en' => ['Hello! How can I help you?'],
@@ -69,7 +69,7 @@ class ChatbotMultiLanguageTest extends TestCase
         ]);
 
         $response = $this->postJson('/api/chatbot/message', [
-            'content' => 'cześć',
+            'content' => 'czesc',
             'locale' => 'pl',
         ]);
 
@@ -87,13 +87,15 @@ class ChatbotMultiLanguageTest extends TestCase
         ]);
         $user->assignRole('User');
 
-        // Create user preferences with Polish locale
-        DB::table('user_preferences')->insert([
-            'user_id' => $user->id,
-            'locale' => 'pl',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        // Create or update user preferences with Polish locale
+        DB::table('user_preferences')->updateOrInsert(
+            ['user_id' => $user->id],
+            [
+                'locale' => 'pl',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
 
         // Create a localized pattern
         Pattern::create([

@@ -27,7 +27,7 @@ class LocalizedPatternsSeeder extends Seeder
                 'group' => 'language',
                 'pattern' => [
                     'en' => '/\\b(?:change language to|set language to|switch to|language)\\s+(polish|english|pl|en)\\b/i',
-                    'pl' => '/\\b(?:zmień język na|ustaw język na|przełącz na|język)\\s+(polski|angielski|pl|en)\\b/i',
+                    'pl' => '/\\b(?:zmień język na|ustaw język na|przełącz na|język)\\s+(polski|angielski|pl|en)\\b/iu',
                 ],
                 'responses' => [
                     'en' => [
@@ -55,7 +55,7 @@ class LocalizedPatternsSeeder extends Seeder
                 'group' => 'greetings',
                 'pattern' => [
                     'en' => '/\\b(?:hi|hello|hey|hiya|greetings|yo)\\b/i',
-                    'pl' => '/\\b(?:cześć|czesc|hej|witaj|witam|siema|dzień dobry|dzien dobry|hejo)\\b/i',
+                    'pl' => '/\\b(?:cześć|czesc|hej|witaj|witam|siema|dzień dobry|dzien dobry|hejo)\\b/iu',
                 ],
                 'responses' => [
                     'en' => [
@@ -81,7 +81,7 @@ class LocalizedPatternsSeeder extends Seeder
                 'group' => 'greetings',
                 'pattern' => [
                     'en' => '/\\b(?:thanks|thank you|thx|thankyou)\\b/i',
-                    'pl' => '/\\b(?:dzięki|dzieki|dziękuję|dziekuje|thx|dzięks|dzieks)\\b/i',
+                    'pl' => '/\\b(?:dzięki|dzieki|dziękuję|dziekuje|thx|dzięks|dzieks)\\b/iu',
                 ],
                 'responses' => [
                     'en' => ['You\'re welcome!', 'No problem — happy to help!', 'Anytime!'],
@@ -99,7 +99,7 @@ class LocalizedPatternsSeeder extends Seeder
                 'group' => 'greetings',
                 'pattern' => [
                     'en' => '/\\b(?:bye|goodbye|see you|see ya|talk to you later)\\b/i',
-                    'pl' => '/\\b(?:pa|papa|do widzenia|cześć|czesc|do zobaczenia|na razie|nara)\\b/i',
+                    'pl' => '/\\b(?:pa|papa|do widzenia|cześć|czesc|do zobaczenia|na razie|nara)\\b/iu',
                 ],
                 'responses' => [
                     'en' => ['Goodbye! Have a great day!', 'See you later! If you need anything else, just ask.'],
@@ -117,7 +117,7 @@ class LocalizedPatternsSeeder extends Seeder
                 'group' => 'help',
                 'pattern' => [
                     'en' => '/\\b(?:help|support|assist|assistance)\\b/i',
-                    'pl' => '/\\b(?:pomoc|pomocy|pomóż|pomoz|wsparcie|asyst)\\b/i',
+                    'pl' => '/\\b(?:pomoc|pomocy|pomóż|pomoz|wsparcie|asyst)\\b/iu',
                 ],
                 'responses' => [
                     'en' => ['Sure — what do you need help with?', 'I\'m here to help. Please tell me more about the issue.'],
@@ -135,7 +135,7 @@ class LocalizedPatternsSeeder extends Seeder
                 'group' => 'technical',
                 'pattern' => [
                     'en' => '/\\b(?:error|bug|doesn\'t work|does not work|failed|exception|page not found|404)\\b/i',
-                    'pl' => '/\\b(?:błąd|blad|bug|nie działa|nie dziala|nie dzia|nie zadziałało|nie zadzialalo|failure|wyjątek|wyjatek|strona nie znaleziona|404)\\b/i',
+                    'pl' => '/\\b(?:błąd|blad|bug|nie działa|nie dziala|nie dzia|nie zadziałało|nie zadzialalo|failure|wyjątek|wyjatek|strona nie znaleziona|404)\\b/iu',
                 ],
                 'responses' => [
                     'en' => [
