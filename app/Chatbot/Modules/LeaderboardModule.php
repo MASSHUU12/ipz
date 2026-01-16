@@ -100,7 +100,11 @@ class LeaderboardModule implements ModuleInterface
     }
 
     /**
-     * Shows the air pollution rank for a specific city.
+     * Shows air pollution rank for a specific city.
+     * 
+     * Uses prefix LIKE pattern to match city names flexibly,
+     * allowing partial matches while prioritizing exact matches
+     * by using prefix matching instead of wildcard on both sides.
      *
      * @param array $matches
      * @param MessageChatbotRequest $request
@@ -114,7 +118,7 @@ class LeaderboardModule implements ModuleInterface
             return "Please specify a city name. For example: 'What is the pollution rank for Warsaw?'";
         }
 
-        // Normalize city name for case-insensitive search
+        // Normalize city name for case-insensitive prefix search
         $entry = AirPollutionLeaderboard::whereRaw('LOWER(city) LIKE ?', [strtolower($cityName) . '%'])
             ->orWhereRaw('LOWER(station_name) LIKE ?', [strtolower($cityName) . '%'])
             ->orderBy('air_quality_index', 'desc')

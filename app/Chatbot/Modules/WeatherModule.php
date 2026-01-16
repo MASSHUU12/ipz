@@ -71,16 +71,8 @@ class WeatherModule implements ModuleInterface
             return "Please specify a city or station name. For example: 'What's the weather in Krakow?'";
         }
 
-        // If location contains a comma (e.g., user pasted an address), drop everything after it
-        if (strpos($location, ',') !== false) {
-            $location = trim(substr($location, 0, strpos($location, ',')));
-        }
-
-        // Find the latest weather data for this location
-        $weather = SynopticHistoricalData::whereRaw('LOWER(station_name) LIKE ?', ['%' . strtolower($location) . '%'])
-            ->orderByDesc('measurement_date')
-            ->orderByDesc('measurement_hour')
-            ->first();
+        $location = self::normalizeLocation($location);
+        $weather = self::findLatestWeatherData($location);
 
         if (!$weather) {
             return sprintf(
@@ -141,16 +133,8 @@ class WeatherModule implements ModuleInterface
             return "Please specify a city or station name. For example: 'What's the temperature in Gdansk?'";
         }
 
-        // If location contains a comma, drop everything after it
-        if (strpos($location, ',') !== false) {
-            $location = trim(substr($location, 0, strpos($location, ',')));
-        }
-
-        // Find the latest weather data for this location
-        $weather = SynopticHistoricalData::whereRaw('LOWER(station_name) LIKE ?', ['%' . strtolower($location) . '%'])
-            ->orderByDesc('measurement_date')
-            ->orderByDesc('measurement_hour')
-            ->first();
+        $location = self::normalizeLocation($location);
+        $weather = self::findLatestWeatherData($location);
 
         if (!$weather) {
             return sprintf(
@@ -171,6 +155,40 @@ class WeatherModule implements ModuleInterface
             $weather->temperature,
             $measurementTime
         );
+    }
+
+    /**
+     * Normalize location name by removing comma-separated parts.
+     *
+     * @param string $location
+     * @return string
+     */
+    private static function normalizeLocation(string $location): string
+    {
+        // If location contains a comma (e.g., user pasted an address), drop everything after it
+        if (strpos($location, ',') !== false) {
+            $location = trim(substr($location, 0, strpos($location, ',')));
+        }
+        return $location;
+    }
+
+    /**
+     * Find the latest weather data for a location.
+     * 
+     * Uses LIKE pattern with wildcards to match partial station names,
+     * consistent with ImgwController's fuzzy matching approach.
+     * This allows users to search for "War" and match "Warsaw",
+     * which improves user experience at the cost of potential ambiguity.
+     *
+     * @param string $location
+     * @return \App\Models\SynopticHistoricalData|null
+     */
+    private static function findLatestWeatherData(string $location): ?SynopticHistoricalData
+    {
+        return SynopticHistoricalData::whereRaw('LOWER(station_name) LIKE ?', ['%' . strtolower($location) . '%'])
+            ->orderByDesc('measurement_date')
+            ->orderByDesc('measurement_hour')
+            ->first();
     }
 
     /**
