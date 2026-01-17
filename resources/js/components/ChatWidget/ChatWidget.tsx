@@ -3,8 +3,7 @@ import { createPortal } from "react-dom";
 import { isAxiosError } from "axios";
 import {
   ChatbotSuggestion,
-  fetchChatbotSuggestions,
-  sendChatWidgetMessage,
+  fetchChatbotSuggestions
 } from "../../api/chatWidgetApi";
 import { useDebounce } from "../../hooks/useDebounce";
 import { sendChatWidgetMessage, MapPayload } from "../../api/chatWidgetApi";
