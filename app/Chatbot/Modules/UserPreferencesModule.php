@@ -16,8 +16,12 @@ class UserPreferencesModule implements ModuleInterface
     /**
      * Get or create user preference for the given user.
      *
-     * @param \App\Models\User $user
-     * @return \App\Models\UserPreference
+     * Returns the existing UserPreference instance for the user, or creates
+     * a new one if it doesn't exist. The new instance is not saved to the
+     * database until the caller explicitly calls save() on it.
+     *
+     * @param \App\Models\User $user The user whose preference to retrieve or create
+     * @return \App\Models\UserPreference The user's preference instance
      */
     private static function getOrCreatePreference($user): \App\Models\UserPreference
     {
