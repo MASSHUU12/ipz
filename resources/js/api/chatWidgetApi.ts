@@ -6,9 +6,18 @@ export interface ChatWidgetRequestPayload {
   sessionId?: string;
 }
 
+export interface MapPayload {
+  type: "map";
+  lat: number;
+  lng: number;
+  label?: string;
+  zoom?: number;
+}
+
 export interface ChatWidgetResponsePayload {
   question: string;
   answer: string;
+  payload?: MapPayload | null;
 }
 
 export interface ChatbotSuggestion {

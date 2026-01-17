@@ -22,7 +22,6 @@ services:
 
   db:
     image: mariadb:10.11
-    container_name: mariadb
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: Zaq12wsx
@@ -43,7 +42,6 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
-    container_name: phpmyadmin
     restart: always
     environment:
       PMA_HOST: db
