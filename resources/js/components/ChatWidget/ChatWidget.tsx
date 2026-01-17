@@ -1,6 +1,12 @@
 import { FocusEvent, FormEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { isAxiosError } from "axios";
+import {
+  ChatbotSuggestion,
+  fetchChatbotSuggestions,
+  sendChatWidgetMessage,
+} from "../../api/chatWidgetApi";
+import { useDebounce } from "../../hooks/useDebounce";
 import { sendChatWidgetMessage, MapPayload } from "../../api/chatWidgetApi";
 import { ChatIcon } from "./ChatIcon";
 import { SuggestionBubble } from "./SuggestionBubble";
@@ -38,23 +44,29 @@ const suggestionPresets = [
   "Gdzie znajdę najbliższe schronienie w razie burzy?",
 ];
 
-const buildSuggestions = (query: string): string[] => {
+const buildSuggestions = (query: string, backend: ChatbotSuggestion[]): string[] => {
   const normalized = query.trim().toLowerCase();
-  const baseList = normalized
+  const backendPool = backend
+    .map(item => item?.suggestion?.trim())
+    .filter((entry): entry is string => Boolean(entry));
+
+  const matchingBackend = normalized
+    ? backendPool.filter(entry => entry.toLowerCase().includes(normalized))
+    : backendPool;
+
+  const fallbackPool = normalized
     ? suggestionPresets.filter(entry => entry.toLowerCase().includes(normalized))
-    : suggestionPresets.slice(0, suggestionLimit);
+    : suggestionPresets;
 
-  if (!normalized) {
-    return baseList.slice(0, suggestionLimit);
-  }
+  const dynamicPool = normalized
+    ? [
+      `Opowiedz mi więcej o ${query}.`,
+      `Jakie są prognozy dotyczące ${query}?`,
+      `Czy są ostrzeżenia związane z ${query}?`,
+    ]
+    : [];
 
-  const dynamicPool = [
-    `Opowiedz mi więcej o ${query}.`,
-    `Jakie są prognozy dotyczące ${query}?`,
-    `Czy są ostrzeżenia związane z ${query}?`,
-  ];
-
-  const unique = Array.from(new Set([...dynamicPool, ...baseList]));
+  const unique = Array.from(new Set([...matchingBackend, ...fallbackPool, ...dynamicPool]));
   return unique.slice(0, suggestionLimit);
 };
 
@@ -68,6 +80,7 @@ export const ChatWidget = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [ratings, setRatings] = useState<Record<string, MessageRating>>({});
+  const [backendSuggestions, setBackendSuggestions] = useState<ChatbotSuggestion[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isInputFocused, setIsInputFocused] = useState(false);
 
@@ -86,6 +99,7 @@ export const ChatWidget = () => {
   }, []);
 
   const [now, setNow] = useState(() => Date.now());
+  const debouncedInputValue = useDebounce(inputValue, 300);
 
   useEffect(() => {
     setMounted(true);
@@ -116,8 +130,30 @@ export const ChatWidget = () => {
   }, [isOpen, messages]);
 
   useEffect(() => {
-    setSuggestions(buildSuggestions(inputValue));
-  }, [inputValue]);
+    let cancelled = false;
+    const loadBackendSuggestions = async () => {
+      try {
+        const data = await fetchChatbotSuggestions(12);
+        if (!cancelled) {
+          setBackendSuggestions(data);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Nie udało się pobrać sugestii czatu", error);
+        }
+      }
+    };
+
+    loadBackendSuggestions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedInputValue]);
+
+  useEffect(() => {
+    setSuggestions(buildSuggestions(inputValue, backendSuggestions));
+  }, [inputValue, backendSuggestions]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -132,6 +168,25 @@ export const ChatWidget = () => {
   const toggleWidget = () => {
     setIsOpen(prev => !prev);
     setErrorMessage(null);
+  };
+
+  const clearHistory = () => {
+    const confirmed = window.confirm("Czy na pewno chcesz usunąć historię czatu?");
+    if (!confirmed) return;
+
+    Object.values(ratingTimers.current).forEach(timeoutId => {
+      window.clearTimeout(timeoutId);
+    });
+    ratingTimers.current = {};
+    setMessages([]);
+    setRatings({});
+    setErrorMessage(null);
+    setInputValue("");
+    setIsSending(false);
+  };
+
+  const handleClearMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
   };
 
   const canSubmit = useMemo(() => {
@@ -273,6 +328,10 @@ export const ChatWidget = () => {
     handleInputFocus();
   };
 
+  const handleCloseMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
+
   const handleInputFocus = () => {
     if (blurTimeoutRef.current) {
       window.clearTimeout(blurTimeoutRef.current);
@@ -324,14 +383,26 @@ export const ChatWidget = () => {
             <ChatIcon className="chat-widget__title-icon" />
             <span>Wsparcie AI</span>
           </div>
-          <button
-            type="button"
-            className="chat-widget__close"
-            aria-label="Zamknij czat"
-            onClick={toggleWidget}
-          >
-            ×
-          </button>
+          <div className="chat-widget__actions">
+            <button
+              type="button"
+              className="chat-widget__clear"
+              onMouseDown={handleClearMouseDown}
+              onClick={clearHistory}
+              aria-label="Wyczyść historię czatu"
+            >
+              Wyczyść historię
+            </button>
+            <button
+              type="button"
+              className="chat-widget__close"
+              aria-label="Zamknij czat"
+              onMouseDown={handleCloseMouseDown}
+              onClick={toggleWidget}
+            >
+              ×
+            </button>
+          </div>
         </header>
 
         <div className="chat-widget__body">

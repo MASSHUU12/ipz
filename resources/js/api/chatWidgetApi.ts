@@ -20,6 +20,11 @@ export interface ChatWidgetResponsePayload {
   payload?: MapPayload | null;
 }
 
+export interface ChatbotSuggestion {
+  suggestion: string | null;
+  description: string | null;
+}
+
 export const sendChatWidgetMessage = async (
   payload: ChatWidgetRequestPayload,
 ): Promise<ChatWidgetResponsePayload> => {
@@ -30,4 +35,14 @@ export const sendChatWidgetMessage = async (
   });
 
   return data;
+};
+
+export const fetchChatbotSuggestions = async (
+  limit = 12,
+): Promise<ChatbotSuggestion[]> => {
+  const { data } = await instance.get<ChatbotSuggestion[]>("/chatbot/suggest", {
+    params: { limit },
+  });
+
+  return data ?? [];
 };
