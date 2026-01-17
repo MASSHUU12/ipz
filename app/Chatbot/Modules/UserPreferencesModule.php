@@ -300,9 +300,10 @@ class UserPreferencesModule implements ModuleInterface
         $preferences->save();
 
         if ($enableWarning) {
+            $currentThreshold = $preferences->temperature_check_value ?? 10.00;
             return sprintf(
                 "✅ Temperature warnings have been **enabled** with the current threshold of **%.1f°C**.",
-                $preferences->temperature_check_value
+                (float) $currentThreshold
             );
         } else {
             return "✅ Temperature warnings have been **disabled**.";
