@@ -51,6 +51,7 @@ class Pattern extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'pattern' => 'array',
         'responses' => 'array',
         'payload' => 'array',
         'enabled' => 'boolean',
@@ -142,6 +143,12 @@ class Pattern extends Model
             return null;
         }
 
+        $patternCandidate = $this->extractPatternString($this->pattern);
+
+        if (empty($patternCandidate)) {
+            return null;
+        }
+
         try {
             $grammar = new Read('hoa://Library/Regex/Grammar.pp');
 
@@ -157,6 +164,31 @@ class Pattern extends Model
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    private function extractPatternString($patternField): ?string
+    {
+        if (is_string($patternField)) {
+            return $patternField;
+        }
+
+        if (is_array($patternField)) {
+            foreach ($patternField as $key => $value) {
+                if (is_string($value) && trim($value) !== '') {
+                    return $value;
+                }
+
+                if (is_array($value)) {
+                    foreach ($value as $v2) {
+                        if (is_string($v2) && trim($v2) !== '') {
+                            return $v2;
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
