@@ -13,6 +13,24 @@ class UserPreferencesModule implements ModuleInterface
      */
     private const DEFAULT_TEMPERATURE_THRESHOLD = 10.00;
 
+    /**
+     * Get or create user preference for the given user.
+     *
+     * @param \App\Models\User $user
+     * @return \App\Models\UserPreference
+     */
+    private static function getOrCreatePreference($user): \App\Models\UserPreference
+    {
+        $preferences = $user->preference;
+
+        if (!$preferences) {
+            $preferences = new \App\Models\UserPreference();
+            $preferences->user_id = $user->id;
+        }
+
+        return $preferences;
+    }
+
     public static function getPatterns(): array
     {
         return [
@@ -161,13 +179,7 @@ class UserPreferencesModule implements ModuleInterface
             return "Please specify a city name. For example: 'set my city to Warsaw'";
         }
 
-        $preferences = $user->preference;
-
-        if (!$preferences) {
-            $preferences = new \App\Models\UserPreference();
-            $preferences->user_id = $user->id;
-        }
-
+        $preferences = self::getOrCreatePreference($user);
         $preferences->city = $city;
         $preferences->save();
 
@@ -207,13 +219,7 @@ class UserPreferencesModule implements ModuleInterface
             return "Invalid notification method. Available options: SMS, E-mail, or Both.";
         }
 
-        $preferences = $user->preference;
-
-        if (!$preferences) {
-            $preferences = new \App\Models\UserPreference();
-            $preferences->user_id = $user->id;
-        }
-
+        $preferences = self::getOrCreatePreference($user);
         $preferences->notice_method = $normalizedMethod;
         $preferences->save();
 
@@ -252,13 +258,7 @@ class UserPreferencesModule implements ModuleInterface
         }
 
         $field = $fieldMap[$warningType];
-        $preferences = $user->preference;
-
-        if (!$preferences) {
-            $preferences = new \App\Models\UserPreference();
-            $preferences->user_id = $user->id;
-        }
-
+        $preferences = self::getOrCreatePreference($user);
         $preferences->$field = $enableWarning;
         $preferences->save();
 
@@ -288,28 +288,23 @@ class UserPreferencesModule implements ModuleInterface
 
         $enableWarning = in_array($action, ['enable', 'turn on', 'activate']);
 
-        $preferences = $user->preference;
-
-        if (!$preferences) {
-            $preferences = new \App\Models\UserPreference();
-            $preferences->user_id = $user->id;
-        }
-
+        $preferences = self::getOrCreatePreference($user);
         $preferences->temperature_warning = $enableWarning;
 
         if ($enableWarning && $threshold !== null) {
             $preferences->temperature_check_value = $threshold;
-            $preferences->save();
-            return sprintf("✅ Temperature warnings have been **enabled** with a threshold of **%.1f°C**.", $threshold);
+        } elseif ($enableWarning && $preferences->temperature_check_value === null) {
+            // Set default threshold if enabling warnings without a threshold and no existing value
+            $preferences->temperature_check_value = self::DEFAULT_TEMPERATURE_THRESHOLD;
         }
 
         $preferences->save();
 
         if ($enableWarning) {
-            $currentThreshold = $preferences->temperature_check_value ?? self::DEFAULT_TEMPERATURE_THRESHOLD;
+            $currentThreshold = (float) $preferences->temperature_check_value;
             return sprintf(
-                "✅ Temperature warnings have been **enabled** with the current threshold of **%.1f°C**.",
-                (float) $currentThreshold
+                "✅ Temperature warnings have been **enabled** with a threshold of **%.1f°C**.",
+                $currentThreshold
             );
         } else {
             return "✅ Temperature warnings have been **disabled**.";
@@ -337,13 +332,7 @@ class UserPreferencesModule implements ModuleInterface
             return "Please specify a temperature threshold. For example: 'set temperature threshold to 25'";
         }
 
-        $preferences = $user->preference;
-
-        if (!$preferences) {
-            $preferences = new \App\Models\UserPreference();
-            $preferences->user_id = $user->id;
-        }
-
+        $preferences = self::getOrCreatePreference($user);
         $preferences->temperature_check_value = $threshold;
         $preferences->save();
 
