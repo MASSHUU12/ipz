@@ -7,6 +7,12 @@ use App\Http\Requests\MessageChatbotRequest;
 
 class UserPreferencesModule implements ModuleInterface
 {
+    /**
+     * Default temperature threshold value when enabling temperature warnings
+     * without specifying a custom threshold.
+     */
+    private const DEFAULT_TEMPERATURE_THRESHOLD = 10.00;
+
     public static function getPatterns(): array
     {
         return [
@@ -300,7 +306,7 @@ class UserPreferencesModule implements ModuleInterface
         $preferences->save();
 
         if ($enableWarning) {
-            $currentThreshold = $preferences->temperature_check_value ?? 10.00;
+            $currentThreshold = $preferences->temperature_check_value ?? self::DEFAULT_TEMPERATURE_THRESHOLD;
             return sprintf(
                 "✅ Temperature warnings have been **enabled** with the current threshold of **%.1f°C**.",
                 (float) $currentThreshold
