@@ -32,27 +32,33 @@ phpMyAdmin is available under port **6969**.
 docker exec -it ipz-web /bin/bash
 ```
 
-5. **Generate the application key:**
+5. **Install PHP dependencies:**
+
+```bash
+composer install
+```
+
+6. **Generate the application key:**
 
 ```bash
 php artisan key:generate
 ```
 
-6. **Run database migrations and seed with roles and permissions:**
+7. **Run database migrations and seed with roles and permissions:**
 
 ```bash
 php artisan migrate:fresh --seed
 ```
 
-7. **Run the development server (API):**
+8. **Run the development server (API):**
 
 ```bash
-php artisan serve --host=0.0.0.0 --port=8000
+php artisan serve --host=0.0.0.0
 ```
 
 API will be available at `http://localhost:8000`.
 
-8. **Run the React development server (frontend):**
+9. **Run the React development server (frontend):**
 
 ```bash
 bun install
@@ -61,7 +67,7 @@ bun run dev
 
 Frontend will be available at `http://localhost:8000`.
 
-9. **(Optional) Automatically run scheduled tasks:**
+10. **(Optional) Automatically run scheduled tasks:**
 
 > [!WARNING]
 > Omitting this step may result in some functionality to be unavailable.
