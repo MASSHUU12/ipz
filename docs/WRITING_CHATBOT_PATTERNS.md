@@ -21,9 +21,9 @@ Common fields you will set in the patterns table (the actual table may have more
 
 - `description` (string) — human-friendly description.
 - `group` (string) — logical group (e.g. "User", "Weather").
-- `pattern` (string) — a PHP-compatible regex string, including delimiters and flags.
-Example: `"/\\b(?:hi|hello)\\b/i"`.
-- `responses` (json array|null) — array of templated strings.
+- `pattern` (string|array) — a PHP-compatible regex string, including delimiters and flags.
+Example: `"/\\b(?:hi|hello)\\b/i"`. For multi-language support, use an associative array with locale keys (see Multi-Language Support section).
+- `responses` (json array|null) — array of templated strings or associative array with locale keys.
 Mutually exclusive with `callback` (pattern can have a callback, or responses).
 - `callback` (string|null) — PHP callable reference as `"App\\Http\\Callbacks\\SomeClass::method"`.
 - `severity` (string) — used for ordering (e.g. `critical`, `high`, `medium`, `low`).
@@ -31,6 +31,104 @@ Mutually exclusive with `callback` (pattern can have a callback, or responses).
 - `enabled` (boolean) — whether pattern is active.
 - `stop_processing` (boolean) — if true, matching stops after this pattern matches.
 - `access_level` (string) — `public`, `authenticated`, or `super_admin`.
+- `payload` (json|null) — optional structured data for client-side rendering.
+
+---
+
+## Multi-Language Support
+
+The chatbot supports responding in multiple languages (currently Polish and English).
+
+### How it works:
+
+1. **Locale Determination** — The locale is determined in this order of priority:
+   - Request parameter `locale` or `language`
+   - User preference `locale` field (for authenticated users)
+   - Application default locale
+   - Fallback to English (`en`)
+
+2. **Pattern Matching** — Patterns can be defined in two ways:
+   
+   **Legacy format (single language):**
+   ```json
+   {
+     "pattern": "/\\b(?:hello|hi)\\b/i",
+     "responses": ["Hello!"]
+   }
+   ```
+
+   **Multi-language format:**
+   ```json
+   {
+     "pattern": {
+       "en": "/\\b(?:hello|hi)\\b/i",
+       "pl": "/\\b(?:cześć|czesc|hej)\\b/iu"
+     },
+     "responses": {
+       "en": ["Hello!", "Hi there!"],
+       "pl": ["Cześć!", "Witaj!"]
+     }
+   }
+   ```
+
+3. **Fallback Behavior** — If a translation is missing for the requested locale:
+   - The system falls back to English
+   - If English is also unavailable, it uses the first available translation
+
+### Important Unicode Considerations:
+
+- When using Polish or other Unicode characters in regex patterns, **always** add the `u` modifier
+- Example: `/\\b(?:cześć|dziękuję)\\b/iu` (note the `u` at the end)
+- Without the `u` modifier, Unicode characters may not match correctly
+
+### User Preference Locale:
+
+Authenticated users can have their preferred language saved in `user_preferences.locale`.
+To change language via chatbot:
+- English: "change language to polish" or "set language to en"
+- Polish: "zmień język na polski" or "ustaw język na angielski"
+
+### Example Multi-Language Pattern:
+
+```php
+Pattern::create([
+    'pattern' => [
+        'en' => '/\\b(?:help|support|assist)\\b/i',
+        'pl' => '/\\b(?:pomoc|pomocy|wsparcie)\\b/iu',
+    ],
+    'responses' => [
+        'en' => [
+            'How can I help you?',
+            'I\'m here to assist you.'
+        ],
+        'pl' => [
+            'Jak mogę Ci pomóc?',
+            'Jestem tu, aby Ci pomóc.'
+        ]
+    ],
+    'severity' => 'high',
+    'priority' => 80,
+    'enabled' => true,
+    'access_level' => 'public',
+]);
+```
+
+### Testing Multi-Language Patterns:
+
+```php
+// Test with explicit locale
+$response = $this->postJson('/api/chatbot/message', [
+    'content' => 'pomoc',
+    'locale' => 'pl',
+]);
+
+// Test with user preference
+$user->preference->update(['locale' => 'pl']);
+$response = $this->actingAs($user, 'sanctum')
+    ->postJson('/api/chatbot/message', [
+        'content' => 'pomoc',
+    ]);
+```
 
 ---
 

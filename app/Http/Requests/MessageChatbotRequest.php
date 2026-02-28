@@ -37,6 +37,7 @@ class MessageChatbotRequest extends FormRequest
             "content" => "required|string|max:255|min:1",
             "timezone" => "nullable|string|timezone",
             "session_id" => "nullable|string", // TODO: Make it required once sessions are implemented
+            "locale" => "nullable|string"
         ];
     }
 }

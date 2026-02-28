@@ -8,14 +8,14 @@ use App\Http\Requests\MessageChatbotRequest;
 class PageFinderModule implements ModuleInterface
 {
     private static array $pages = [
-        'login' => ['url' => '/login', 'name' => 'Login'],
-        'dashboard' => ['url' => '/dashboard', 'name' => 'Dashboard'],
-        'my profile' => ['url' => '/profile', 'name' => 'Your Profile'],
-        'profile' => ['url' => '/profile', 'name' => 'Your Profile'],
-        'leaderboard' => ['url' => '/leaderboard', 'name' => 'Leaderboard'],
-        'register' => ['url' => '/register', 'name' => 'Register'],
-        'settings' => ['url' => '/edit-profile', 'name' => 'Settings'],
-        'alert rcb' => ['url' => 'https://www.gov.pl/web/rcb/alertrcbb', 'name' => 'Alert RCB'],
+        'login' => ['url' => '/login', 'name' => ['en' => 'Login', 'pl' => 'Logowanie']],
+        'dashboard' => ['url' => '/dashboard', 'name' => ['en' => 'Dashboard', 'pl' => 'Panel']],
+        'my profile' => ['url' => '/profile', 'name' => ['en' => 'Your Profile', 'pl' => 'Twój profil']],
+        'profile' => ['url' => '/profile', 'name' => ['en' => 'Your Profile', 'pl' => 'Twój profil']],
+        'leaderboard' => ['url' => '/leaderboard', 'name' => ['en' => 'Leaderboard', 'pl' => 'Ranking']],
+        'register' => ['url' => '/register', 'name' => ['en' => 'Register', 'pl' => 'Rejestracja']],
+        'settings' => ['url' => '/edit-profile', 'name' => ['en' => 'Settings', 'pl' => 'Ustawienia']],
+        'alert rcb' => ['url' => 'https://www.gov.pl/web/rcb/alertrcbb', 'name' => ['en' => 'Alert RCB', 'pl' => 'Alert RCB']],
     ];
 
     public static function getPatterns(): array
@@ -24,9 +24,15 @@ class PageFinderModule implements ModuleInterface
 
         return [
             [
-                "pattern" => "/\\b(where is|where can i find|go to|show me|take me to) (the |a |an )?({$pageKeywords})\\b/i",
-                "responses" => [],
-                "callback" => "findPageCallback",
+                "pattern" => [
+                    "en" => "/\\b(where is|where can i find|go to|show me|take me to) (the |a |an )?({$pageKeywords})\\b/i",
+                    "pl" => "/\\b(?:gdzie (?:znajd(?:z|z)e?\\w*|mog(?:ę|e) znaleź(?:ć|c)|jest)|poka[zż] mi|przej[dź] do) (?:strona |)?({$pageKeywords})\\b/iu",
+                ],
+                "responses" => [
+                    "en" => ["Sure! You can find the %1 page here.", "Here is the link to %1."],
+                    "pl" => ["Jasne! Stronę %1 znajdziesz tutaj.", "Oto link do %1."],
+                ],
+                "callback" => \App\Chatbot\Modules\PageFinderModule::class . "::findPageCallback",
                 "severity" => "medium",
                 "priority" => 30,
                 "enabled" => true,
@@ -42,20 +48,32 @@ class PageFinderModule implements ModuleInterface
 
     public static function findPageCallback(array $matches, MessageChatbotRequest $request): ?array
     {
+        $locale = $request->input('locale') ?? app()->getLocale() ?? 'en';
+        $locale = strtolower(explode('-', str_replace('_', '-', $locale))[0]);
+
         $pageKeyword = strtolower(trim($matches[count($matches) - 1]));
 
         if (isset(self::$pages[$pageKeyword])) {
             $page = self::$pages[$pageKeyword];
 
+            $name = is_array($page['name']) ? ($page['name'][$locale] ?? $page['name']['en'] ?? array_values($page['name'])[0]) : $page['name'];
+
             $isExternal = filter_var($page['url'], FILTER_VALIDATE_URL);
             $finalUrl = $isExternal ? $page['url'] : url($page['url']);
 
+            $answers = [
+                'en' => "Sure! You can find the {$name} page here.",
+                'pl' => "Jasne! Stronę {$name} znajdziesz tutaj.",
+            ];
+
+            $answer = $answers[$locale] ?? $answers['en'];
+
             return [
-                'answer' => "Sure! You can find the {$page['name']} page here.",
+                'answer' => $answer,
                 'payload' => [
                     'type' => 'navigation_link',
                     'url' => $finalUrl,
-                    'text' => "Go to {$page['name']}",
+                    'text' => $locale === 'pl' ? "Przejdź do {$name}" : "Go to {$name}",
                 ],
             ];
         }
